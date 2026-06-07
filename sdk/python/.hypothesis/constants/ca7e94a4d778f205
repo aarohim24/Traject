@@ -1,0 +1,4 @@
+# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/core/provider_adapter.py
+# hypothesis_version: 6.141.1
+
+['Chunk', 'Event', 'Stream', 'anthropic', 'cached_tokens', 'choices', 'estimated', 'exact', 'model', 'openai', 'unknown', 'usage']

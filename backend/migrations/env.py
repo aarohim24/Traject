@@ -1,7 +1,9 @@
 """Alembic environment configuration for axon-backend.
 
 Provides both offline (generate SQL) and online (apply to DB) migration modes.
-The online mode uses SQLAlchemy's async engine to support asyncpg.
+The online mode reads the database URL directly from Settings so that the
+DATABASE_URL environment variable is always respected — no hardcoded URL in
+alembic.ini is required.
 """
 
 import asyncio
@@ -9,9 +11,8 @@ from logging.config import fileConfig
 from typing import Any
 
 from alembic import context
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy import Connection, pool
+from sqlalchemy.ext.asyncio import create_async_engine
 
 # ---------------------------------------------------------------------------
 # Alembic Config object — provides access to alembic.ini values
@@ -24,11 +25,9 @@ if config.config_file_name is not None:
 
 # ---------------------------------------------------------------------------
 # Import the project's metadata so Alembic can detect schema changes.
-# The import is deferred so that the env.py can be used before the package
-# is fully installed (e.g., during the initial pip install step).
 # ---------------------------------------------------------------------------
 try:
-    from axon_backend.models.base import Base  # noqa: E402
+    from axon_backend.models.base import Base  # noqa: PLC0415
 
     target_metadata = Base.metadata
 except ImportError:
@@ -41,9 +40,11 @@ def run_migrations_offline() -> None:
     Configures the context with just a URL and without an Engine, then
     emits DDL to a SQL script rather than executing against a live DB.
     """
-    url = config.get_main_option("sqlalchemy.url")
+    from axon_backend.core.config import Settings  # noqa: PLC0415
+
+    settings = Settings()
     context.configure(
-        url=url,
+        url=settings.database_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -66,10 +67,18 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    """Create an async engine and run migrations inside a transaction."""
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    """Create an async engine from Settings and run migrations.
+
+    Reads DATABASE_URL from the environment via pydantic-settings rather
+    than relying on alembic.ini, so the correct URL is always used in
+    Docker and CI without any manual alembic.ini edits.
+    """
+    from axon_backend.core.config import Settings  # noqa: PLC0415
+
+    settings = Settings()
+
+    connectable = create_async_engine(
+        settings.database_url,
         poolclass=pool.NullPool,
     )
 

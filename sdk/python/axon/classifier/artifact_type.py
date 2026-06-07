@@ -8,15 +8,15 @@ guaranteeing sub-millisecond classification and zero side effects.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class ArtifactType(str, Enum):
+class ArtifactType(StrEnum):
     """Enumeration of the nine canonical artifact types for message segments.
 
-    Inherits from ``str`` so that enum values can be used directly as JSON-
-    serialisable strings without an explicit ``.value`` access.
+    Inherits from ``StrEnum`` so that enum values can be used directly as
+    JSON-serialisable strings without an explicit ``.value`` access.
     """
 
     SYSTEM_PROMPT = "system_prompt"

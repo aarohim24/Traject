@@ -20,14 +20,14 @@ from axon.exceptions import (
 __version__ = "0.1.0"
 
 __all__ = [
-    "instrument",
-    "patch",
-    "configure",
-    "CompressionStrategy",
-    "AxonError",
+    "AxonCompressionError",
     "AxonConfigError",
     "AxonDependencyError",
-    "AxonCompressionError",
+    "AxonError",
     "AxonProviderError",
+    "CompressionStrategy",
     "__version__",
+    "configure",
+    "instrument",
+    "patch",
 ]

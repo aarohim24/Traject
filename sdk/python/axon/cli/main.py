@@ -11,7 +11,7 @@ import json
 import os
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import structlog
 import typer
@@ -27,8 +27,18 @@ _log = structlog.get_logger(__name__)
 
 @app.command()
 def analyze(
-    input: Path = typer.Option(..., "--input", "-i", help="Path to JSONL file of InferenceSpan records."),
-    format: str = typer.Option("table", "--format", "-f", help="Output format: table or json."),
+    input: Annotated[
+        Path,
+        typer.Option(
+            "--input",
+            "-i",
+            help="Path to JSONL file of InferenceSpan records.",
+        ),
+    ],
+    format: Annotated[
+        str,
+        typer.Option("--format", "-f", help="Output format: table or json."),
+    ] = "table",
 ) -> None:
     """Analyze a JSONL file of InferenceSpan records and display a cost summary.
 
@@ -40,7 +50,8 @@ def analyze(
         console.print(f"[red]Error: file not found: {input}[/red]")
         raise typer.Exit(code=1)
 
-    # aggregated[key] = {calls, input_tokens, output_tokens, cost_usd, tokens_saved, cache_hits}
+    # aggregated[key] = {calls, input_tokens, output_tokens, cost_usd, tokens_saved,
+    #                    cache_hits}
     aggregated: dict[tuple[str, str], dict[str, Any]] = {}
 
     with input.open("r", encoding="utf-8") as f:
@@ -50,8 +61,12 @@ def analyze(
                 continue
             try:
                 span = InferenceSpan.model_validate_json(line)
-            except Exception as exc:  # noqa: BLE001
-                _log.warning("axon.cli.analyze.skip_malformed_line", line=line_number, error=str(exc))
+            except Exception as exc:
+                _log.warning(
+                    "axon.cli.analyze.skip_malformed_line",
+                    line=line_number,
+                    error=str(exc),
+                )
                 continue
 
             key = (span.model, span.feature_tag)

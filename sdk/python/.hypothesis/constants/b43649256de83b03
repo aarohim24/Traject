@@ -1,0 +1,4 @@
+# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/compression/adapters/langchain.py
+# hypothesis_version: 6.155.1
+
+['assistant', 'content', 'role', 'system', 'tool', 'tool_calls', 'user']

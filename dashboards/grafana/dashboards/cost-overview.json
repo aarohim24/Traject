@@ -1,0 +1,111 @@
+{
+  "id": null,
+  "uid": "axon-cost-overview",
+  "title": "Axon \u2014 Cost Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5m",
+  "time": { "from": "now-7d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "tags": ["axon"],
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Cost Over Time (by Feature Tag)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "A",
+          "url": "/v1/attribution",
+          "queryParams": "group_by=feature_tag"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD" },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "single" } }
+    },
+    {
+      "id": 2,
+      "title": "Cost by Model",
+      "type": "barchart",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "B",
+          "url": "/v1/attribution",
+          "queryParams": "group_by=model"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD" },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "title": "Cost by Provider",
+      "type": "piechart",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "C",
+          "url": "/v1/attribution",
+          "queryParams": "group_by=provider"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD" },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "title": "Top Feature Tags by Cost",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "D",
+          "url": "/v1/attribution/summary",
+          "queryParams": "period=weekly"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "footer": {} }
+    },
+    {
+      "id": 5,
+      "title": "Input vs Output Tokens",
+      "type": "barchart",
+      "gridPos": { "x": 0, "y": 24, "w": 24, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "E",
+          "url": "/v1/attribution",
+          "queryParams": "group_by=feature_tag"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "stacking": "normal" }
+    }
+  ]
+}

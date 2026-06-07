@@ -121,7 +121,7 @@ def test_calculate_cost_precision_at_most_8_decimal_places() -> None:
         result = calculate_cost(model, 123456, 78901)
         assert result is not None
         # The number of decimal places in the quantized result must be <= 8
-        sign, digits, exponent = result.as_tuple()
+        _sign, _digits, exponent = result.as_tuple()
         assert exponent >= -8, f"{model}: exponent {exponent} exceeds 8 decimal places"
 
 

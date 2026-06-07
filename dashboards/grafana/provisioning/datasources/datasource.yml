@@ -1,0 +1,13 @@
+apiVersion: 1
+
+datasources:
+  - name: Axon Backend
+    type: marcusolsson-json-datasource
+    access: proxy
+    url: http://axon-backend:8000
+    jsonData:
+      queryParams: ""
+    secureJsonData:
+      headers: '{"X-Axon-API-Key": "dev-key-change-in-production"}'
+    isDefault: true
+    editable: true

@@ -11,7 +11,7 @@ module itself. The implementation language is **Python 3.11**.
 
 ## Tasks
 
-- [-] 1. Initialize repository structure and license
+- [x] 1. Initialize repository structure and license
   - Create the complete directory tree under `sdk/python/axon/` with all
     `__init__.py` files and the `py.typed` marker
   - Create `sdk/python/tests/` with `conftest.py` (empty fixtures scaffold)
@@ -37,8 +37,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `chore: initialize repository structure and license`_
   - _Satisfies: R15.1, R16.8_
 
-- [ ] 2. Define exception hierarchy
-  - [~] 2.1 Implement `sdk/python/axon/exceptions.py`
+- [x] 2. Define exception hierarchy
+  - [x] 2.1 Implement `sdk/python/axon/exceptions.py`
     - Module docstring: one-sentence summary + extended description
     - `AxonError(Exception)` — base class; Google-style docstring
     - `AxonConfigError(AxonError)` — invalid configuration values
@@ -49,7 +49,7 @@ module itself. The implementation language is **Python 3.11**.
       argument forwarded to `super().__init__(message)`
     - Full type annotations; `mypy --strict` clean
     - _Requirements: R16.4, R17_
-  - [ ]* 2.2 Write unit tests for exception hierarchy
+  - [x]* 2.2 Write unit tests for exception hierarchy
     - File: `sdk/python/tests/unit/test_exceptions.py`
     - Test that each class is instantiable with a string message
     - Test that each subclass is an instance of `AxonError`
@@ -59,8 +59,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(core): define exception hierarchy`_
   - _Satisfies: R16.4, R17_
 
-- [ ] 3. Add provider pricing table with verified prices
-  - [~] 3.1 Implement `sdk/python/axon/core/pricing.py`
+- [x] 3. Add provider pricing table with verified prices
+  - [x] 3.1 Implement `sdk/python/axon/core/pricing.py`
     - Module docstring explaining ADR-006 (Decimal) and ADR-010 (auditable)
     - Import `ModelPricing` from `axon.models` (forward reference — models
       module will be created in Task 6; use `TYPE_CHECKING` guard or define
@@ -84,7 +84,7 @@ module itself. The implementation language is **Python 3.11**.
       gemini-1.5-pro input=1.25, output=5.00, cache_read=0.3125;
       gemini-1.5-flash input=0.075, output=0.30, cache_read=0.01875
     - _Requirements: R1.4, R3.6, R16.5_
-  - [ ]* 3.2 Write unit tests for pricing table
+  - [x]* 3.2 Write unit tests for pricing table
     - File: `sdk/python/tests/unit/test_pricing.py`
     - Assert all 9 model keys are present in `PROVIDER_PRICING`
     - Assert every `input_cost_per_1m_tokens` and
@@ -97,8 +97,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(core): add provider pricing table with verified prices`_
   - _Satisfies: R1.4, R3.6, R16.5_
 
-- [ ] 4. Implement cost calculator with Decimal precision
-  - [~] 4.1 Implement `sdk/python/axon/core/cost_calculator.py`
+- [x] 4. Implement cost calculator with Decimal precision
+  - [x] 4.1 Implement `sdk/python/axon/core/cost_calculator.py`
     - Module docstring
     - `get_pricing(model: str) -> ModelPricing | None` — looks up
       `PROVIDER_PRICING`; returns `None` for unknown models (no exception)
@@ -114,7 +114,7 @@ module itself. The implementation language is **Python 3.11**.
     - No `float` arithmetic anywhere in this module (ADR-006)
     - Full type annotations; Google-style docstrings with Args/Returns/Raises
     - _Requirements: R1.4, R3.6, R3.7, R3.8, R3.9, R16.5_
-  - [ ]* 4.2 Write unit tests for cost calculator
+  - [x]* 4.2 Write unit tests for cost calculator
     - File: `sdk/python/tests/unit/test_cost_calculator.py`
     - Parametrize over all 9 known models: assert return value is `Decimal`
       and `>= Decimal("0")`
@@ -131,8 +131,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(core): implement cost calculator with Decimal precision`_
   - _Satisfies: R1.4, R3.6, R3.7, R3.8, R3.9, R16.5_
 
-- [ ] 5. Implement artifact type classifier
-  - [~] 5.1 Implement `sdk/python/axon/classifier/artifact_type.py`
+- [x] 5. Implement artifact type classifier
+  - [x] 5.1 Implement `sdk/python/axon/classifier/artifact_type.py`
     - Module docstring
     - `ArtifactType(str, Enum)` with 9 members: `SYSTEM_PROMPT`,
       `USER_MESSAGE`, `ASSISTANT_MESSAGE`, `TOOL_RESULT`, `TOOL_CALL`,
@@ -150,7 +150,7 @@ module itself. The implementation language is **Python 3.11**.
       list of same length
     - No I/O, no ML, no imports beyond stdlib and `axon.exceptions`
     - _Requirements: R2.1, R2.2, R2.3, R5.1–5.6_
-  - [ ]* 5.2 Write unit tests for artifact classifier
+  - [x]* 5.2 Write unit tests for artifact classifier
     - File: `sdk/python/tests/unit/test_artifact_classifier.py`
     - Test each of the 9 artifact types with a representative message
     - **Property P1 (system prompt zero false negatives)**: parametrize over
@@ -171,8 +171,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(classifier): implement artifact type classifier`_
   - _Satisfies: R2.1, R2.2, R2.3, R5.1–5.6_
 
-- [ ] 6. Define SDK data models with Pydantic v2
-  - [~] 6.1 Implement `sdk/python/axon/models.py`
+- [x] 6. Define SDK data models with Pydantic v2
+  - [x] 6.1 Implement `sdk/python/axon/models.py`
     - Module docstring
     - `ModelPricing` as `@dataclass(frozen=True)` with fields: `provider: str`,
       `model: str`, `input_cost_per_1m_tokens: Decimal`,
@@ -197,7 +197,7 @@ module itself. The implementation language is **Python 3.11**.
     - Update `axon/core/pricing.py` to import `ModelPricing` from
       `axon.models` (remove any local definition added in Task 3)
     - _Requirements: R2.1, R6.1, R10.1–10.4, R16.6_
-  - [ ]* 6.2 Write unit tests for data models
+  - [x]* 6.2 Write unit tests for data models
     - File: `sdk/python/tests/unit/test_models.py`
     - Test valid `InferenceSpan` construction with all required fields
     - Test `duration_ms < 0` raises `ValidationError`
@@ -217,8 +217,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(core): define SDK data models with Pydantic v2`_
   - _Satisfies: R2.1, R6.1, R10.1–10.4, R16.6_
 
-- [ ] 7. Add compression strategy configuration and defaults
-  - [~] 7.1 Implement `sdk/python/axon/compression/strategies.py`
+- [x] 7. Add compression strategy configuration and defaults
+  - [x] 7.1 Implement `sdk/python/axon/compression/strategies.py`
     - Module docstring
     - `CompressionStrategy(str, Enum)` with 3 members: `CONSERVATIVE`,
       `MODERATE`, `AGGRESSIVE` (string values lowercase)
@@ -239,7 +239,7 @@ module itself. The implementation language is **Python 3.11**.
       `AxonConfigError` if `protect_system_prompt is False`; exact
       error messages from design §2.10
     - _Requirements: R9.1–9.3, R17.3_
-  - [ ]* 7.2 Write unit tests for strategy configuration
+  - [x]* 7.2 Write unit tests for strategy configuration
     - File: `sdk/python/tests/unit/test_strategies.py`
     - Test `get_config` returns correct defaults for all 3 strategies
     - Test `validate_config` passes for all 3 default configs
@@ -255,8 +255,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(compression): add strategy configuration and defaults`_
   - _Satisfies: R9.1–9.3, R17.3_
 
-- [ ] 8. Implement framework adapters — base ABC and RawOpenAIAdapter
-  - [~] 8.1 Implement `sdk/python/axon/compression/adapters/base.py`
+- [x] 8. Implement framework adapters — base ABC and RawOpenAIAdapter
+  - [x] 8.1 Implement `sdk/python/axon/compression/adapters/base.py`
     - Module docstring
     - `FrameworkAdapter(ABC)` with three abstract methods:
       `normalize(self, messages: Any) -> list[dict[str, Any]]`,
@@ -264,7 +264,7 @@ module itself. The implementation language is **Python 3.11**.
       `accepts(cls, messages: Any) -> bool` (classmethod + abstractmethod)
     - Full type annotations; Google-style docstrings on each method
     - _Requirements: R6.4, R6.5, R6.6_
-  - [~] 8.2 Implement `sdk/python/axon/compression/adapters/raw_openai.py`
+  - [x] 8.2 Implement `sdk/python/axon/compression/adapters/raw_openai.py`
     - Module docstring
     - `RawOpenAIAdapter(FrameworkAdapter)`:
       - `accepts(cls, messages)` — returns `True` iff `messages` is a
@@ -275,7 +275,7 @@ module itself. The implementation language is **Python 3.11**.
       - `denormalize(self, messages, original)` — identity: returns
         `messages` unchanged
     - _Requirements: R6.6_
-  - [ ]* 8.3 Write partial unit tests for adapters (raw OpenAI format)
+  - [x]* 8.3 Write partial unit tests for adapters (raw OpenAI format)
     - File: `sdk/python/tests/unit/test_segment_parser.py` (partial — raw
       OpenAI format tests only; completed in Task 9)
     - Test `RawOpenAIAdapter.accepts()` returns `True` for valid
@@ -288,8 +288,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(compression): implement framework adapters (base + raw_openai)`_
   - _Satisfies: R6.4, R6.5, R6.6_
 
-- [ ] 9. Implement segment parser with tiktoken
-  - [~] 9.1 Implement `sdk/python/axon/compression/segment_parser.py`
+- [x] 9. Implement segment parser with tiktoken
+  - [x] 9.1 Implement `sdk/python/axon/compression/segment_parser.py`
     - Module docstring
     - `parse(messages: list[dict[str, Any]], artifact_types: list[ArtifactType]) -> list[Segment]`
     - Raises `AxonCompressionError` with descriptive message if
@@ -308,7 +308,7 @@ module itself. The implementation language is **Python 3.11**.
       already a string
     - Returns list of `Segment` objects of length `len(messages)`
     - _Requirements: R6.2, R7.1, R7.3_
-  - [ ]* 9.2 Complete unit tests for segment parser
+  - [x]* 9.2 Complete unit tests for segment parser
     - File: `sdk/python/tests/unit/test_segment_parser.py` (complete —
       extends partial file from Task 8)
     - Test `parse` with a 3-message conversation (system, user, assistant):
@@ -325,8 +325,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(compression): implement segment parser with tiktoken`_
   - _Satisfies: R6.2, R7.1, R7.3_
 
-- [ ] 10. Implement relevance scorer with local embedding model
-  - [~] 10.1 Implement `sdk/python/axon/compression/relevance_scorer.py`
+- [x] 10. Implement relevance scorer with local embedding model
+  - [x] 10.1 Implement `sdk/python/axon/compression/relevance_scorer.py`
     - Module docstring
     - Module-level singleton: `_model: SentenceTransformer = SentenceTransformer("all-MiniLM-L6-v2")`
       loaded at import time (ADR-003); never reloaded
@@ -350,7 +350,7 @@ module itself. The implementation language is **Python 3.11**.
           `min(1.0, count/3.0)`, composite weighted sum;
       (8) clamp all scores to `[0.0, 1.0]`
     - _Requirements: R7.4, R8.1–8.4_
-  - [ ]* 10.2 Write unit tests for relevance scorer
+  - [x]* 10.2 Write unit tests for relevance scorer
     - File: `sdk/python/tests/unit/test_relevance_scorer.py`
     - Test score ordering: a segment at `turn_index=5` scores higher
       recency than one at `turn_index=0` (all else equal)
@@ -365,8 +365,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(compression): implement relevance scorer with local embedding model`_
   - _Satisfies: R7.4, R8.1–8.4_
 
-- [ ] 11. Implement compression engine with shadow mode
-  - [~] 11.1 Implement `sdk/python/axon/compression/engine.py`
+- [x] 11. Implement compression engine with shadow mode
+  - [x] 11.1 Implement `sdk/python/axon/compression/engine.py`
     - Module docstring
     - `_detect_adapter(messages: Any) -> FrameworkAdapter` — tries
       `RawOpenAIAdapter`, then optionally `LangChainAdapter` and
@@ -395,7 +395,7 @@ module itself. The implementation language is **Python 3.11**.
       `tokens_saved = 0`
     - Coverage target: ≥ 90% on this file (R16.3)
     - _Requirements: R6.1–6.6, R7.1–7.3, R9.1–9.4, R10.1–10.4, R17.4, R17.5_
-  - [ ]* 11.2 Write unit tests for compression engine
+  - [x]* 11.2 Write unit tests for compression engine
     - File: `sdk/python/tests/unit/test_compression_engine.py`
     - **Property P4 (shadow mode identity)**: `@given(valid_messages_strategy)` —
       assert `compress(msgs, shadow_config).messages == msgs`
@@ -422,8 +422,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(compression): implement compression engine with shadow mode`_
   - _Satisfies: R6.1–6.6, R7.1–7.3, R9.1–9.4, R10.1–10.4, R17.4, R17.5_
 
-- [ ] 12. Add LangChain and AutoGen adapters
-  - [~] 12.1 Implement `sdk/python/axon/compression/adapters/langchain.py`
+- [x] 12. Add LangChain and AutoGen adapters
+  - [x] 12.1 Implement `sdk/python/axon/compression/adapters/langchain.py`
     - Module docstring
     - Top-level guarded import: `try: from langchain_core.messages import ...`
       `except ImportError as exc: raise AxonDependencyError("LangChain adapter
@@ -439,7 +439,7 @@ module itself. The implementation language is **Python 3.11**.
       - `denormalize(self, messages, original)` — reconstruct `BaseMessage`
         subclasses from normalized dicts using role mapping
     - _Requirements: R6.4_
-  - [~] 12.2 Implement `sdk/python/axon/compression/adapters/autogen.py`
+  - [x] 12.2 Implement `sdk/python/axon/compression/adapters/autogen.py`
     - Module docstring
     - Top-level guarded import: `try: import autogen` `except ImportError as exc:
       raise AxonDependencyError("AutoGen adapter requires pyautogen. Install it
@@ -454,7 +454,7 @@ module itself. The implementation language is **Python 3.11**.
       - `denormalize(self, messages, original)` — re-adds `"name"` field
         from corresponding original message where available
     - _Requirements: R6.5_
-  - [ ]* 12.3 Write unit tests for LangChain and AutoGen adapters
+  - [x]* 12.3 Write unit tests for LangChain and AutoGen adapters
     - File: `sdk/python/tests/unit/test_segment_parser.py` (additions)
     - Test `LangChainAdapter.accepts()` with mock `BaseMessage` objects
     - Test `LangChainAdapter.normalize()` produces correct role/content dicts
@@ -467,8 +467,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(compression): add LangChain and AutoGen adapters`_
   - _Satisfies: R6.4, R6.5, R17.2_
 
-- [ ] 13. Implement provider adapters (OpenAI + Anthropic)
-  - [~] 13.1 Implement `sdk/python/axon/core/provider_adapter.py`
+- [x] 13. Implement provider adapters (OpenAI + Anthropic)
+  - [x] 13.1 Implement `sdk/python/axon/core/provider_adapter.py`
     - Module docstring
     - `UsageData` as `@dataclass` with fields: `input_tokens: int`,
       `output_tokens: int`, `cached_tokens: int`,
@@ -497,7 +497,7 @@ module itself. The implementation language is **Python 3.11**.
       `"anthropic"`; raises `AxonProviderError` with message listing
       supported providers for any other string
     - _Requirements: R3.1–3.5, R17.1_
-  - [ ]* 13.2 Write unit tests for provider adapters
+  - [x]* 13.2 Write unit tests for provider adapters
     - File: `sdk/python/tests/unit/test_provider_adapter.py`
     - Test `OpenAIAdapter.extract_usage()` with a mock non-streaming
       response object having `usage.prompt_tokens=100`,
@@ -518,8 +518,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(core): implement provider adapters (OpenAI + Anthropic)`_
   - _Satisfies: R3.1–3.5, R17.1_
 
-- [ ] 14. Implement OTEL span exporter
-  - [~] 14.1 Implement `sdk/python/axon/telemetry/otel_exporter.py`
+- [x] 14. Implement OTEL span exporter
+  - [x] 14.1 Implement `sdk/python/axon/telemetry/otel_exporter.py`
     - Module docstring
     - Module-level `_tracer_provider: TracerProvider | None = None`
     - `configure_exporter(otlp_endpoint: str | None = None, export_to_stdout: bool = True) -> None`
@@ -537,7 +537,7 @@ module itself. The implementation language is **Python 3.11**.
       or `""` if `None`; `tokens_saved` as `span_data.tokens_saved or 0`
     - Import `__version__` from `axon` package (or define locally as `"0.1.0"`)
     - _Requirements: R4.1, R11.1–11.5_
-  - [ ]* 14.2 Write unit tests for OTEL exporter
+  - [x]* 14.2 Write unit tests for OTEL exporter
     - File: `sdk/python/tests/unit/test_otel_exporter.py`
     - Test `configure_exporter()` is idempotent: call twice, assert
       `_tracer_provider` is the same object both times
@@ -554,8 +554,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(telemetry): implement OTEL span exporter`_
   - _Satisfies: R4.1, R11.1–11.5_
 
-- [ ] 15. Implement instrumentation decorator and patch function
-  - [~] 15.1 Implement `sdk/python/axon/core/instrumentor.py`
+- [x] 15. Implement instrumentation decorator and patch function
+  - [x] 15.1 Implement `sdk/python/axon/core/instrumentor.py`
     - Module docstring
     - `_hash_prompt(messages: list[dict[str, Any]]) -> str` — algorithm
       from design §2.1: concatenate all `content` string fields (strip +
@@ -585,7 +585,7 @@ module itself. The implementation language is **Python 3.11**.
     - `configure(otlp_endpoint, export_to_stdout, local_span_log) -> None`
       — delegates to `configure_exporter()`
     - _Requirements: R1.1–1.6, R2.1–2.6, R4.1, R14.1–14.4_
-  - [ ]* 15.2 Write unit tests for instrumentor
+  - [x]* 15.2 Write unit tests for instrumentor
     - File: `sdk/python/tests/unit/test_instrumentor.py`
     - Test sync decorator: wrap a function that returns a mock response;
       assert return value is unchanged
@@ -606,8 +606,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(core): implement instrumentation decorator and patch function`_
   - _Satisfies: R1.1–1.6, R2.1–2.6, R4.1, R14.1–14.4_
 
-- [ ] 16. Expose public SDK API surface
-  - [~] 16.1 Implement `sdk/python/axon/__init__.py`
+- [x] 16. Expose public SDK API surface
+  - [x] 16.1 Implement `sdk/python/axon/__init__.py`
     - Module docstring from design §2.13: one-sentence summary + extended
       description
     - `__version__ = "0.1.0"`
@@ -624,8 +624,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat: expose public SDK API surface`_
   - _Satisfies: R15.1, R15.8_
 
-- [ ] 17. Implement CLI — analyze, version, and doctor commands
-  - [~] 17.1 Implement `sdk/python/axon/cli/main.py`
+- [x] 17. Implement CLI — analyze, version, and doctor commands
+  - [x] 17.1 Implement `sdk/python/axon/cli/main.py`
     - Module docstring
     - `app = typer.Typer(name="axon", help="Axon SDK developer tools.")`
     - `console = Console()` from `rich.console`
@@ -649,7 +649,7 @@ module itself. The implementation language is **Python 3.11**.
       as set/not set)
     - No `print()` statements — use `console.print()` or `structlog`
     - _Requirements: R12.1–12.4, R13.1–13.5_
-  - [ ]* 17.2 Write unit tests for CLI
+  - [x]* 17.2 Write unit tests for CLI
     - File: `sdk/python/tests/unit/test_cli.py`
     - Use `typer.testing.CliRunner` for all tests
     - Test `axon version` exits 0 and stdout contains `"axon-sdk 0.1.0"`
@@ -667,8 +667,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `feat(cli): implement analyze, version, and doctor commands`_
   - _Satisfies: R12.1–12.4, R13.1–13.5_
 
-- [ ] 18. Add pyproject.toml with full dependency specification
-  - [~] 18.1 Create `sdk/python/pyproject.toml`
+- [x] 18. Add pyproject.toml with full dependency specification
+  - [x] 18.1 Create `sdk/python/pyproject.toml`
     - `[build-system]`: `requires = ["hatchling"]`,
       `build-backend = "hatchling.build"`
     - `[project]`: `name = "axon-sdk"`, `version = "0.1.0"`,
@@ -701,8 +701,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `chore: add pyproject.toml with full dependency specification`_
   - _Satisfies: R15.1–15.8, R16.1–16.3_
 
-- [ ] 19. Add GitHub Actions CI and publish workflows
-  - [~] 19.1 Implement `.github/workflows/ci.yml`
+- [x] 19. Add GitHub Actions CI and publish workflows
+  - [x] 19.1 Implement `.github/workflows/ci.yml`
     - Trigger: `on: [push, pull_request]` on all branches
     - `runs-on: ubuntu-latest`, `python-version: "3.11"` for all jobs
     - Job `lint`: `pip install ruff`; `ruff check axon tests`;
@@ -715,14 +715,14 @@ module itself. The implementation language is **Python 3.11**.
       run `python tests/benchmarks/bench_compression_latency.py --assert-median-ms 50`;
       step fails if either script exits non-zero
     - _Requirements: R4.1, R16.1–16.3_
-  - [~] 19.2 Implement `.github/workflows/publish.yml`
+  - [x] 19.2 Implement `.github/workflows/publish.yml`
     - Trigger: `on: push: tags: ["v*"]`
     - Single job `publish`: `runs-on: ubuntu-latest`; uses PyPI trusted
       publisher (`id-token: write` permission); steps: checkout, setup
       Python 3.11, `pip install hatchling`, `python -m hatchling build`,
       `pypa/gh-action-pypi-publish@release/v1` with `skip-existing: true`
     - _Requirements: R15.1_
-  - [~] 19.3 Create benchmark files
+  - [x] 19.3 Create benchmark files
     - `sdk/python/tests/benchmarks/bench_sdk_overhead.py`: imports `axon`,
       creates mock OpenAI client (returns canned response in < 1ms), runs
       `@axon.instrument()` wrapped function 1000 times, collects wall-clock
@@ -738,8 +738,8 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `ci: add GitHub Actions CI and publish workflows`_
   - _Satisfies: R4.1, R15.1, R16.1–16.3_
 
-- [ ] 20. Add pre-commit configuration
-  - [~] 20.1 Implement `.pre-commit-config.yaml`
+- [x] 20. Add pre-commit configuration
+  - [x] 20.1 Implement `.pre-commit-config.yaml`
     - `repos:` section with two entries:
     - `ruff-pre-commit` hook (from `https://github.com/astral-sh/ruff-pre-commit`):
       two hooks — `id: ruff` with `args: [--fix]` and `id: ruff-format`
@@ -752,15 +752,15 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `chore: add pre-commit configuration`_
   - _Satisfies: R16.1, R16.2_
 
-- [ ] 21. Add README, quickstart, compression guide, and examples
-  - [~] 21.1 Write `README.md` at repo root
+- [x] 21. Add README, quickstart, compression guide, and examples
+  - [x] 21.1 Write `README.md` at repo root
     - Sections: What Axon Is, What Axon Is Not (no backend, no data
       exfiltration), Quickstart (3-line install + decorator example),
       Architecture (module map from design §1.2), Contributing (link to
       CONTRIBUTING.md)
     - Include badges: PyPI version, CI status, license
     - _Requirements: R15.1_
-  - [~] 21.2 Write `docs/quickstart.md`
+  - [x] 21.2 Write `docs/quickstart.md`
     - 5-minute guide with 3 runnable code examples:
       (1) Raw OpenAI: `@axon.instrument(feature_tag="chat")` on a function
       calling `openai.OpenAI().chat.completions.create()`
@@ -768,14 +768,14 @@ module itself. The implementation language is **Python 3.11**.
       (3) Async OpenAI: `@axon.instrument()` on an `async def` function
     - Each example shows the expected console output (OTEL span JSON)
     - _Requirements: R1.1, R1.5_
-  - [~] 21.3 Write `docs/compression-guide.md`
+  - [x] 21.3 Write `docs/compression-guide.md`
     - Sections: Shadow Mode (what it is, why it's the default, how to
       read `CompressionResult`), Strategies (table of CONSERVATIVE /
       MODERATE / AGGRESSIVE with targets and decision rules), Enabling
       Live Compression (`shadow_mode=False` — document the risk),
       Interpreting `CompressionResult` fields
     - _Requirements: R6.1, R9.1–9.3_
-  - [~] 21.4 Write runnable examples
+  - [x] 21.4 Write runnable examples
     - `examples/openai-basic/main.py`: complete runnable script using
       `@axon.instrument(feature_tag="demo", shadow_mode=True)` on a
       function that calls `openai.OpenAI().chat.completions.create()`
@@ -785,7 +785,7 @@ module itself. The implementation language is **Python 3.11**.
       prompt; prints the response
     - Both examples include `if __name__ == "__main__":` guard
     - _Requirements: R1.1, R1.2_
-  - [~] 21.5 Write integration test files
+  - [x] 21.5 Write integration test files
     - `sdk/python/tests/integration/test_openai_instrumentation.py`:
       mock HTTP via `respx`; set up a mock OpenAI endpoint returning a
       canned `ChatCompletion` response with `usage.prompt_tokens=100`,
@@ -801,7 +801,7 @@ module itself. The implementation language is **Python 3.11**.
   - _Commit: `docs: add README, quickstart, compression guide, examples`_
   - _Satisfies: R1.1, R1.2, R6.1, R9.1–9.3, R15.1_
 
-- [~] 22. Final validation — all checks passing
+- [x] 22. Final validation — all checks passing
   - Verify `mypy axon --strict` passes with zero errors
   - Verify `ruff check axon tests` passes with zero issues
   - Verify `ruff format --check axon tests` passes with zero issues

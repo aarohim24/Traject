@@ -1,0 +1,4 @@
+# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/core/instrumentor.py
+# hypothesis_version: 6.141.1
+
+[1000, '__module__', 'anthropic', 'content', 'default', 'estimated', 'exact', 'messages', 'openai', 'production', 'text', 'type', 'unknown', 'utf-8']

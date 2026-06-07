@@ -1,0 +1,97 @@
+{
+  "id": null,
+  "uid": "axon-budget-burn-rate",
+  "title": "Axon \u2014 Budget Burn Rate",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "tags": ["axon"],
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Budget Utilization by Feature Tag",
+      "type": "gauge",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "A",
+          "url": "/v1/budgets"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.8 },
+              { "color": "red", "value": 1.0 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 2,
+      "title": "Daily Spend vs Daily Budget",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "B",
+          "url": "/v1/attribution",
+          "queryParams": "group_by=feature_tag"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" }, "overrides": [] }
+    },
+    {
+      "id": 3,
+      "title": "Features Approaching Budget Limit",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "C",
+          "url": "/v1/budgets"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {
+        "footer": {},
+        "sortBy": [{ "displayName": "pct_used", "desc": true }]
+      },
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": [{ "displayName": "pct_used", "desc": true }]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -12,7 +12,7 @@ from typing import Any
 from axon.exceptions import AxonDependencyError
 
 try:
-    import autogen  # noqa: F401  # validate optional dep is installed
+    import autogen  # noqa: F401  # optional dep — stubs handled via mypy override
 except ImportError as exc:
     raise AxonDependencyError(
         "AutoGen adapter requires pyautogen. "

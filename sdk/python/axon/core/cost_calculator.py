@@ -86,16 +86,22 @@ def calculate_cost(
         _log.warning("axon.cost.unknown_model", model=model)
         return None
 
-    MILLION = Decimal("1000000")
+    million = Decimal("1000000")
 
     non_cached_input = input_tokens - cached_tokens
-    input_cost = (Decimal(non_cached_input) / MILLION) * pricing.input_cost_per_1m_tokens
+    input_cost = (
+        (Decimal(non_cached_input) / million)
+        * pricing.input_cost_per_1m_tokens
+    )
 
     cache_cost = Decimal("0")
     if cached_tokens > 0 and pricing.cache_read_cost_per_1m_tokens is not None:
-        cache_cost = (Decimal(cached_tokens) / MILLION) * pricing.cache_read_cost_per_1m_tokens
+        cache_cost = (
+            (Decimal(cached_tokens) / million)
+            * pricing.cache_read_cost_per_1m_tokens
+        )
 
-    output_cost = (Decimal(output_tokens) / MILLION) * pricing.output_cost_per_1m_tokens
+    output_cost = (Decimal(output_tokens) / million) * pricing.output_cost_per_1m_tokens
 
     total = input_cost + cache_cost + output_cost
     return total.quantize(Decimal("0.00000001"))

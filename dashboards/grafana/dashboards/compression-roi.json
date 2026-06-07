@@ -1,0 +1,100 @@
+{
+  "id": null,
+  "uid": "axon-compression-roi",
+  "title": "Axon \u2014 Compression ROI",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5m",
+  "time": { "from": "now-7d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "tags": ["axon"],
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Tokens Saved by Compression Over Time",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "A",
+          "url": "/v1/attribution",
+          "queryParams": "group_by=feature_tag"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "id": 2,
+      "title": "Cost Saved by Compression (Cumulative)",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 8, "w": 6, "h": 4 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "B",
+          "url": "/v1/attribution",
+          "queryParams": "group_by=feature_tag"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["sum"] } }
+    },
+    {
+      "id": 3,
+      "title": "Compression Ratio by Feature Tag",
+      "type": "table",
+      "gridPos": { "x": 6, "y": 8, "w": 18, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "C",
+          "url": "/v1/attribution",
+          "queryParams": "group_by=feature_tag"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "footer": {} }
+    },
+    {
+      "id": 4,
+      "title": "Cache Hit Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "D",
+          "url": "/v1/cache/stats"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] }
+    },
+    {
+      "id": 5,
+      "title": "Cost Saved by Semantic Cache (Cumulative)",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "refId": "E",
+          "url": "/v1/cache/stats"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["sum"] } }
+    }
+  ]
+}

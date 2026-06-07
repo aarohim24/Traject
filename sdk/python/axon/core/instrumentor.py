@@ -12,14 +12,19 @@ import functools
 import hashlib
 import time
 import uuid
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any
 
 import structlog
 
 from axon.classifier.artifact_type import ArtifactType, classify
 from axon.compression.engine import compress
-from axon.compression.strategies import CompressionConfig, CompressionStrategy, get_config
+from axon.compression.strategies import (
+    CompressionConfig,
+    CompressionStrategy,
+    get_config,
+)
 from axon.core.cost_calculator import calculate_cost
 from axon.core.provider_adapter import UsageData, get_adapter
 from axon.exceptions import AxonError
@@ -27,6 +32,15 @@ from axon.models import CompressionResult, InferenceSpan
 from axon.telemetry.otel_exporter import configure_exporter, emit_span
 
 _logger = structlog.get_logger(__name__)
+
+# Module-level BackendClient — set by configure() when backend_url is provided.
+# TYPE_CHECKING guard avoids importing httpx at module load time.
+from typing import TYPE_CHECKING  # noqa: E402
+
+if TYPE_CHECKING:
+    from axon.backend_client import BackendClient
+
+_backend_client: BackendClient | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -61,7 +75,10 @@ def _hash_prompt(messages: list[dict[str, Any]]) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
-def _extract_messages(args: tuple[Any, ...], kwargs: dict[str, Any]) -> list[dict[str, Any]] | None:
+def _extract_messages(
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+) -> list[dict[str, Any]] | None:
     """Best-effort extraction of messages from function arguments.
 
     Checks kwargs first ('messages' key), then the first positional arg
@@ -75,14 +92,23 @@ def _extract_messages(args: tuple[Any, ...], kwargs: dict[str, Any]) -> list[dic
         The messages list if found, or None.
     """
     messages = kwargs.get("messages")
-    if isinstance(messages, list) and len(messages) > 0 and isinstance(messages[0], dict):
-        return messages  # type: ignore[return-value]
-    if args and isinstance(args[0], list) and len(args[0]) > 0 and isinstance(args[0][0], dict):
-        return args[0]  # type: ignore[return-value]
+    if (
+        isinstance(messages, list)
+        and len(messages) > 0
+        and isinstance(messages[0], dict)
+    ):
+        return messages
+    if (
+        args
+        and isinstance(args[0], list)
+        and len(args[0]) > 0
+        and isinstance(args[0][0], dict)
+    ):
+        return args[0]
     return None
 
 
-def _detect_provider(fn: Any, args: tuple[Any, ...]) -> str:
+def _detect_provider(fn: Any, args: tuple[Any, ...]) -> str:  # noqa: ANN401 — fn is an arbitrary callable
     """Best-effort detection of provider from function module or first arg class.
 
     Args:
@@ -122,11 +148,11 @@ def _build_compression_config(
 
 
 def _run_pipeline(
-    response: Any,
+    response: Any,  # noqa: ANN401 — provider response type is framework-specific
     messages: list[dict[str, Any]] | None,
     prompt_hash: str,
     compression_result: CompressionResult | None,
-    fn: Any,
+    fn: Any,  # noqa: ANN401 — fn is an arbitrary user-provided callable
     args: tuple[Any, ...],
     start_time: float,
     feature_tag: str,
@@ -164,7 +190,7 @@ def _run_pipeline(
     if messages:
         try:
             artifact_type = classify(messages[0], 0, len(messages))
-        except Exception as exc:  # noqa: BLE001 — classification never raises, but guard anyway
+        except Exception as exc:
             _logger.warning("axon.classification.failed", error=str(exc))
 
     # Build and emit span
@@ -182,12 +208,16 @@ def _run_pipeline(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             cached_tokens=cached_tokens,
-            token_count_method="exact" if token_count_method == "exact" else "estimated",  # type: ignore[arg-type]
+            token_count_method=(
+                "exact" if token_count_method == "exact" else "estimated"
+            ),
             cost_usd=cost,
             feature_tag=feature_tag,
             prompt_hash=prompt_hash,
             artifact_type=artifact_type,
-            compression_applied=(compression_result is not None and not config.shadow_mode),
+            compression_applied=(
+                compression_result is not None and not config.shadow_mode
+            ),
             shadow_mode=config.shadow_mode,
             pre_compression_tokens=(
                 compression_result.original_tokens if compression_result else None
@@ -199,9 +229,16 @@ def _run_pipeline(
             environment=environment,
         )
         emit_span(span)
+        # Fire-and-forget to backend if configured
+        if _backend_client is not None:
+            try:
+                asyncio.create_task(_backend_client.send_span(span))
+            except RuntimeError:
+                # No running event loop (sync context) — skip backend send
+                pass
     except AxonError as exc:
         _logger.warning("axon.span_emission.failed", error=str(exc))
-    except Exception as exc:  # noqa: BLE001 — span emission must never crash the caller
+    except Exception as exc:
         _logger.warning("axon.span_emission.unexpected_error", error=str(exc))
 
 
@@ -246,7 +283,7 @@ def instrument(
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         if asyncio.iscoroutinefunction(fn):
             @functools.wraps(fn)
-            async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+            async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 start_time = time.perf_counter()
                 messages = _extract_messages(args, kwargs)
                 prompt_hash = _hash_prompt(messages) if messages else _hash_prompt([])
@@ -280,7 +317,7 @@ def instrument(
             return async_wrapper
         else:
             @functools.wraps(fn)
-            def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+            def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 start_time = time.perf_counter()
                 messages = _extract_messages(args, kwargs)
                 prompt_hash = _hash_prompt(messages) if messages else _hash_prompt([])
@@ -317,7 +354,7 @@ def instrument(
 
 
 def patch(
-    client: Any,  # openai.OpenAI | anthropic.Anthropic | async variants
+    client: Any,  # noqa: ANN401 — accepts OpenAI/Anthropic/async variants; no common base type
     feature_tag: str = "default",
     shadow_mode: bool = True,
     strategy: CompressionStrategy = CompressionStrategy.CONSERVATIVE,
@@ -346,16 +383,16 @@ def patch(
 
     # Try OpenAI chat.completions.create
     try:
-        original = client.chat.completions.create  # type: ignore[union-attr]
-        client.chat.completions.create = decorator(original)  # type: ignore[union-attr]
+        original = client.chat.completions.create
+        client.chat.completions.create = decorator(original)
         return
     except AttributeError:
         pass
 
     # Try Anthropic messages.create
     try:
-        original = client.messages.create  # type: ignore[union-attr]
-        client.messages.create = decorator(original)  # type: ignore[union-attr]
+        original = client.messages.create
+        client.messages.create = decorator(original)
         return
     except AttributeError:
         pass
@@ -373,17 +410,41 @@ def patch(
 def configure(
     otlp_endpoint: str | None = None,
     export_to_stdout: bool = True,
-    local_span_log: str | None = None,  # noqa: ARG001 — reserved for Phase 2
+    local_span_log: str | None = None,
+    backend_url: str | None = None,
+    backend_api_key: str | None = None,
 ) -> None:
-    """Configure the Axon SDK telemetry exporter.
+    """Configure the Axon SDK telemetry exporter and optional backend client.
 
-    Delegates to :func:`~axon.telemetry.otel_exporter.configure_exporter`.
-    Idempotent: safe to call multiple times.
+    Delegates OTEL setup to
+    :func:`~axon.telemetry.otel_exporter.configure_exporter`.
+    When ``backend_url`` is provided, creates a
+    :class:`~axon.backend_client.BackendClient` that receives a copy of
+    every span in addition to the OTEL export path.  Both paths run
+    independently — a backend error never affects OTEL export.
+
+    Idempotent: safe to call multiple times.  A second call with the same
+    ``backend_url`` is a no-op; a second call with a different
+    ``backend_url`` replaces the existing client.
 
     Args:
         otlp_endpoint: gRPC endpoint for an OTLP collector.
         export_to_stdout: Whether to also export to stdout (console).
         local_span_log: Reserved for Phase 2 local SQLite logging.
             Currently unused.
+        backend_url: Base URL of the Axon backend service.  When set,
+            spans are also sent to ``POST /v1/spans`` via
+            :class:`~axon.backend_client.BackendClient`.
+        backend_api_key: API key for the backend service.  Required when
+            ``backend_url`` is set.
     """
+    global _backend_client
     configure_exporter(otlp_endpoint=otlp_endpoint, export_to_stdout=export_to_stdout)
+
+    if backend_url is not None:
+        from axon.backend_client import BackendClient  # noqa: PLC0415
+
+        _backend_client = BackendClient(
+            base_url=backend_url,
+            api_key=backend_api_key or "",
+        )

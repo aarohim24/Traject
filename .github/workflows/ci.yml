@@ -67,3 +67,48 @@ jobs:
         run: python sdk/python/tests/benchmarks/bench_sdk_overhead.py --assert-median-ms 5
       - name: Compression latency benchmark
         run: python sdk/python/tests/benchmarks/bench_compression_latency.py --assert-median-ms 50
+
+  backend-test:
+    name: Backend Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: axon
+          POSTGRES_PASSWORD: axon
+          POSTGRES_DB: axon_test
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U axon"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - "6379:6379"
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install backend dev dependencies
+        run: pip install -e "backend[dev]"
+      - name: Run Alembic migrations
+        run: alembic upgrade head
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://axon:axon@localhost:5432/axon_test
+      - name: Run backend tests
+        run: pytest tests/ --cov=axon_backend --cov-fail-under=75
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://axon:axon@localhost:5432/axon_test
+          REDIS_URL: redis://localhost:6379/0

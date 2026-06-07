@@ -5,6 +5,7 @@ formats into a canonical list[dict] for the compression engine to process,
 and converts results back to the original format.
 """
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any
 
