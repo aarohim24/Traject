@@ -8,6 +8,7 @@ calculation, artifact classification, and OTEL span emission.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import functools
 import hashlib
 import time
@@ -39,8 +40,13 @@ from typing import TYPE_CHECKING  # noqa: E402
 
 if TYPE_CHECKING:
     from axon.backend_client import BackendClient
+    from axon.router.rule_router import RuleRouter
 
 _backend_client: BackendClient | None = None
+
+# Module-level RuleRouter — set by configure() when router is provided.
+# Import is guarded with TYPE_CHECKING to prevent circular imports at load time.
+_router: RuleRouter | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -231,11 +237,10 @@ def _run_pipeline(
         emit_span(span)
         # Fire-and-forget to backend if configured
         if _backend_client is not None:
-            try:
-                asyncio.create_task(_backend_client.send_span(span))
-            except RuntimeError:
-                # No running event loop (sync context) — skip backend send
-                pass
+            with contextlib.suppress(RuntimeError):
+                asyncio.create_task(
+                    _backend_client.send_span(span)
+                )
     except AxonError as exc:
         _logger.warning("axon.span_emission.failed", error=str(exc))
     except Exception as exc:
@@ -296,6 +301,20 @@ def instrument(
                     except AxonError as exc:
                         _logger.warning("axon.compression.failed", error=str(exc))
 
+                # Apply router if configured — logs and records routing decision
+                if _router is not None and messages is not None:
+                    requested_model: str = kwargs.get("model", "unknown") or "unknown"
+                    routing_decision = _router.route(messages, requested_model)
+                    _logger.info(
+                        "axon.router.decision",
+                        selected_model=routing_decision.selected_model,
+                        original_model=routing_decision.original_model,
+                        task_type=routing_decision.task_type,
+                        complexity_tier=routing_decision.complexity_tier,
+                        routing_rule=routing_decision.routing_rule,
+                        cost_delta_pct=routing_decision.cost_delta_pct,
+                    )
+
                 # Call original function with original arguments
                 response = await fn(*args, **kwargs)
 
@@ -329,6 +348,24 @@ def instrument(
                         compression_result = compress(messages, config)
                     except AxonError as exc:
                         _logger.warning("axon.compression.failed", error=str(exc))
+
+                # Apply router if configured — logs and records routing decision
+                if _router is not None and messages is not None:
+                    requested_model_sync: str = (
+                        kwargs.get("model", "unknown") or "unknown"
+                    )
+                    routing_decision_sync = _router.route(
+                        messages, requested_model_sync
+                    )
+                    _logger.info(
+                        "axon.router.decision",
+                        selected_model=routing_decision_sync.selected_model,
+                        original_model=routing_decision_sync.original_model,
+                        task_type=routing_decision_sync.task_type,
+                        complexity_tier=routing_decision_sync.complexity_tier,
+                        routing_rule=routing_decision_sync.routing_rule,
+                        cost_delta_pct=routing_decision_sync.cost_delta_pct,
+                    )
 
                 # Call original function
                 response = fn(*args, **kwargs)
@@ -413,8 +450,9 @@ def configure(
     local_span_log: str | None = None,
     backend_url: str | None = None,
     backend_api_key: str | None = None,
+    router: RuleRouter | None = None,
 ) -> None:
-    """Configure the Axon SDK telemetry exporter and optional backend client.
+    """Configure the Axon SDK telemetry exporter, optional backend client, and router.
 
     Delegates OTEL setup to
     :func:`~axon.telemetry.otel_exporter.configure_exporter`.
@@ -422,6 +460,12 @@ def configure(
     :class:`~axon.backend_client.BackendClient` that receives a copy of
     every span in addition to the OTEL export path.  Both paths run
     independently — a backend error never affects OTEL export.
+
+    When ``router`` is provided, stores it as the module-level ``_router``
+    so that subsequent ``instrument()`` / ``patch()`` wrappers invoke
+    ``router.route()`` before each LLM call and log the routing decision.
+    When ``router`` is ``None`` (default), routing is skipped and behaviour
+    is identical to Phase 1/2.
 
     Idempotent: safe to call multiple times.  A second call with the same
     ``backend_url`` is a no-op; a second call with a different
@@ -437,14 +481,21 @@ def configure(
             :class:`~axon.backend_client.BackendClient`.
         backend_api_key: API key for the backend service.  Required when
             ``backend_url`` is set.
+        router: Optional :class:`~axon.router.rule_router.RuleRouter`
+            instance.  When provided, ``route()`` is called before each
+            LLM call and the routing decision is recorded in structlog
+            output.  When ``None``, no routing logic executes.
     """
-    global _backend_client
+    global _backend_client, _router
     configure_exporter(otlp_endpoint=otlp_endpoint, export_to_stdout=export_to_stdout)
 
     if backend_url is not None:
-        from axon.backend_client import BackendClient  # noqa: PLC0415
+        from axon.backend_client import BackendClient
 
         _backend_client = BackendClient(
             base_url=backend_url,
             api_key=backend_api_key or "",
         )
+
+    if router is not None:
+        _router = router

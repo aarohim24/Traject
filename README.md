@@ -115,7 +115,7 @@ Novel contributions: typed artifact model enabling per-type optimization, integr
 |---|---|---|
 | 1 — SDK | ✓ Complete | Python SDK, compression engine, OTel, CLI |
 | 2 — Backend | ✓ Complete | FastAPI, PostgreSQL, Redis, Grafana |
-| 3 — Router | In progress | Adaptive model router, TypeScript SDK, cascade tracer |
+| 3 — Router | ✓ Complete | Adaptive model router, TypeScript SDK, multi-agent cascade tracer, prompt cache advisor |
 | 4 — Dashboard | Planned | Custom React dashboard, cloud hosting |
 | 5 — Guarantees | Planned | Conformal prediction quality bounds, ML routing |
 

@@ -77,7 +77,7 @@ def _get_embedding_model() -> Any:  # noqa: ANN401 — SentenceTransformer avoid
     Returns:
         The ``SentenceTransformer`` singleton.
     """
-    from axon.compression.relevance_scorer import _model  # noqa: PLC0415
+    from axon.compression.relevance_scorer import _model
 
     return _model
 
@@ -144,7 +144,7 @@ class SemanticCacheClient:
                 similarity=data.get("similarity"),
             )
 
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _log.warning("axon.cache.lookup.error", error=str(exc))
             return None
 
@@ -189,5 +189,5 @@ class SemanticCacheClient:
                     "cost_usd": str(cost_usd),
                 },
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _log.warning("axon.cache.store.error", error=str(exc))

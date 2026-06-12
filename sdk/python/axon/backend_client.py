@@ -74,7 +74,7 @@ class BackendClient:
                     "axon.backend_client.send_span.http_error",
                     status_code=response.status_code,
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _log.warning("axon.backend_client.send_span.error", error=str(exc))
 
     async def check_budget(self, feature_tag: str) -> BudgetStatus:
@@ -96,7 +96,7 @@ class BackendClient:
                 status_str = data.get("status", "ok")
                 return BudgetStatus(status_str)
             return BudgetStatus.OK
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _log.warning(
                 "axon.backend_client.check_budget.error",
                 feature_tag=feature_tag,

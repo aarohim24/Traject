@@ -1,0 +1,4 @@
+# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/router/task_classifier.py
+# hypothesis_version: 6.155.2
+
+[0.0, 0.02, 0.1, 0.2, 0.5, 1.0, 4.0, 10.0, 8000.0, '?', '```', 'analyze', 'brief', 'bug', 'categorize', 'class', 'classification', 'classify', 'code', 'code_generation', 'code_review', 'compare', 'content', 'creative', 'creative_writing', 'critique', 'explain why', 'extract', 'extraction', 'fictional', 'find all', 'function', 'identify', 'imagine', 'implement', 'improve', 'in french', 'in german', 'in spanish', 'key points', 'label', 'list the', 'one of the following', 'poem', 'question_answering', 'reason', 'reasoning', 'review', 'role', 'step by step', 'summarization', 'summarize', 'summary', 'system', 'think', 'tldr', 'tool', 'tool_call', 'translate', 'translation', 'unknown', 'user', 'what are the', 'which of', 'write a story']

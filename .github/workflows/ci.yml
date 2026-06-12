@@ -68,6 +68,26 @@ jobs:
       - name: Compression latency benchmark
         run: python sdk/python/tests/benchmarks/bench_compression_latency.py --assert-median-ms 50
 
+  typescript-test:
+    name: TypeScript Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install
+      - name: Type check
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test -- --coverage
+
   backend-test:
     name: Backend Test
     runs-on: ubuntu-latest
@@ -112,3 +132,23 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://axon:axon@localhost:5432/axon_test
           REDIS_URL: redis://localhost:6379/0
+
+  typescript-test:
+    name: TypeScript Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install
+      - name: Type check
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test -- --coverage

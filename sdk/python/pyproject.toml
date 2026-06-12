@@ -66,6 +66,12 @@ ignore = ["ANN101", "ANN102"]
 [tool.ruff.lint.per-file-ignores]
 # Adapter interfaces must accept Any — they're framework-agnostic by design
 "axon/compression/adapters/*.py" = ["ANN401"]
+# RuleRouter.apply is framework-agnostic; client and response types require Any
+"axon/router/rule_router.py" = ["ANN401"]
+# CascadeTracer.get_cascade_cost accepts Any backend_client — no fixed interface
+"axon/tracer/cascade_tracer.py" = ["ANN401"]
+# instrumentor.py uses fire-and-forget asyncio.create_task for backend send
+"axon/core/instrumentor.py" = ["RUF006"]
 # Test helpers use Any for mock responses and fixtures; E501 allowed in parametrize
 "tests/**/*.py" = ["ANN401", "E501", "RUF002"]
 

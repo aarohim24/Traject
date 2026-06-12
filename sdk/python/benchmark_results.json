@@ -1,0 +1,20 @@
+{
+  "date": "2026-06-08",
+  "strategy": "conservative",
+  "model_projected": "gpt-4o-mini",
+  "iterations": 10,
+  "steps_per_run": 10,
+  "baseline": {
+    "avg_input_tokens": 11845,
+    "avg_cost_usd": 0.00177675
+  },
+  "with_axon": {
+    "avg_input_tokens": 10183,
+    "avg_cost_usd": 0.00152745
+  },
+  "reduction": {
+    "avg_tokens_saved": 1662,
+    "input_tokens_pct": 14.0,
+    "cost_pct": 14.0
+  }
+}

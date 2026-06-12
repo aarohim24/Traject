@@ -49,7 +49,7 @@ module itself. The implementation language is **Python 3.11**.
       argument forwarded to `super().__init__(message)`
     - Full type annotations; `mypy --strict` clean
     - _Requirements: R16.4, R17_
-  - [x]* 2.2 Write unit tests for exception hierarchy
+  - [x] 2.2 Write unit tests for exception hierarchy
     - File: `sdk/python/tests/unit/test_exceptions.py`
     - Test that each class is instantiable with a string message
     - Test that each subclass is an instance of `AxonError`
@@ -84,7 +84,7 @@ module itself. The implementation language is **Python 3.11**.
       gemini-1.5-pro input=1.25, output=5.00, cache_read=0.3125;
       gemini-1.5-flash input=0.075, output=0.30, cache_read=0.01875
     - _Requirements: R1.4, R3.6, R16.5_
-  - [x]* 3.2 Write unit tests for pricing table
+  - [x] 3.2 Write unit tests for pricing table
     - File: `sdk/python/tests/unit/test_pricing.py`
     - Assert all 9 model keys are present in `PROVIDER_PRICING`
     - Assert every `input_cost_per_1m_tokens` and
@@ -114,7 +114,7 @@ module itself. The implementation language is **Python 3.11**.
     - No `float` arithmetic anywhere in this module (ADR-006)
     - Full type annotations; Google-style docstrings with Args/Returns/Raises
     - _Requirements: R1.4, R3.6, R3.7, R3.8, R3.9, R16.5_
-  - [x]* 4.2 Write unit tests for cost calculator
+  - [x] 4.2 Write unit tests for cost calculator
     - File: `sdk/python/tests/unit/test_cost_calculator.py`
     - Parametrize over all 9 known models: assert return value is `Decimal`
       and `>= Decimal("0")`
@@ -150,7 +150,7 @@ module itself. The implementation language is **Python 3.11**.
       list of same length
     - No I/O, no ML, no imports beyond stdlib and `axon.exceptions`
     - _Requirements: R2.1, R2.2, R2.3, R5.1–5.6_
-  - [x]* 5.2 Write unit tests for artifact classifier
+  - [x] 5.2 Write unit tests for artifact classifier
     - File: `sdk/python/tests/unit/test_artifact_classifier.py`
     - Test each of the 9 artifact types with a representative message
     - **Property P1 (system prompt zero false negatives)**: parametrize over
@@ -197,7 +197,7 @@ module itself. The implementation language is **Python 3.11**.
     - Update `axon/core/pricing.py` to import `ModelPricing` from
       `axon.models` (remove any local definition added in Task 3)
     - _Requirements: R2.1, R6.1, R10.1–10.4, R16.6_
-  - [x]* 6.2 Write unit tests for data models
+  - [x] 6.2 Write unit tests for data models
     - File: `sdk/python/tests/unit/test_models.py`
     - Test valid `InferenceSpan` construction with all required fields
     - Test `duration_ms < 0` raises `ValidationError`
@@ -239,7 +239,7 @@ module itself. The implementation language is **Python 3.11**.
       `AxonConfigError` if `protect_system_prompt is False`; exact
       error messages from design §2.10
     - _Requirements: R9.1–9.3, R17.3_
-  - [x]* 7.2 Write unit tests for strategy configuration
+  - [x] 7.2 Write unit tests for strategy configuration
     - File: `sdk/python/tests/unit/test_strategies.py`
     - Test `get_config` returns correct defaults for all 3 strategies
     - Test `validate_config` passes for all 3 default configs
@@ -275,7 +275,7 @@ module itself. The implementation language is **Python 3.11**.
       - `denormalize(self, messages, original)` — identity: returns
         `messages` unchanged
     - _Requirements: R6.6_
-  - [x]* 8.3 Write partial unit tests for adapters (raw OpenAI format)
+  - [x] 8.3 Write partial unit tests for adapters (raw OpenAI format)
     - File: `sdk/python/tests/unit/test_segment_parser.py` (partial — raw
       OpenAI format tests only; completed in Task 9)
     - Test `RawOpenAIAdapter.accepts()` returns `True` for valid
@@ -308,7 +308,7 @@ module itself. The implementation language is **Python 3.11**.
       already a string
     - Returns list of `Segment` objects of length `len(messages)`
     - _Requirements: R6.2, R7.1, R7.3_
-  - [x]* 9.2 Complete unit tests for segment parser
+  - [x] 9.2 Complete unit tests for segment parser
     - File: `sdk/python/tests/unit/test_segment_parser.py` (complete —
       extends partial file from Task 8)
     - Test `parse` with a 3-message conversation (system, user, assistant):
@@ -350,7 +350,7 @@ module itself. The implementation language is **Python 3.11**.
           `min(1.0, count/3.0)`, composite weighted sum;
       (8) clamp all scores to `[0.0, 1.0]`
     - _Requirements: R7.4, R8.1–8.4_
-  - [x]* 10.2 Write unit tests for relevance scorer
+  - [x] 10.2 Write unit tests for relevance scorer
     - File: `sdk/python/tests/unit/test_relevance_scorer.py`
     - Test score ordering: a segment at `turn_index=5` scores higher
       recency than one at `turn_index=0` (all else equal)
@@ -395,7 +395,7 @@ module itself. The implementation language is **Python 3.11**.
       `tokens_saved = 0`
     - Coverage target: ≥ 90% on this file (R16.3)
     - _Requirements: R6.1–6.6, R7.1–7.3, R9.1–9.4, R10.1–10.4, R17.4, R17.5_
-  - [x]* 11.2 Write unit tests for compression engine
+  - [x] 11.2 Write unit tests for compression engine
     - File: `sdk/python/tests/unit/test_compression_engine.py`
     - **Property P4 (shadow mode identity)**: `@given(valid_messages_strategy)` —
       assert `compress(msgs, shadow_config).messages == msgs`
@@ -454,7 +454,7 @@ module itself. The implementation language is **Python 3.11**.
       - `denormalize(self, messages, original)` — re-adds `"name"` field
         from corresponding original message where available
     - _Requirements: R6.5_
-  - [x]* 12.3 Write unit tests for LangChain and AutoGen adapters
+  - [x] 12.3 Write unit tests for LangChain and AutoGen adapters
     - File: `sdk/python/tests/unit/test_segment_parser.py` (additions)
     - Test `LangChainAdapter.accepts()` with mock `BaseMessage` objects
     - Test `LangChainAdapter.normalize()` produces correct role/content dicts
@@ -497,7 +497,7 @@ module itself. The implementation language is **Python 3.11**.
       `"anthropic"`; raises `AxonProviderError` with message listing
       supported providers for any other string
     - _Requirements: R3.1–3.5, R17.1_
-  - [x]* 13.2 Write unit tests for provider adapters
+  - [x] 13.2 Write unit tests for provider adapters
     - File: `sdk/python/tests/unit/test_provider_adapter.py`
     - Test `OpenAIAdapter.extract_usage()` with a mock non-streaming
       response object having `usage.prompt_tokens=100`,
@@ -537,7 +537,7 @@ module itself. The implementation language is **Python 3.11**.
       or `""` if `None`; `tokens_saved` as `span_data.tokens_saved or 0`
     - Import `__version__` from `axon` package (or define locally as `"0.1.0"`)
     - _Requirements: R4.1, R11.1–11.5_
-  - [x]* 14.2 Write unit tests for OTEL exporter
+  - [x] 14.2 Write unit tests for OTEL exporter
     - File: `sdk/python/tests/unit/test_otel_exporter.py`
     - Test `configure_exporter()` is idempotent: call twice, assert
       `_tracer_provider` is the same object both times
@@ -585,7 +585,7 @@ module itself. The implementation language is **Python 3.11**.
     - `configure(otlp_endpoint, export_to_stdout, local_span_log) -> None`
       — delegates to `configure_exporter()`
     - _Requirements: R1.1–1.6, R2.1–2.6, R4.1, R14.1–14.4_
-  - [x]* 15.2 Write unit tests for instrumentor
+  - [x] 15.2 Write unit tests for instrumentor
     - File: `sdk/python/tests/unit/test_instrumentor.py`
     - Test sync decorator: wrap a function that returns a mock response;
       assert return value is unchanged
@@ -649,7 +649,7 @@ module itself. The implementation language is **Python 3.11**.
       as set/not set)
     - No `print()` statements — use `console.print()` or `structlog`
     - _Requirements: R12.1–12.4, R13.1–13.5_
-  - [x]* 17.2 Write unit tests for CLI
+  - [x] 17.2 Write unit tests for CLI
     - File: `sdk/python/tests/unit/test_cli.py`
     - Use `typer.testing.CliRunner` for all tests
     - Test `axon version` exits 0 and stdout contains `"axon-sdk 0.1.0"`

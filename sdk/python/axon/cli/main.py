@@ -134,6 +134,61 @@ def version() -> None:
     console.print("axon-sdk 0.1.0")
 
 
+@app.command(name="cache-advisor")
+def cache_advisor(
+    input: Annotated[
+        Path,
+        typer.Option(
+            "--input",
+            "-i",
+            help="Path to JSONL file of InferenceSpan records.",
+        ),
+    ],
+    provider: Annotated[
+        str,
+        typer.Option(
+            "--provider",
+            "-p",
+            help="Provider name (e.g. anthropic, openai).",
+        ),
+    ] = "anthropic",
+) -> None:
+    """Analyse spans from a JSONL file for prompt cache optimisation opportunities.
+
+    Reads a JSONL file produced by the Axon instrumentor, groups spans by their
+    prompt hash, and prints a rich table summarising any detected caching
+    opportunities.
+
+    Args:
+        input: Path to the JSONL file containing InferenceSpan records.
+        provider: Provider name used to look up the caching threshold.
+    """
+    if not input.exists():
+        typer.echo(f"Error: file not found: {input}", err=True)
+        raise typer.Exit(code=1)
+
+    from axon.advisor.prompt_cache_advisor import PromptCacheAdvisor
+
+    advisor = PromptCacheAdvisor()
+    report = advisor.analyze_directory(str(input))
+
+    table = Table(title="Prompt Cache Opportunities")
+    table.add_column("Provider")
+    table.add_column("Token Count", justify="right")
+    table.add_column("Est. Savings %", justify="right")
+    table.add_column("Recommendation")
+
+    for opp in report.opportunities:
+        table.add_row(
+            opp.provider,
+            str(opp.token_count),
+            f"{opp.estimated_savings_pct:.1%}",
+            opp.recommendation,
+        )
+
+    console.print(table)
+
+
 @app.command()
 def doctor() -> None:
     """Check that required dependencies are installed and report their status.
