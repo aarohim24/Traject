@@ -1,0 +1,40 @@
+backend:
+  replicaCount: 2
+  image: ghcr.io/aarohim24/axon-backend:latest
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+dashboard:
+  replicaCount: 1
+  image: ghcr.io/aarohim24/axon-dashboard:latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+postgres:
+  enabled: true
+  storageSize: 20Gi
+
+redis:
+  enabled: true
+  storageSize: 2Gi
+
+ingress:
+  enabled: false
+  host: ""
+
+config:
+  DATABASE_URL: "postgresql+asyncpg://axon:axon@postgres:5432/axon"
+  REDIS_URL: "redis://redis:6379/0"
+  API_KEY: "change-me-in-production"
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"

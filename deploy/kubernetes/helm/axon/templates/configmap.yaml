@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  labels:
+    {{- include "axon.labels" . | nindent 4 }}
+data:
+  API_HOST: {{ .Values.config.API_HOST | quote }}
+  API_PORT: {{ .Values.config.API_PORT | quote }}
+  REDIS_URL: {{ .Values.config.REDIS_URL | quote }}

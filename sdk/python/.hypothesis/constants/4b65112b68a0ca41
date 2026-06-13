@@ -1,0 +1,4 @@
+# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/cache/semantic_cache.py
+# hypothesis_version: 6.155.1
+
+[200, '/v1/cache/lookup', '/v1/cache/store', 'content', 'cost_usd', 'feature_tag', 'hit', 'model', 'prompt_embedding', 'prompt_hash', 'response_preview', 'similarity', 'text', 'type', 'utf-8']
