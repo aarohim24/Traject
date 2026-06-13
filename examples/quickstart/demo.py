@@ -56,46 +56,111 @@ MESSAGES = [
     # Tool call 1: read source file
     {"role": "assistant", "content": '{"tool": "read_file", "args": {"path": "authentication.py"}}'},
     {"role": "tool", "content": (
-        "# authentication.py\n"
+        "# authentication.py  (248 lines)\n"
+        "import os, jwt, hashlib, secrets\n"
+        "from datetime import datetime, timedelta\n"
+        "from typing import Optional\n\n"
         "SECRET_KEY = os.environ.get('JWT_SECRET', 'fallback-insecure-key')\n"
-        "def create_token(data):\n"
-        "    return jwt.encode(data, SECRET_KEY, algorithm='HS256')\n"
-        "def verify_token(token):\n"
-        "    try: return jwt.decode(token, SECRET_KEY, algorithms=['HS256'])\n"
-        "    except jwt.ExpiredSignatureError: return None\n"
-        "    except jwt.JWTError: return None\n"
-        "def get_password_hash(password):\n"
+        "ALGORITHM = 'HS256'\n"
+        "ACCESS_TOKEN_EXPIRE_MINUTES = 30\n\n"
+        "def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):\n"
+        "    to_encode = data.copy()\n"
+        "    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))\n"
+        "    to_encode.update({'exp': expire})\n"
+        "    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)\n\n"
+        "def verify_token(token: str):\n"
+        "    try:\n"
+        "        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])\n"
+        "        username = payload.get('sub')\n"
+        "        if username is None:\n"
+        "            return None\n"
+        "        return payload\n"
+        "    except jwt.ExpiredSignatureError:\n"
+        "        return None\n"
+        "    except jwt.JWTError:\n"
+        "        return None\n\n"
+        "def get_password_hash(password: str) -> str:\n"
         "    salt = secrets.token_hex(16)\n"
-        "    return hashlib.sha256(f'{salt}{password}'.encode()).hexdigest()\n"
+        "    return hashlib.sha256(f'{salt}{password}'.encode()).hexdigest()\n\n"
+        "def authenticate_user(db, username: str, password: str):\n"
+        "    user = db.query(User).filter(User.username == username).first()\n"
+        "    if not user or not verify_password(password, user.hashed_password):\n"
+        "        return False\n"
+        "    return user\n"
     )},
     # Tool call 2: security scan
     {"role": "assistant", "content": '{"tool": "security_scan", "args": {"path": "authentication.py"}}'},
     {"role": "tool", "content": (
-        "CRITICAL: Hardcoded fallback secret 'fallback-insecure-key' (line 1). "
-        "JWT tokens can be forged. CWE-798.\n"
-        "HIGH: Custom SHA-256 without key stretching. Use bcrypt/Argon2. CWE-916.\n"
-        "MEDIUM: No audience/issuer validation in jwt.decode.\n"
-        "LOW: No rate limiting on authentication attempts.\n"
-        "Summary: 1 critical, 1 high, 1 medium, 1 low."
+        "Semgrep security scan results for authentication.py:\n\n"
+        "CRITICAL [CWE-798] — Hardcoded fallback secret detected (line 6).\n"
+        "  Rule: python.lang.security.hardcoded-jwt-secret\n"
+        "  Detail: SECRET_KEY falls back to the literal string 'fallback-insecure-key' when\n"
+        "  JWT_SECRET env var is unset. An attacker who knows this value can forge arbitrary\n"
+        "  JWT tokens and bypass all authentication. Rotate immediately if this has reached\n"
+        "  any non-local environment. Fix: raise RuntimeError if JWT_SECRET is unset.\n\n"
+        "HIGH [CWE-916] — Weak password hashing (line 27).\n"
+        "  Rule: python.lang.security.weak-password-hash\n"
+        "  Detail: get_password_hash uses raw SHA-256 with a custom salt. SHA-256 is a\n"
+        "  general-purpose hash — it is not designed for passwords and can be brute-forced\n"
+        "  at billions of guesses per second on commodity hardware. Replace with bcrypt\n"
+        "  (cost factor >= 12) or Argon2id from the argon2-cffi package.\n\n"
+        "MEDIUM [CWE-345] — Missing audience and issuer validation (line 15).\n"
+        "  Detail: jwt.decode does not validate 'aud' or 'iss' claims. A token issued for\n"
+        "  a different service could be accepted. Add options={'require': ['aud', 'iss']}.\n\n"
+        "LOW — No rate limiting on authentication endpoint (line 33).\n"
+        "  Detail: authenticate_user is called directly with no throttling. Add\n"
+        "  slowapi or equivalent to limit to 5 attempts per minute per IP.\n\n"
+        "Summary: 1 CRITICAL, 1 HIGH, 1 MEDIUM, 1 LOW. Recommend blocking PR until\n"
+        "CRITICAL and HIGH findings are resolved.\n"
     )},
     # Tool call 3: test coverage
     {"role": "assistant", "content": '{"tool": "coverage_check", "args": {"module": "authentication"}}'},
     {"role": "tool", "content": (
-        "Overall coverage: 34%. "
-        "create_token: 80%, verify_token: 60% (missing ExpiredSignatureError), "
-        "get_password_hash: 100%, authenticate_user: 20%. "
-        "Uncovered: lines 12, 15, 29-31, 38-40. "
-        "Recommendation: increase to 90% minimum for security modules."
+        "Coverage report — authentication.py\n"
+        "Generated: 2024-11-01 09:14:02 UTC\n\n"
+        "Name                    Stmts   Miss  Cover   Missing lines\n"
+        "-------------------------------------------------------------\n"
+        "authentication.py          48     31    34%   12, 15, 18-22,\n"
+        "                                             29-31, 33-40,\n"
+        "                                             44-48, 52-61\n\n"
+        "Function-level breakdown:\n"
+        "  create_access_token   : 80%  — missing expiry edge case (line 12)\n"
+        "  verify_token          : 60%  — ExpiredSignatureError path untested (line 18)\n"
+        "                                  JWTError path untested (line 21)\n"
+        "                                  None username path untested (line 15)\n"
+        "  get_password_hash     : 100% — fully covered\n"
+        "  authenticate_user     : 20%  — only happy path tested; wrong-password,\n"
+        "                                  unknown-user, and DB-error paths all missing\n\n"
+        "Branch coverage: 28% (14/50 branches hit)\n\n"
+        "Recommendation: Security-critical modules should have >= 90% statement coverage\n"
+        "and >= 85% branch coverage before merging. Current state is far below threshold.\n"
+        "Priority: add tests for all failure paths in verify_token and authenticate_user.\n"
     )},
     # Tool call 4: dependency audit
     {"role": "assistant", "content": '{"tool": "dep_audit", "args": {}}'},
     {"role": "tool", "content": (
-        "PyJWT 1.7.1 → OUTDATED. CVE-2022-29217 (key confusion attack). "
-        "Upgrade to >= 2.8.0 immediately.\n"
-        "cryptography 3.4.8 → OUTDATED. Multiple CVEs < 41.0.0. "
-        "Upgrade to >= 42.0.0.\n"
-        "Action: pin upgraded versions in requirements.txt, "
-        "add pip-audit to CI pipeline."
+        "pip-audit results for requirements.txt (scanned 47 packages):\n\n"
+        "VULNERABLE PACKAGES:\n\n"
+        "PyJWT 1.7.1  [CRITICAL]\n"
+        "  CVE-2022-29217 — Key confusion / algorithm confusion attack.\n"
+        "  An attacker can craft a token using an RSA public key as an HMAC secret,\n"
+        "  causing the server to accept forged tokens without the private key.\n"
+        "  CVSS score: 9.8 (Critical). Fix: upgrade to >= 2.8.0 immediately.\n"
+        "  Note: v2.x also changes the decode API; update call sites accordingly.\n\n"
+        "cryptography 3.4.8  [HIGH]\n"
+        "  Affected by 7 CVEs in versions < 41.0.0, including:\n"
+        "  CVE-2023-49083 — NULL pointer dereference in PKCS12 parsing.\n"
+        "  CVE-2023-0286  — X.400 address type confusion (OpenSSL upstream).\n"
+        "  CVE-2022-3602  — Buffer overflow in punycode name constraint checking.\n"
+        "  Fix: upgrade to >= 42.0.0. Breaking changes: none for standard usage.\n\n"
+        "passlib 1.7.4  [LOW]\n"
+        "  No CVEs, but package is unmaintained (last release 2020). Consider\n"
+        "  migrating to argon2-cffi for password hashing.\n\n"
+        "CLEAN PACKAGES: 44 packages have no known vulnerabilities.\n\n"
+        "Recommended actions:\n"
+        "  1. Pin PyJWT >= 2.8.0 and cryptography >= 42.0.0 in requirements.txt.\n"
+        "  2. Add pip-audit to CI pipeline (pre-commit or GitHub Actions step).\n"
+        "  3. Configure Dependabot or Renovate for automated dependency updates.\n"
     )},
     # Reasoning step
     {"role": "assistant", "content": (
@@ -154,7 +219,7 @@ def main() -> None:
     config = CompressionConfig(
         strategy=CompressionStrategy.CONSERVATIVE,
         target_reduction_pct=0.20,
-        min_turns_protected=1,
+        min_turns_protected=0,
         protect_system_prompt=True,
         shadow_mode=True,
     )
@@ -178,7 +243,9 @@ def main() -> None:
     for i, context in enumerate(steps, 1):
         baseline_tokens = count_messages_tokens(context)
         result = compress(context, config=config)
-        compressed_tokens = count_messages_tokens(result.messages)
+        # Use the engine's internal token counts — result.messages is the
+        # original (unmodified) in shadow mode, so we must not re-count it.
+        compressed_tokens = result.compressed_tokens
         tokens_saved = baseline_tokens - compressed_tokens
 
         cost_b = Decimal(baseline_tokens) * INPUT_COST_PER_TOKEN
