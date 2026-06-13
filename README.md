@@ -24,6 +24,8 @@ In multi-step AI agents, each LLM call re-pays for all prior tool results and re
 
 Reproduce: `python examples/benchmark/run_benchmark.py` — no API key required.
 
+> **Benchmark note:** This benchmark runs on a realistic but synthetic agent trajectory using tiktoken for exact token counting. Compression ratios vary by workload — we are actively collecting production validation data. Run it yourself: `python examples/benchmark/run_benchmark.py` — no API key required.
+
 ---
 
 ## What Axon Is Not
