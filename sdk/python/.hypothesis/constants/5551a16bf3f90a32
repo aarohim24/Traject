@@ -1,4 +1,0 @@
-# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/router/routing_table.py
-# hypothesis_version: 6.155.2
-
-[0.4, 0.7, 'anthropic', 'gpt-4o', 'gpt-4o-mini', 'high', 'low', 'medium', 'openai', 'tier_1', 'tier_2', 'tier_3']

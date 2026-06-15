@@ -1,4 +1,0 @@
-# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/batch/batch_router.py
-# hypothesis_version: 6.155.1
-
-[1024, '/v1/chat/completions', '24h', 'POST', 'anthropic', 'application/jsonl', 'batch', 'batch_input.jsonl', 'body', 'completed', 'content', 'custom_id', 'ends_at', 'expired', 'expires_at', 'failed', 'in_progress', 'max_tokens', 'messages', 'method', 'model', 'no_eligible_spans', 'openai', 'params', 'pending', 'request_counts', 'role', 'url', 'user']

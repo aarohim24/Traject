@@ -1,4 +1,0 @@
-# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/classifier/artifact_type.py
-# hypothesis_version: 6.155.1
-
-['<reasoning>', '<scratchpad>', '<thinking>', '[context]', '[doc]', '[retrieved]', 'a:', 'answer:', 'assistant', 'assistant_message', 'chain of thought', 'content', 'context:', 'demonstration:', 'document:', 'example:', 'few_shot_example', 'input:', 'let me think', 'output:', 'passage:', 'q:', 'question:', 'rag_chunk', 'reasoning_block', 'retrieved:', 'role', 'source:', 'step by step', 'system', 'system_prompt', 'tool', 'tool_call', 'tool_calls', 'tool_result', 'unknown', 'user', 'user_message']

@@ -1,4 +1,0 @@
-# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/telemetry/otel_exporter.py
-# hypothesis_version: 6.141.1
-
-['0.1.0', 'AXON_OTLP_ENDPOINT', 'axon-sdk', 'axon.artifact_type', 'axon.cache_hit', 'axon.cost_usd', 'axon.duration_ms', 'axon.environment', 'axon.feature_tag', 'axon.prompt_hash', 'gen_ai.request.model', 'gen_ai.system', 'service.name', 'service.version']

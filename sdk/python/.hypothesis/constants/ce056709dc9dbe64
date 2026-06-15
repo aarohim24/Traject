@@ -1,4 +1,0 @@
-# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/providers/bedrock.py
-# hypothesis_version: 6.155.1
-
-[512, 4096, 'amazon.titan', 'anthropic.claude', 'anthropic_version', 'application/json', 'bedrock', 'bedrock-2023-05-31', 'bedrock-runtime', 'body', 'content', 'generation', 'inputText', 'inputTextTokenCount', 'input_tokens', 'max_gen_len', 'max_tokens', 'messages', 'meta.llama', 'outputText', 'output_tokens', 'prompt', 'prompt_token_count', 'results', 'role', 'text', 'tokenCount', 'usage', 'user']

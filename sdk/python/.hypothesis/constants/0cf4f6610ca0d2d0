@@ -1,4 +1,0 @@
-# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/advisor/prompt_cache_advisor.py
-# hypothesis_version: 6.155.2
-
-[0.0, 0.9, 1024, 'AdvisorReport', 'CACHE_THRESHOLDS', 'CacheOpportunity', 'PromptCacheAdvisor', '\\{[^}]+\\}', 'anthropic', 'cl100k_base', 'openai', 'utf-8']

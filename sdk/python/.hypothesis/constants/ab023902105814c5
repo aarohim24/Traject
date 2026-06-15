@@ -1,4 +1,0 @@
-# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/cli/main.py
-# hypothesis_version: 6.155.2
-
-['--format', '--input', '--provider', '-f', '-i', '-p', '0', 'AXON_OTLP_ENDPOINT', 'Axon Cost Analysis', 'Cache Hits', 'Calls', 'Cost (USD)', 'Est. Savings %', 'Feature Tag', 'Input Tokens', 'Model', 'Output Tokens', 'Package', 'Provider', 'Recommendation', 'Status', 'Token Count', '[dim]not set[/dim]', 'anthropic', 'anthropic (optional)', 'axon', 'axon-sdk 0.1.0', 'bold', 'cache-advisor', 'cache_hits', 'calls', 'cost_usd', 'cyan', 'feature_tag', 'green', 'input_tokens', 'json', 'magenta', 'model', 'openai', 'openai (optional)', 'opentelemetry-sdk', 'opentelemetry.sdk', 'output_tokens', 'r', 'right', 'table', 'tiktoken', 'tokens_saved', 'utf-8']

@@ -1,4 +1,0 @@
-# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/core/telemetry_reporter.py
-# hypothesis_version: 6.155.1
-
-[5.0, 200, 300, 'avg_routing_accuracy', 'false', 'json', 'p50_cost_usd', 'p95_cost_usd', 'python_version', 'sample_count', 'sdk_version', 'submitted_at', 'true']
