@@ -131,7 +131,9 @@ def analyze(
 @app.command()
 def version() -> None:
     """Print the axon-sdk version."""
-    console.print("axon-sdk 0.1.0")
+    from axon import __version__
+
+    console.print(f"axon-sdk {__version__}")
 
 
 @app.command(name="cache-advisor")

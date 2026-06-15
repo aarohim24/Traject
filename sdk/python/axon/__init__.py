@@ -15,6 +15,7 @@ from axon.exceptions import (
     AxonDependencyError,
     AxonError,
     AxonProviderError,
+    InsufficientDataError,
 )
 
 __version__ = "0.1.0"
@@ -26,6 +27,7 @@ __all__ = [
     "AxonError",
     "AxonProviderError",
     "CompressionStrategy",
+    "InsufficientDataError",
     "__version__",
     "configure",
     "instrument",

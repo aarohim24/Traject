@@ -1,0 +1,9 @@
+"""Artifact type classifier for the Axon SDK.
+
+Classifies context segments into typed artifact categories (system prompt,
+user message, tool result, reasoning block, etc.) to enable per-type
+compression policies.
+"""
+from axon.classifier.artifact_type import ArtifactType, classify, classify_sequence
+
+__all__ = ["ArtifactType", "classify", "classify_sequence"]
