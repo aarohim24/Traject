@@ -13,17 +13,17 @@ from __future__ import annotations
 import json
 import os
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon.exceptions import InsufficientDataError
-from axon.router.ml_router import FEATURE_NAMES, MLModelArtifact, _extract_features
-from axon.router.routing_table import ModelTier
 from axon_backend.models.span import InferenceSpanRecord
+
+if TYPE_CHECKING:
+    from axon.router.ml_router import MLModelArtifact
 
 _log = structlog.get_logger(__name__)
 
@@ -66,6 +66,10 @@ class MLTrainingService:
             InsufficientDataError: If zero training rows with a non-null
                 ``routing_decision`` are found in the database.
         """
+        from axon.exceptions import InsufficientDataError  # noqa: PLC0415
+        from axon.router.ml_router import FEATURE_NAMES, MLModelArtifact, _extract_features  # noqa: PLC0415
+        from axon.router.routing_table import ModelTier  # noqa: PLC0415
+
         try:
             from sklearn.linear_model import (  # type: ignore[import-untyped]  # noqa: PLC0415
                 LogisticRegression,

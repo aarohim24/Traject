@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 import structlog
-from axon.core.pricing import PROVIDER_PRICING
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -59,13 +58,21 @@ class CostPredictor:
         Raises:
             KeyError: If ``model`` is not found in ``PROVIDER_PRICING``.
         """
+        from axon.core.pricing import PROVIDER_PRICING  # noqa: PLC0415
+
         pricing = PROVIDER_PRICING[model]
-        input_cost = (
-            Decimal(str(estimated_input_tokens)) / Decimal("1000000")
-        ) * pricing.input_cost_per_1m_tokens
-        output_cost = (
-            Decimal(str(estimated_output_tokens)) / Decimal("1000000")
-        ) * pricing.output_cost_per_1m_tokens
+        input_cost = Decimal(
+            str(
+                (Decimal(str(estimated_input_tokens)) / Decimal("1000000"))
+                * Decimal(str(pricing.input_cost_per_1m_tokens))
+            )
+        )
+        output_cost = Decimal(
+            str(
+                (Decimal(str(estimated_output_tokens)) / Decimal("1000000"))
+                * Decimal(str(pricing.output_cost_per_1m_tokens))
+            )
+        )
         return input_cost + output_cost
 
     async def predict_interval(
@@ -181,6 +188,7 @@ def _percentile(sorted_values: list[Decimal], pct: int) -> Decimal:
     if upper_idx >= n:
         return sorted_values[n - 1]
     fraction = index - Decimal(str(lower_idx))
-    return sorted_values[lower_idx] + fraction * (
+    result: Decimal = sorted_values[lower_idx] + fraction * (
         sorted_values[upper_idx] - sorted_values[lower_idx]
     )
+    return result
