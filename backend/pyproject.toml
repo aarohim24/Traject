@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "axon-backend"
-version = "0.2.0"
+version = "0.5.0"
 description = "Axon self-hosted backend service — span ingestion, cost attribution, semantic cache, budget controls."
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -49,6 +49,14 @@ addopts = "--cov=axon_backend --cov-report=term-missing --cov-fail-under=75"
 [tool.mypy]
 strict = true
 python_version = "3.11"
+
+[[tool.mypy.overrides]]
+module = "pgvector.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "apscheduler.*"
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100

@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: "/budgets", label: "Budget Manager", icon: "🎯" },
   { path: "/router", label: "Router Analytics", icon: "🔀" },
   { path: "/spans", label: "Span Explorer", icon: "🔍" },
+  { path: "/benchmarks", label: "Benchmarks", icon: "🏆" },
 ];
 
 export default function Sidebar(): JSX.Element {

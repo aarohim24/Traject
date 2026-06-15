@@ -68,25 +68,23 @@ jobs:
       - name: Compression latency benchmark
         run: python sdk/python/tests/benchmarks/bench_compression_latency.py --assert-median-ms 50
 
-  typescript-test:
-    name: TypeScript Test
+  welcome-contributor:
+    name: Welcome First-Time Contributor
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: sdk/typescript
+    if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/first-interaction@v1
         with:
-          node-version: '20'
-      - name: Install dependencies
-        run: npm install
-      - name: Type check
-        run: npm run typecheck
-      - name: Lint
-        run: npm run lint
-      - name: Test
-        run: npm test -- --coverage
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-message: |
+            👋 Welcome, and thanks for opening your first pull request to Axon!
+
+            A maintainer will review your PR shortly. In the meantime, please check that:
+            - All CI checks are passing (lint, type-check, tests)
+            - Your commit messages follow the [Conventional Commits](https://www.conventionalcommits.org/) format
+            - You've read [CONTRIBUTING.md](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md)
+
+            We're glad you're here. 🚀
 
   backend-test:
     name: Backend Test

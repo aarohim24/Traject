@@ -1,0 +1,4 @@
+# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/batch/job_tracker.py
+# hypothesis_version: 6.155.1
+
+['batch_jobs', 'gen_random_uuid()', 'ix_batch_jobs_job_id', 'ix_batch_jobs_status', 'job_id', 'now()', 'status']

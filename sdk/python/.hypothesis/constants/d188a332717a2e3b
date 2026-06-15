@@ -1,0 +1,4 @@
+# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/models.py
+# hypothesis_version: 6.155.1
+
+[0.0, 1.0, 384, '0', 'CompressionResult', 'InferenceSpan', 'ModelPricing', 'Segment', '^[a-f0-9]{64}$', 'after', 'cached_tokens', 'compression_ratio', 'cost_usd', 'duration_ms', 'embedding', 'estimated', 'exact', 'input_tokens', 'output_tokens', 'prompt_hash', 'token_count', 'turn_index']

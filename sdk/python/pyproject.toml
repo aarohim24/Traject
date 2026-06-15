@@ -29,6 +29,7 @@ dependencies = [
     "tiktoken>=0.7",
     "typer>=0.12",
     "rich>=13.0",
+    "httpx>=0.27",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +37,9 @@ openai = ["openai>=1.30"]
 anthropic = ["anthropic>=0.28"]
 langchain = ["langchain-core>=0.2"]
 autogen = ["pyautogen>=0.2"]
+bedrock = ["boto3>=1.34"]
+vertex = ["google-cloud-aiplatform>=1.50"]
+ml = ["scikit-learn>=1.3"]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
@@ -70,10 +74,19 @@ ignore = ["ANN101", "ANN102"]
 "axon/router/rule_router.py" = ["ANN401"]
 # CascadeTracer.get_cascade_cost accepts Any backend_client — no fixed interface
 "axon/tracer/cascade_tracer.py" = ["ANN401"]
+# Provider adapters forward **kwargs to cloud SDKs with no fixed type — Any is required
+"axon/providers/*.py" = ["ANN401"]
+# BatchRouter wraps optional provider clients (openai.AsyncOpenAI, anthropic.AsyncAnthropic)
+# and poll_and_collect accepts a provider-specific client — Any is required
+"axon/batch/batch_router.py" = ["ANN401"]
+# Plugin ABCs forward **kwargs to implementations — no fixed provider type
+"axon/plugins/__init__.py" = ["ANN401"]
+"axon/plugins/base.py" = ["ANN401"]
 # instrumentor.py uses fire-and-forget asyncio.create_task for backend send
 "axon/core/instrumentor.py" = ["RUF006"]
 # Test helpers use Any for mock responses and fixtures; E501 allowed in parametrize
-"tests/**/*.py" = ["ANN401", "E501", "RUF002"]
+# N817 allows CamelCase aliases in test fixtures (e.g. BedrockAdapter as BA)
+"tests/**/*.py" = ["ANN401", "E501", "RUF002", "N817"]
 
 [tool.mypy]
 strict = true
@@ -81,6 +94,34 @@ python_version = "3.11"
 
 [[tool.mypy.overrides]]
 module = "autogen"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sklearn.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sqlalchemy.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "boto3"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "botocore.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "vertexai"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "vertexai.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "google.*"
 ignore_missing_imports = true
 
 

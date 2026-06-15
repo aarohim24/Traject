@@ -16,6 +16,7 @@ const CompressionROI = lazy(() => import("./pages/CompressionROI"));
 const BudgetManager = lazy(() => import("./pages/BudgetManager"));
 const RouterAnalytics = lazy(() => import("./pages/RouterAnalytics"));
 const SpanExplorer = lazy(() => import("./pages/SpanExplorer"));
+const BenchmarkRegistry = lazy(() => import("./pages/BenchmarkRegistry"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,6 +47,7 @@ export default function App(): JSX.Element {
               <Route path="/budgets" element={<BudgetManager />} />
               <Route path="/router" element={<RouterAnalytics />} />
               <Route path="/spans" element={<SpanExplorer />} />
+              <Route path="/benchmarks" element={<BenchmarkRegistry />} />
             </Route>
           </Routes>
         </Suspense>

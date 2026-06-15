@@ -1,9 +1,10 @@
 """APScheduler background workers for the Axon backend.
 
-Defines three recurring jobs:
+Defines four recurring jobs:
 - ``materialize_attribution``: runs every hour at :05 to aggregate spans.
 - ``expire_cache_entries``: runs daily at 02:00 to remove stale cache rows.
 - ``recompute_budget_counters``: runs every 15 minutes to refresh Redis.
+- ``ml_weekly_training``: runs every Sunday at 01:00 to retrain the ML router.
 
 The module-level ``scheduler`` instance is started and stopped by the
 FastAPI lifespan context manager in :mod:`axon_backend.main`.
@@ -122,6 +123,60 @@ async def _run_recompute_budget_counters() -> None:
         _log.error("axon.worker.recompute_budget_counters.error", error=str(exc))
 
 
+async def _run_anomaly_scan() -> None:
+    """Scan all feature tags for IQR-based cost anomalies and emit alerts.
+
+    Creates a fresh :class:`~axon_backend.services.anomaly_detector.AnomalyDetector`
+    instance, opens a database session, and calls ``run_scan(db)``.  Each
+    returned :class:`~axon_backend.services.anomaly_detector.AnomalyAlert` is
+    emitted as a structlog WARNING with full context fields.
+
+    Errors are caught and logged; the scheduler is never crashed.
+    """
+    try:
+        from axon_backend.services.anomaly_detector import (  # noqa: PLC0415
+            AnomalyDetector,
+        )
+
+        detector = AnomalyDetector()
+        async with AsyncSessionLocal() as db:
+            alerts = await detector.run_scan(db)
+        for alert in alerts:
+            _log.warning(
+                "axon.anomaly_detector.alert",
+                feature_tag=alert.feature_tag,
+                metric=alert.metric,
+                direction=alert.direction,
+                observed_value=alert.observed_value,
+                upper_fence=alert.upper_fence,
+                lower_fence=alert.lower_fence,
+            )
+        _log.info("axon.worker.anomaly_scan.done", alert_count=len(alerts))
+    except Exception as exc:  # noqa: BLE001
+        _log.error("axon.worker.anomaly_scan.error", error=str(exc))
+
+
+async def _run_ml_weekly_training() -> None:
+    """Retrain the ML routing model on the latest labeled inference spans.
+
+    Creates a fresh :class:`~axon_backend.services.ml_training.MLTrainingService`
+    instance, opens a database session, and delegates all training and
+    persistence logic to
+    :meth:`~axon_backend.services.ml_training.MLTrainingService.run_weekly_training_job`.
+
+    Errors are caught and logged; the scheduler is never crashed.
+    """
+    try:
+        from axon_backend.services.ml_training import MLTrainingService  # noqa: PLC0415
+
+        svc = MLTrainingService()
+        async with AsyncSessionLocal() as db:
+            await svc.run_weekly_training_job(db)
+        _log.info("axon.worker.ml_weekly_training.done")
+    except Exception as exc:  # noqa: BLE001
+        _log.error("axon.worker.ml_weekly_training.error", error=str(exc))
+
+
 def register_jobs() -> None:
     """Register all background jobs with the module-level scheduler.
 
@@ -148,5 +203,21 @@ def register_jobs() -> None:
         trigger="interval",
         minutes=15,
         id="recompute_budget_counters",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        _run_ml_weekly_training,
+        trigger="cron",
+        day_of_week="sun",
+        hour=1,
+        minute=0,
+        id="ml_weekly_training",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        _run_anomaly_scan,
+        trigger="interval",
+        hours=6,
+        id="anomaly_scan",
         replace_existing=True,
     )

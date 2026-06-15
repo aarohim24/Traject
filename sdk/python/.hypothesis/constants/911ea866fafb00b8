@@ -1,0 +1,4 @@
+# file: /Users/aarohimathur/Desktop/projects/axon/sdk/python/axon/router/ml_router.py
+# hypothesis_version: 6.155.1
+
+[0.0, 1.0, 2.0, 4.0, 7.0, 24.0, 8000.0, 500, '_model_map', '```', 'classes', 'coefficients', 'complexity_score', 'content', 'day_of_week_cos', 'day_of_week_sin', 'feature_count', 'feature_names', 'has_code_blocks', 'has_tool_calls', 'hour_of_day_cos', 'hour_of_day_sin', 'intercept', 'is_trained', 'role', 'tool', 'trained_at']

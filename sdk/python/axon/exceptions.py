@@ -74,3 +74,20 @@ class AxonProviderError(AxonError):
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class InsufficientDataError(AxonError):
+    """Raised when a training or analytics operation lacks enough data to proceed.
+
+    This exception signals that the operation requires a minimum number of
+    labeled examples or historical records but the available dataset does not
+    meet that threshold.  The caller should collect more data before retrying.
+
+    Args:
+        message: Human-readable description of why the data is insufficient,
+            including the current count and the minimum required count where
+            applicable.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

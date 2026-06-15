@@ -80,6 +80,9 @@ class InferenceSpan(BaseModel):
         cache_hit: ``True`` when at least one token was served from the
             provider cache.
         environment: Deployment environment label (e.g. ``"production"``).
+        batch_eligible: ``True`` when this span is eligible for submission
+            to a provider batch API (non-latency-sensitive workloads).
+            Defaults to ``False``.
     """
 
     id: UUID
@@ -105,6 +108,7 @@ class InferenceSpan(BaseModel):
     tokens_saved: int | None
     cache_hit: bool
     environment: str
+    batch_eligible: bool = False
 
     @field_validator("duration_ms", mode="after")
     @classmethod

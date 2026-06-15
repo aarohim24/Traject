@@ -47,6 +47,10 @@ class InferenceSpanRecord(Base):
         tokens_saved: Tokens eliminated by compression, if any.
         cache_hit: Whether the provider served tokens from its cache.
         environment: Deployment environment label (e.g. ``"production"``).
+        routing_decision: ModelTier string value assigned by the router, or
+            ``None`` when no router was configured.  Populated by the Phase 4
+            instrumentor and used as the logistic regression label during ML
+            training.
         created_at: Server-side insertion timestamp.
     """
 
@@ -77,6 +81,7 @@ class InferenceSpanRecord(Base):
     tokens_saved: Mapped[int | None] = mapped_column(nullable=True)
     cache_hit: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
     environment: Mapped[str] = mapped_column(String, nullable=False)
+    routing_decision: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         nullable=False, server_default=text("now()")
     )
