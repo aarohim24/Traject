@@ -153,4 +153,4 @@ No authentication is required to read the registry.
 - [ml-router-guide.md](ml-router-guide.md) — understanding routing accuracy
 - [batch-routing.md](batch-routing.md) — additional cost reduction via batch APIs
 - [research/notebooks/compression_analysis.ipynb](../research/notebooks/compression_analysis.ipynb) — analysis notebook
-- [research/paper/axon_paper.md](../research/paper/axon_paper.md) — technical background
+- [docs/research-paper.md](../docs/research-paper.md) — technical background

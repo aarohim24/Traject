@@ -118,10 +118,10 @@ Novel contributions: typed artifact model enabling per-type optimization, integr
 | 1 — SDK | ✓ Complete | Python SDK, compression engine, OTel, CLI |
 | 2 — Backend | ✓ Complete | FastAPI, PostgreSQL, Redis, Grafana |
 | 3 — Router | ✓ Complete | Adaptive model router, TypeScript SDK, multi-agent cascade tracer, prompt cache advisor |
-| 4 — Dashboard | ✓ Complete | Custom React dashboard, cloud hosting, RBAC, SSO groundwork |
-| 5 — Differentiation & Scale | ✓ Complete | ML routing, conformal prediction, batch routing, Bedrock/Vertex providers, plugin system, cost prediction, anomaly detection, benchmark registry |
+| 4 — Dashboard | ✓ Complete | Custom React dashboard, RBAC, budget enforcement, semantic cache UI |
+| 5 — Differentiation & Scale | ✓ Complete | ML routing with conformal prediction, batch routing, Bedrock/Vertex providers, plugin system, cost prediction, anomaly detection, benchmark registry |
 
-See the [research paper](research/paper/axon_paper.md) for the technical background on Phase 5's ML routing and conformal prediction guarantees.
+See the [research paper](docs/research-paper.md) for technical background on Phase 5's ML routing and conformal prediction guarantees.
 
 ---
 

@@ -151,5 +151,5 @@ on that evidence.)_
 
 - GitHub: https://github.com/aarohimathur/axon
 - PyPI: `pip install axon-sdk`
-- Research paper: [research/paper/axon_paper.md](../../research/paper/axon_paper.md)
+- Research paper: [docs/research-paper.md](../../docs/research-paper.md)
 - Docs: https://github.com/aarohimathur/axon/tree/main/docs

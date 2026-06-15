@@ -39,7 +39,7 @@ axon.patch(client, feature_tag="my_agent", shadow_mode=True)
 **Links:**
 - GitHub: https://github.com/aarohimathur/axon
 - Docs: https://github.com/aarohimathur/axon/tree/main/docs
-- Benchmark registry: https://github.com/aarohimathur/axon/blob/main/research/paper/axon_paper.md
+- Benchmark registry: https://github.com/aarohimathur/axon/blob/main/docs/research-paper.md
 
 **What's different from other LLM cost tools:**
 Most tools focus on prompt engineering or model selection. Axon operates at the infrastructure layer — it's middleware, not advice. It works with whatever model you're already using.
