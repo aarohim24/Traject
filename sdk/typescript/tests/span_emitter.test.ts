@@ -47,7 +47,7 @@ describe("SpanEmitter", () => {
   });
 
   // Validates: Requirements 8.6
-  it("POSTs to {backendUrl}/v1/spans with X-Axon-API-Key header", async () => {
+  it("POSTs to {backendUrl}/v1/spans with X-Traject-API-Key header", async () => {
     const mockFetch = jest
       .fn()
       .mockResolvedValue({ ok: true } as Response);
@@ -67,7 +67,7 @@ describe("SpanEmitter", () => {
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
-          "X-Axon-API-Key": "test-key",
+          "X-Traject-API-Key": "test-key",
           "Content-Type": "application/json",
         }),
       }),
@@ -102,7 +102,7 @@ describe("SpanEmitter", () => {
   });
 
   // Validates: Requirements 8.6
-  it("does not set X-Axon-API-Key header when apiKey is not configured", async () => {
+  it("does not set X-Traject-API-Key header when apiKey is not configured", async () => {
     const mockFetch = jest
       .fn()
       .mockResolvedValue({ ok: true } as Response);
@@ -115,6 +115,6 @@ describe("SpanEmitter", () => {
 
     const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
     const headers = callArgs[1]?.headers as Record<string, string>;
-    expect(headers["X-Axon-API-Key"]).toBeUndefined();
+    expect(headers["X-Traject-API-Key"]).toBeUndefined();
   });
 });

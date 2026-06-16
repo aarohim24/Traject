@@ -1,5 +1,5 @@
 /**
- * Instrumentor for the Axon TypeScript SDK.
+ * Instrumentor for the Traject TypeScript SDK.
  *
  * Provides two instrumentation strategies:
  * - `patch(client)` — wraps an OpenAI or Anthropic client in place.
@@ -12,30 +12,30 @@
 import { randomUUID } from "crypto";
 import { calculateCost } from "./cost_calculator";
 import { SpanEmitter } from "./span_emitter";
-import type { AxonConfig, InferenceSpan, UsageData } from "./types";
+import type { TrajectConfig, InferenceSpan, UsageData } from "./types";
 
 // ---------------------------------------------------------------------------
 // Global configuration
 // ---------------------------------------------------------------------------
 
 /** Module-level global config set by {@link setGlobalConfig}. */
-let _globalConfig: AxonConfig = {};
+let _globalConfig: TrajectConfig = {};
 
 /**
- * Set the global Axon SDK configuration.
+ * Set the global Traject SDK configuration.
  *
  * @param config - Configuration to apply globally.
  */
-export function setGlobalConfig(config: AxonConfig): void {
+export function setGlobalConfig(config: TrajectConfig): void {
   _globalConfig = config;
 }
 
 /**
- * Get the current global Axon SDK configuration.
+ * Get the current global Traject SDK configuration.
  *
- * @returns The active global {@link AxonConfig}.
+ * @returns The active global {@link TrajectConfig}.
  */
-export function getGlobalConfig(): AxonConfig {
+export function getGlobalConfig(): TrajectConfig {
   return _globalConfig;
 }
 
@@ -67,7 +67,7 @@ function toIso(ms: number): string {
  * ```
  */
 export function instrument(
-  config?: AxonConfig,
+  config?: TrajectConfig,
 ): <T extends (...args: unknown[]) => Promise<unknown>>(target: T) => T {
   const effectiveConfig = config ?? _globalConfig;
 
@@ -143,7 +143,7 @@ interface AnthropicUsage {
  * @param config - Optional config override; falls back to global config.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function patch(client: unknown, config?: AxonConfig): void {
+export function patch(client: unknown, config?: TrajectConfig): void {
   const effectiveConfig = config ?? _globalConfig;
   const emitter = new SpanEmitter(effectiveConfig);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

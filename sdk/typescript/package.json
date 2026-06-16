@@ -1,5 +1,5 @@
 {
-  "name": "@axon-sdk/typescript",
+  "name": "@traject-sdk/typescript",
   "version": "0.3.0",
   "description": "TypeScript SDK for Axon — LLM inference observability, cost attribution, and span emission for Node.js",
   "main": "dist/index.js",
@@ -44,6 +44,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/axon-sdk/axon"
+    "url": "https://github.com/traject-sdk/axon"
   }
 }

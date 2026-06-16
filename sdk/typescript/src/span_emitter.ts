@@ -1,12 +1,12 @@
 /**
- * Span emitter for the Axon TypeScript SDK.
+ * Span emitter for the Traject TypeScript SDK.
  *
  * Handles console export (synchronous) and backend POST (fire-and-forget)
  * of {@link InferenceSpan} records. Errors from the backend POST are logged
  * but never thrown — the emitter never disrupts application code.
  */
 
-import type { AxonConfig, InferenceSpan } from "./types";
+import type { TrajectConfig, InferenceSpan } from "./types";
 
 /**
  * Emits {@link InferenceSpan} records to configured outputs.
@@ -14,14 +14,14 @@ import type { AxonConfig, InferenceSpan } from "./types";
  * Instantiate once per configured session and reuse across calls.
  */
 export class SpanEmitter {
-  private readonly config: AxonConfig;
+  private readonly config: TrajectConfig;
 
   /**
    * Create a SpanEmitter.
    *
-   * @param config - Axon SDK configuration controlling export behaviour.
+   * @param config - Traject SDK configuration controlling export behaviour.
    */
-  constructor(config: AxonConfig) {
+  constructor(config: TrajectConfig) {
     this.config = config;
   }
 
@@ -47,7 +47,7 @@ export class SpanEmitter {
         "Content-Type": "application/json",
       };
       if (this.config.apiKey !== undefined && this.config.apiKey !== "") {
-        headers["X-Axon-API-Key"] = this.config.apiKey;
+        headers["X-Traject-API-Key"] = this.config.apiKey;
       }
       // Fire-and-forget: errors are logged, never thrown.
       void Promise.resolve()
@@ -59,7 +59,7 @@ export class SpanEmitter {
           }),
         )
         .catch((err: unknown) => {
-          console.error("[axon] Failed to POST span to backend:", err); // eslint-disable-line no-console
+          console.error("[traject] Failed to POST span to backend:", err); // eslint-disable-line no-console
         });
     }
   }

@@ -10,7 +10,7 @@ describe("calculateCost", () => {
   // Validates: Requirements 7.1, 7.5
   it("returns correct cost for gpt-4o with 1M input and 1M output tokens", () => {
     // gpt-4o: $2.50/1M input + $10.00/1M output → $12.50 for 1M+1M
-    // (matches sdk/python/axon/core/pricing.py — last verified 2025-01-01)
+    // (matches sdk/python/traject/core/pricing.py — last verified 2025-01-01)
     const result = calculateCost("gpt-4o", 1_000_000, 1_000_000);
     expect(result).toBe("12.50000000");
   });

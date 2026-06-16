@@ -1,9 +1,9 @@
 /**
- * Core type definitions for the Axon TypeScript SDK.
+ * Core type definitions for the Traject TypeScript SDK.
  *
  * Mirrors the canonical Python InferenceSpan model and supporting types
- * defined in `sdk/python/axon/models.py` and
- * `sdk/python/axon/classifier/artifact_type.py`. All types are pure
+ * defined in `sdk/python/traject/models.py` and
+ * `sdk/python/traject/classifier/artifact_type.py`. All types are pure
  * interfaces and type aliases — no logic lives here.
  */
 
@@ -91,20 +91,20 @@ export interface InferenceSpan {
 }
 
 /**
- * Configuration options for the Axon TypeScript SDK.
+ * Configuration options for the Traject TypeScript SDK.
  *
  * All fields are optional. The SDK operates in console-only export mode
  * when neither `backendUrl` nor `exportToConsole` is explicitly set.
  */
-export interface AxonConfig {
+export interface TrajectConfig {
   /**
-   * Axon backend API key for authenticated span ingestion.
-   * Axon never reads, stores, or logs provider API keys — only its own
+   * Traject backend API key for authenticated span ingestion.
+   * Traject never reads, stores, or logs provider API keys — only its own
    * backend key (ADR standards).
    */
   apiKey?: string;
   /**
-   * Base URL of the Axon backend service (e.g. `"http://localhost:8000"`).
+   * Base URL of the Traject backend service (e.g. `"http://localhost:8000"`).
    * When set, spans are POSTed to `{backendUrl}/v1/spans`.
    */
   backendUrl?: string;

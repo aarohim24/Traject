@@ -1,5 +1,5 @@
 /**
- * Cost calculator for the Axon TypeScript SDK.
+ * Cost calculator for the Traject TypeScript SDK.
  *
  * Uses BigInt arithmetic scaled to 8 decimal places for all monetary
  * calculations. No floating-point arithmetic is used for currency values

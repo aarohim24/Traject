@@ -1,7 +1,7 @@
 /**
- * Provider pricing table for the Axon TypeScript SDK.
+ * Provider pricing table for the Traject TypeScript SDK.
  *
- * Mirrors `sdk/python/axon/core/pricing.py` exactly. All prices are USD per
+ * Mirrors `sdk/python/traject/core/pricing.py` exactly. All prices are USD per
  * 1 million tokens, stored as string literals to preserve exact decimal
  * representation (ADR-006 equivalent for TypeScript). No floating-point
  * values are used for monetary data.
