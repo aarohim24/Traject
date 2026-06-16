@@ -1,6 +1,6 @@
 backend:
   replicaCount: 2
-  image: ghcr.io/aarohim24/axon-backend:latest
+  image: ghcr.io/aarohim24/traject-backend:latest
   resources:
     requests:
       cpu: 250m
@@ -11,7 +11,7 @@ backend:
 
 dashboard:
   replicaCount: 1
-  image: ghcr.io/aarohim24/axon-dashboard:latest
+  image: ghcr.io/aarohim24/traject-dashboard:latest
   resources:
     requests:
       cpu: 100m

@@ -28,14 +28,14 @@ services:
     ports:
       - "6379:6379"
 
-  axon-backend:
+  traject-backend:
     build:
       context: ../backend
       dockerfile: Dockerfile
     environment:
       DATABASE_URL: postgresql+asyncpg://axon:axon@postgres:5432/axon
       REDIS_URL: redis://redis:6379/0
-      API_KEY: ${AXON_API_KEY:-dev-key-change-in-production}
+      API_KEY: ${TRAJECT_API_KEY:-dev-key-change-in-production}
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,7 +60,7 @@ services:
       - ../dashboards/grafana/dashboards:/var/lib/grafana/dashboards
       - grafana_data:/var/lib/grafana/data
     depends_on:
-      - axon-backend
+      - traject-backend
     ports:
       - "3000:3000"
 

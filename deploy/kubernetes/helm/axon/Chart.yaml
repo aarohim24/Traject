@@ -1,6 +1,6 @@
 apiVersion: v2
-name: axon
-description: Axon AI inference optimization platform
+name: traject
+description: Traject AI inference optimization platform
 type: application
 version: 0.4.0
 appVersion: "0.4.0"
