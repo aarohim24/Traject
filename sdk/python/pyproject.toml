@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "axon-sdk"
+name = "traject-sdk"
 version = "0.1.0"
 description = "AI inference observability and trajectory optimization middleware"
 readme = "README.md"
@@ -54,10 +54,10 @@ dev = [
 ]
 
 [project.scripts]
-axon = "axon.cli.main:app"
+traject = "traject.cli.main:app"
 
 [tool.hatch.build.targets.wheel]
-packages = ["axon"]
+packages = ["traject"]
 
 [tool.ruff]
 line-length = 88
@@ -131,5 +131,5 @@ asyncio_mode = "auto"
 addopts = "--cov=axon --cov-report=term-missing --cov-fail-under=80"
 
 [tool.coverage.run]
-source = ["axon"]
+source = ["traject"]
 omit = ["axon/cli/*"]

@@ -20,7 +20,7 @@ from rich.table import Table
 
 from traject.models import InferenceSpan
 
-app = typer.Typer(name="axon", help="Axon SDK developer tools.")
+app = typer.Typer(name="traject", help="Traject SDK developer tools.")
 console = Console()
 _log = structlog.get_logger(__name__)
 
