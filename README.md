@@ -104,14 +104,29 @@ The compression pipeline runs before each provider call:
 
 1. **Parse** — the context window is segmented into typed artifacts: `SYSTEM_PROMPT`, `USER_MESSAGE`, `TOOL_RESULT`, `REASONING_BLOCK`, `RAG_CHUNK`, `TOOL_CALL`, `FEW_SHOT_EXAMPLE`, `ASSISTANT_MESSAGE`.
 2. **Protect** — system prompts and the last N turns are marked immutable. They are never modified regardless of strategy.
-3. **Score** — remaining segments are scored by recency (0.4 weight), semantic relevance to the current task (0.4 weight, local embedding model), and reference count in recent turns (0.2 weight).
-4. **Compress** — low-scoring segments are summarized or dropped per strategy thresholds. Tool results older than 3 turns with score < 0.3 are summarized to one sentence. Completed reasoning blocks with score < 0.4 are dropped.
-5. **Validate** — circuit breaker: if system prompts or recent turns are absent from the compressed output, compression is aborted and the original context is returned unchanged.
-6. **Emit** — an OpenTelemetry span records tokens saved, cost delta, compression ratio, and strategy applied.
+3. **Soft-protect** — each remaining segment is embedded (in-process, `all-MiniLM-L6-v2`) and compared against the next 5 segments via cosine similarity. Segments with max similarity ≥ 0.6 to any later message are marked soft-protected: they require a score < 0.15 to be compressed rather than the normal threshold. This catches paraphrase references — the agent restating a tool result in different words — which substring matching misses.
+4. **Score** — remaining segments are scored by recency (0.4 weight), semantic relevance to the current task (0.4 weight), and reference count in recent turns (0.2 weight). The semantic component is cached within a call by content hash and task-similarity bucket, avoiding redundant embedding lookups for repeated segments.
+5. **Compress** — low-scoring segments are summarized or dropped per strategy thresholds. Tool results older than 3 turns with score < 0.3 are summarized to one sentence. Completed reasoning blocks with score < 0.4 are dropped. Soft-protected segments use a tighter threshold (< 0.15) across all strategies.
+6. **Validate** — circuit breaker: if system prompts or recent turns are absent from the compressed output, compression is aborted and the original context is returned unchanged.
+7. **Emit** — an OpenTelemetry span records tokens saved, compression ratio, strategy applied, cache hit rate, and count of soft-protected segments.
 
 ### Shadow mode
 
 Shadow mode computes the full compression pipeline and logs what would have been saved, without modifying the context passed to the provider. It is the default. Enable live compression (`shadow_mode=False`) after validating savings on your workload.
+
+### OTel span attributes
+
+Each `traject.compression.complete` span carries:
+
+| Attribute | Type | Description |
+|---|---|---|
+| `tokens_saved` | int | Tokens eliminated by compression |
+| `compression_ratio` | float | Fraction of tokens eliminated, 0–1 |
+| `strategy` | str | `conservative`, `moderate`, or `aggressive` |
+| `shadow_mode` | bool | Whether original messages were returned |
+| `cache_hits` | int | Semantic scores served from call-scoped cache |
+| `cache_hit_rate` | float | Cache hit fraction, 0–1 |
+| `segments_soft_protected` | int | Segments elevated to the soft-protect tier |
 
 ---
 
