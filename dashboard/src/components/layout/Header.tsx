@@ -1,5 +1,5 @@
 /**
- * Header — top bar displayed on every page of the Axon dashboard.
+ * Header — top bar displayed on every page of the Traject dashboard.
  *
  * Shows the current page title derived from the active route path and
  * provides a three-button time-range selector (24h / 7d / 30d) that
@@ -26,7 +26,7 @@ export default function Header(): JSX.Element {
   const timeRange = useAppStore((s) => s.timeRange);
   const setTimeRange = useAppStore((s) => s.setTimeRange);
 
-  const title = PAGE_TITLES[pathname] ?? "Axon Dashboard";
+  const title = PAGE_TITLES[pathname] ?? "Traject Dashboard";
 
   return (
     <header className="bg-gray-900 border-b border-gray-700 px-6 py-4 flex items-center justify-between flex-shrink-0">

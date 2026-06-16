@@ -1,5 +1,5 @@
 /**
- * types — all TypeScript interfaces for the Axon backend REST API.
+ * types — all TypeScript interfaces for the Traject backend REST API.
  *
  * Monetary values are represented as strings (decimal notation) to avoid
  * IEEE 754 floating-point rounding errors. Never parse cost strings to
@@ -113,6 +113,6 @@ export interface HealthStatus {
 }
 
 /** Error detail payload returned by the backend on 4xx/5xx responses. */
-export interface AxonAPIErrorPayload {
+export interface TrajectAPIErrorPayload {
   detail: string;
 }

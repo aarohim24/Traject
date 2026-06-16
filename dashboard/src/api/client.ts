@@ -1,16 +1,16 @@
 /**
- * client — typed HTTP client for the Axon backend REST API.
+ * client — typed HTTP client for the Traject backend REST API.
  *
- * Exports `AxonAPIError`, `AxonAPIClient`, and a pre-configured singleton
+ * Exports `TrajectAPIError`, `TrajectAPIClient`, and a pre-configured singleton
  * `apiClient` resolved from Vite environment variables. All methods throw
- * `AxonAPIError` on non-2xx responses. The `X-Axon-API-Key` header is
+ * `TrajectAPIError` on non-2xx responses. The `X-Traject-API-Key` header is
  * added automatically to every request by the private `request` helper.
  */
 
 import type {
   AttributionParams,
   AttributionResponse,
-  AxonAPIErrorPayload,
+  TrajectAPIErrorPayload,
   BudgetPayload,
   BudgetStatus,
   CacheStats,
@@ -24,17 +24,17 @@ import type {
 // ---------------------------------------------------------------------------
 
 /**
- * Thrown by `AxonAPIClient` whenever the backend returns a non-2xx status.
+ * Thrown by `TrajectAPIClient` whenever the backend returns a non-2xx status.
  * Callers can inspect `error.status` to decide how to handle the failure.
  */
-export class AxonAPIError extends Error {
+export class TrajectAPIError extends Error {
   constructor(
     /** HTTP status code returned by the backend. */
     public readonly status: number,
     message: string,
   ) {
     super(message);
-    this.name = "AxonAPIError";
+    this.name = "TrajectAPIError";
   }
 }
 
@@ -43,12 +43,12 @@ export class AxonAPIError extends Error {
 // ---------------------------------------------------------------------------
 
 /**
- * Type-safe HTTP client for the Axon backend API.
+ * Type-safe HTTP client for the Traject backend API.
  *
  * Construct with a base URL and an API key, then call the typed methods.
  * Use the exported `apiClient` singleton for normal application code.
  */
-export class AxonAPIClient {
+export class TrajectAPIClient {
   private readonly baseUrl: string;
   private readonly apiKey: string;
 
@@ -65,15 +65,15 @@ export class AxonAPIClient {
   /**
    * Execute a fetch request against the backend.
    *
-   * Automatically injects the `X-Axon-API-Key` header. Parses the response
-   * body as JSON and returns it as `T`. Throws `AxonAPIError` on any non-2xx
+   * Automatically injects the `X-Traject-API-Key` header. Parses the response
+   * body as JSON and returns it as `T`. Throws `TrajectAPIError` on any non-2xx
    * status code, using the `detail` field from the error payload when present.
    */
   private async request<T>(path: string, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "X-Axon-API-Key": this.apiKey,
+      "X-Traject-API-Key": this.apiKey,
       // Merge any caller-supplied headers, allowing overrides (except key).
       ...(options?.headers as Record<string, string> | undefined),
     };
@@ -84,14 +84,14 @@ export class AxonAPIClient {
       // Attempt to extract the FastAPI error detail; fall back gracefully.
       let message = `HTTP ${response.status}`;
       try {
-        const payload = (await response.json()) as AxonAPIErrorPayload;
+        const payload = (await response.json()) as TrajectAPIErrorPayload;
         if (payload.detail) {
           message = payload.detail;
         }
       } catch {
         // Response body was not JSON — keep the default message.
       }
-      throw new AxonAPIError(response.status, message);
+      throw new TrajectAPIError(response.status, message);
     }
 
     // 204 No Content — return void cast to T (callers annotate as Promise<void>).
@@ -232,13 +232,13 @@ function buildQuery(params: QueryParams): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Pre-configured `AxonAPIClient` instance for use throughout the application.
+ * Pre-configured `TrajectAPIClient` instance for use throughout the application.
  *
  * Resolved from Vite environment variables at module load time:
- * - `VITE_AXON_BACKEND_URL` — defaults to `http://localhost:8000`
- * - `VITE_AXON_API_KEY`     — defaults to empty string (unauthenticated)
+ * - `VITE_TRAJECT_BACKEND_URL` — defaults to `http://localhost:8000`
+ * - `VITE_TRAJECT_API_KEY`     — defaults to empty string (unauthenticated)
  */
-export const apiClient = new AxonAPIClient(
-  import.meta.env.VITE_AXON_BACKEND_URL ?? "http://localhost:8000",
-  import.meta.env.VITE_AXON_API_KEY ?? "",
+export const apiClient = new TrajectAPIClient(
+  import.meta.env.VITE_TRAJECT_BACKEND_URL ?? "http://localhost:8000",
+  import.meta.env.VITE_TRAJECT_API_KEY ?? "",
 );

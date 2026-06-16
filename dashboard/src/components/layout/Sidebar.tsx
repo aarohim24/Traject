@@ -1,5 +1,5 @@
 /**
- * Sidebar — fixed left navigation panel for the Axon dashboard.
+ * Sidebar — fixed left navigation panel for the Traject dashboard.
  *
  * Renders NavLinks to all five dashboard pages using React Router.
  * The active link is highlighted with the teal-400 accent colour;
@@ -28,7 +28,7 @@ export default function Sidebar(): JSX.Element {
     <aside className="bg-gray-900 border-r border-gray-700 h-screen w-64 flex flex-col flex-shrink-0">
       {/* Logo / brand */}
       <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-700">
-        <span className="text-teal-400 text-xl font-bold tracking-tight">⚡ Axon</span>
+        <span className="text-teal-400 text-xl font-bold tracking-tight">⚡ Traject</span>
       </div>
 
       {/* Navigation */}
@@ -55,7 +55,7 @@ export default function Sidebar(): JSX.Element {
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-gray-700">
-        <p className="text-xs text-gray-600">Axon v0.4.0</p>
+        <p className="text-xs text-gray-600">Traject v0.4.0</p>
       </div>
     </aside>
   );

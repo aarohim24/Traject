@@ -11,7 +11,7 @@ import { TIME_RANGES } from "../lib/constants";
 type TimeRange = (typeof TIME_RANGES)[number];
 
 interface AppStore {
-  /** Axon API key, defaults to the VITE_AXON_API_KEY environment variable. */
+  /** Traject API key, defaults to the VITE_TRAJECT_API_KEY environment variable. */
   apiKey: string;
   /** Update the active API key. */
   setApiKey: (key: string) => void;
@@ -22,7 +22,7 @@ interface AppStore {
 }
 
 export const useAppStore = create<AppStore>((set) => ({
-  apiKey: import.meta.env.VITE_AXON_API_KEY ?? "",
+  apiKey: import.meta.env.VITE_TRAJECT_API_KEY ?? "",
   setApiKey: (key: string) => set({ apiKey: key }),
   timeRange: "7d",
   setTimeRange: (range: TimeRange) => set({ timeRange: range }),

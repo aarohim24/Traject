@@ -2,7 +2,7 @@
  * BenchmarkRegistry — public page showing community-submitted benchmark data.
  *
  * Accessible without authentication. Fetches records from GET /v1/benchmarks
- * without including an X-Axon-API-Key header. Displays a sortable table when
+ * without including an X-Traject-API-Key header. Displays a sortable table when
  * records exist; shows an empty-state message when no data is available.
  */
 
@@ -40,10 +40,10 @@ function useBenchmarks(): {
 
   useEffect(() => {
     const baseUrl =
-      (import.meta.env.VITE_AXON_BACKEND_URL as string | undefined) ??
+      (import.meta.env.VITE_TRAJECT_BACKEND_URL as string | undefined) ??
       "http://localhost:8000";
 
-    // Deliberately no X-Axon-API-Key header — this is a public endpoint
+    // Deliberately no X-Traject-API-Key header — this is a public endpoint
     fetch(`${baseUrl}/v1/benchmarks?limit=50`)
       .then(async (res) => {
         if (!res.ok) {
@@ -99,14 +99,14 @@ export default function BenchmarkRegistry(): JSX.Element {
           Community Benchmark Registry
         </h1>
         <p className="mt-1 text-sm text-gray-400">
-          Aggregate performance metrics submitted by opted-in Axon deployments.
+          Aggregate performance metrics submitted by opted-in Traject deployments.
           No personally-identifiable information is collected.
         </p>
       </div>
 
       {/* Prominent disclaimer — required by spec */}
       <p className="text-sm text-gray-400 italic">
-        All data submitted by users. Axon does not verify individual submissions.
+        All data submitted by users. Traject does not verify individual submissions.
       </p>
 
       {/* Loading state */}
