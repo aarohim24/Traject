@@ -11,14 +11,20 @@ Covers:
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from axon.core.pricing import PROVIDER_PRICING
 from axon_backend.services.cost_predictor import CostPredictor
+
+
+def _pricing_keys() -> list[str]:
+    """Return PROVIDER_PRICING keys lazily to avoid circular import at module load."""
+    from axon.core.pricing import PROVIDER_PRICING  # noqa: PLC0415
+    return list(PROVIDER_PRICING.keys())
 
 
 # ---------------------------------------------------------------------------
@@ -112,7 +118,7 @@ class TestCostPredictorProperties:
 
     @settings(max_examples=50)
     @given(
-        model=st.sampled_from(list(PROVIDER_PRICING.keys())),
+        model=st.sampled_from(_pricing_keys()),
         input_tokens=st.integers(min_value=0, max_value=10_000),
         output_tokens=st.integers(min_value=0, max_value=10_000),
     )
