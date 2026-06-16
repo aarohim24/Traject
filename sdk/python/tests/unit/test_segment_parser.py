@@ -6,7 +6,7 @@ import pytest
 from traject.classifier.artifact_type import ArtifactType
 from traject.compression.adapters.raw_openai import RawOpenAIAdapter
 from traject.compression.segment_parser import parse
-from traject.exceptions import AxonCompressionError
+from traject.exceptions import TrajectCompressionError
 
 
 class TestRawOpenAIAdapter:
@@ -87,7 +87,7 @@ class TestSegmentParser:
     def test_raises_on_mismatched_lengths(self) -> None:
         messages = [{"role": "user", "content": "hi"}]
         art_types: list[ArtifactType] = []
-        with pytest.raises(AxonCompressionError):
+        with pytest.raises(TrajectCompressionError):
             parse(messages, art_types)
 
     def test_empty_messages_returns_empty(self) -> None:

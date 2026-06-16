@@ -1,4 +1,4 @@
-"""Unit tests for axon.compression.strategies."""
+"""Unit tests for traject.compression.strategies."""
 from __future__ import annotations
 
 import pytest

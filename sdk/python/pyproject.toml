@@ -128,8 +128,8 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "--cov=axon --cov-report=term-missing --cov-fail-under=80"
+addopts = "--cov=traject --cov-report=term-missing --cov-fail-under=80"
 
 [tool.coverage.run]
 source = ["traject"]
-omit = ["axon/cli/*"]
+omit = ["traject/cli/*"]

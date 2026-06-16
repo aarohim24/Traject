@@ -1,4 +1,4 @@
-"""Unit and property-based tests for axon.core.cost_calculator.
+"""Unit and property-based tests for traject.core.cost_calculator.
 
 Validates: Requirements R3.6, R3.7, R3.8, R3.9
 """

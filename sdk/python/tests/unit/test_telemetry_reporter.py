@@ -1,4 +1,4 @@
-"""Unit tests for axon.core.telemetry_reporter.
+"""Unit tests for traject.core.telemetry_reporter.
 
 Covers:
 - No network calls when reporter is disabled (enabled=False).

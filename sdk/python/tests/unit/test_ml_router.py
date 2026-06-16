@@ -1,4 +1,4 @@
-"""Unit and property-based tests for axon.router.ml_router.MLRouter.
+"""Unit and property-based tests for traject.router.ml_router.MLRouter.
 
 Covers is_trained(), route() fallback behaviour, training_stats() shape/types,
 the 499-sample boundary, ML-path routing when trained, and a Hypothesis

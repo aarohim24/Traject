@@ -1,4 +1,4 @@
-"""Unit tests for axon.core.pricing.
+"""Unit tests for traject.core.pricing.
 
 Validates: Requirements R1.4, R3.6, R16.5
 """

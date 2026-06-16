@@ -1,4 +1,4 @@
-"""Unit tests for axon.models."""
+"""Unit tests for traject.models."""
 from __future__ import annotations
 
 from datetime import datetime

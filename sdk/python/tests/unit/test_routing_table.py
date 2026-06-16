@@ -1,4 +1,4 @@
-"""Unit tests for axon.router.routing_table.
+"""Unit tests for traject.router.routing_table.
 
 Validates: Requirements 2.1, 2.2 (routing table completeness and model map).
 

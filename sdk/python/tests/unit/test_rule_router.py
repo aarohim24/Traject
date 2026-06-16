@@ -1,4 +1,4 @@
-"""Unit tests for axon.router.rule_router and axon.router.ab_test.
+"""Unit tests for traject.router.rule_router and traject.router.ab_test.
 
 Validates: Requirements 2.3–2.7, 3.1–3.4 (routing decisions, A/B testing,
 cost delta, and fallback behaviour).

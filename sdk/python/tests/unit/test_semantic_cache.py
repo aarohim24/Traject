@@ -1,4 +1,4 @@
-"""Unit tests for axon.cache.semantic_cache.SemanticCacheClient.
+"""Unit tests for traject.cache.semantic_cache.SemanticCacheClient.
 
 Mocks the BackendClient's internal httpx client to avoid real HTTP calls
 and mocks the embedding model to avoid loading sentence-transformers.

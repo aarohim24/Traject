@@ -1,6 +1,6 @@
-"""Unit and property-based tests for axon.batch.batch_router.
+"""Unit and property-based tests for traject.batch.batch_router.
 
-Covers :class:`~axon.batch.batch_router.BatchRouter` filtering behaviour,
+Covers :class:`~traject.batch.batch_router.BatchRouter` filtering behaviour,
 error handling on API failures, and the ``poll_and_collect`` stub.
 
 Validates: Requirements 20.1, 20.2

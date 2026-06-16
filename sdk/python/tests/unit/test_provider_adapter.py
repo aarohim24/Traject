@@ -1,4 +1,4 @@
-"""Unit tests for axon.core.provider_adapter."""
+"""Unit tests for traject.core.provider_adapter."""
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -11,7 +11,7 @@ from traject.core.provider_adapter import (
     OpenAIAdapter,
     get_adapter,
 )
-from traject.exceptions import AxonProviderError
+from traject.exceptions import TrajectProviderError
 
 
 def _openai_response(
@@ -117,9 +117,9 @@ class TestGetAdapter:
         assert isinstance(get_adapter("anthropic"), AnthropicAdapter)
 
     def test_unknown_raises_axon_provider_error(self) -> None:
-        with pytest.raises(AxonProviderError, match="Unknown provider"):
+        with pytest.raises(TrajectProviderError, match="Unknown provider"):
             get_adapter("cohere")
 
     def test_empty_string_raises(self) -> None:
-        with pytest.raises(AxonProviderError):
+        with pytest.raises(TrajectProviderError):
             get_adapter("")

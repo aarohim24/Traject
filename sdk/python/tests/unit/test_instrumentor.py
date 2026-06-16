@@ -1,4 +1,4 @@
-"""Unit tests for axon.core.instrumentor.
+"""Unit tests for traject.core.instrumentor.
 
 Validates: Requirements R1.1-R1.6, R2.3, R14.1-R14.4
 """
@@ -106,7 +106,7 @@ class TestInstrumentDecorator:
 
     def test_axon_error_does_not_suppress_response(self) -> None:
         """TrajectError during pipeline still returns original response."""
-        from traject.exceptions import AxonCompressionError
+        from traject.exceptions import TrajectCompressionError
 
         resp = _mock_response()
 
@@ -117,7 +117,7 @@ class TestInstrumentDecorator:
         with (
             patch(
                 "traject.core.instrumentor.compress",
-                side_effect=AxonCompressionError("oops"),
+                side_effect=TrajectCompressionError("oops"),
             ),
             patch("traject.core.instrumentor.emit_span"),
         ):

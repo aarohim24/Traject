@@ -1,4 +1,4 @@
-"""Unit tests for axon.providers.vertex.VertexAdapter.
+"""Unit tests for traject.providers.vertex.VertexAdapter.
 
 Validates: Requirements 5.3 (VertexAdapter — token extraction, dependency guard).
 

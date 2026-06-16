@@ -61,14 +61,14 @@ def _make_span(
 
 @pytest.fixture(autouse=True)
 def reset_exporter_state() -> Generator[None, None, None]:
-    import axon.telemetry.otel_exporter as mod
+    import traject.telemetry.otel_exporter as mod
     mod._tracer_provider = None  # type: ignore[attr-defined]
     yield
     mod._tracer_provider = None  # type: ignore[attr-defined]
 
 
 def _setup_in_memory_exporter() -> tuple[InMemorySpanExporter, TracerProvider]:
-    import axon.telemetry.otel_exporter as mod
+    import traject.telemetry.otel_exporter as mod
     exporter = InMemorySpanExporter()
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
@@ -79,25 +79,25 @@ def _setup_in_memory_exporter() -> tuple[InMemorySpanExporter, TracerProvider]:
 class TestConfigureExporter:
 
     def test_sets_tracer_provider_on_first_call(self) -> None:
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         assert mod._tracer_provider is None
         mod.configure_exporter(export_to_stdout=False)
         assert mod._tracer_provider is not None
 
     def test_idempotent(self) -> None:
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         mod.configure_exporter(export_to_stdout=False)
         first = mod._tracer_provider
         mod.configure_exporter(export_to_stdout=False)
         assert mod._tracer_provider is first
 
     def test_otlp_endpoint_accepted(self) -> None:
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         mod.configure_exporter(export_to_stdout=False, otlp_endpoint="http://localhost:4317")
         assert mod._tracer_provider is not None
 
     def test_env_var_otlp_endpoint(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         monkeypatch.setenv("TRAJECT_OTLP_ENDPOINT", "http://localhost:4317")
         mod.configure_exporter(export_to_stdout=False)
         assert mod._tracer_provider is not None
@@ -107,7 +107,7 @@ class TestEmitSpan:
 
     def test_gen_ai_attributes_set(self) -> None:
         exporter, _ = _setup_in_memory_exporter()
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         mod.emit_span(_make_span(provider="openai", model="gpt-4o"))
         attrs = exporter.get_finished_spans()[0].attributes
         assert attrs is not None
@@ -116,7 +116,7 @@ class TestEmitSpan:
 
     def test_token_attributes_set(self) -> None:
         exporter, _ = _setup_in_memory_exporter()
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         mod.emit_span(_make_span(input_tokens=100, output_tokens=50))
         attrs = exporter.get_finished_spans()[0].attributes
         assert attrs is not None
@@ -125,7 +125,7 @@ class TestEmitSpan:
 
     def test_cost_usd_serialized_as_string(self) -> None:
         exporter, _ = _setup_in_memory_exporter()
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         cost = Decimal("0.00123456")
         mod.emit_span(_make_span(cost_usd=cost))
         attrs = exporter.get_finished_spans()[0].attributes
@@ -134,7 +134,7 @@ class TestEmitSpan:
 
     def test_cost_usd_none_is_empty_string(self) -> None:
         exporter, _ = _setup_in_memory_exporter()
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         mod.emit_span(_make_span(cost_usd=None))
         attrs = exporter.get_finished_spans()[0].attributes
         assert attrs is not None
@@ -142,7 +142,7 @@ class TestEmitSpan:
 
     def test_tokens_saved_none_is_zero(self) -> None:
         exporter, _ = _setup_in_memory_exporter()
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         mod.emit_span(_make_span(tokens_saved=None))
         attrs = exporter.get_finished_spans()[0].attributes
         assert attrs is not None
@@ -150,7 +150,7 @@ class TestEmitSpan:
 
     def test_all_fifteen_attributes_present(self) -> None:
         exporter, _ = _setup_in_memory_exporter()
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         mod.emit_span(_make_span())
         attrs = exporter.get_finished_spans()[0].attributes
         assert attrs is not None
@@ -166,7 +166,7 @@ class TestEmitSpan:
         assert required.issubset(set(attrs.keys()))
 
     def test_auto_configures_if_not_configured(self) -> None:
-        import axon.telemetry.otel_exporter as mod
+        import traject.telemetry.otel_exporter as mod
         assert mod._tracer_provider is None
         mod.emit_span(_make_span())
         assert mod._tracer_provider is not None

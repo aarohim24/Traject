@@ -1,4 +1,4 @@
-"""Unit tests for axon.compression.relevance_scorer."""
+"""Unit tests for traject.compression.relevance_scorer."""
 from __future__ import annotations
 
 from traject.classifier.artifact_type import ArtifactType

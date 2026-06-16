@@ -57,7 +57,7 @@ class TestVersionCommand:
     def test_prints_version(self) -> None:
         result = runner.invoke(app, ["version"])
         assert result.exit_code == 0
-        assert "axon-sdk 0.1.0" in result.output
+        assert "traject-sdk 0.1.0" in result.output
 
 
 class TestDoctorCommand:

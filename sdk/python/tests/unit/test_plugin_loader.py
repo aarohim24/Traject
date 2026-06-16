@@ -1,4 +1,4 @@
-"""Unit tests for axon.plugins.loader.PluginLoader.
+"""Unit tests for traject.plugins.loader.PluginLoader.
 
 Validates: Requirements 5.4, 5.5
 

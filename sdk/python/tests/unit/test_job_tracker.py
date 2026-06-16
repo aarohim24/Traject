@@ -1,6 +1,6 @@
-"""Unit tests for axon.batch.job_tracker.
+"""Unit tests for traject.batch.job_tracker.
 
-Covers :class:`~axon.batch.job_tracker.JobTracker` status validation,
+Covers :class:`~traject.batch.job_tracker.JobTracker` status validation,
 list_pending filtering, and the not-found path for ``get``.
 
 Validates: Requirements 20.3

@@ -1,4 +1,4 @@
-"""Unit tests for axon.providers.bedrock.BedrockAdapter.
+"""Unit tests for traject.providers.bedrock.BedrockAdapter.
 
 Validates: Requirements 5.2 (BedrockAdapter — model-family dispatch, token extraction,
 dependency guard).

@@ -1,4 +1,4 @@
-"""Unit tests for axon.plugins.registry.PluginRegistry.
+"""Unit tests for traject.plugins.registry.PluginRegistry.
 
 Validates: Requirements 5.2, 5.3
 

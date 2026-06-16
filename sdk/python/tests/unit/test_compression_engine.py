@@ -1,4 +1,4 @@
-"""Unit tests for axon.compression.engine.
+"""Unit tests for traject.compression.engine.
 
 Validates correctness properties P4-P8 and protection invariants.
 Coverage target: >= 90% on engine.py.
@@ -16,7 +16,7 @@ from traject.compression.strategies import (
     CompressionConfig,
     CompressionStrategy,
 )
-from traject.exceptions import AxonCompressionError, TrajectDependencyError
+from traject.exceptions import TrajectCompressionError, TrajectDependencyError
 from traject.models import Segment
 
 
@@ -214,7 +214,7 @@ class TestValidationFallback:
         msgs = _msgs(("system", "sys"), ("user", "Q"), ("assistant", "A"))
         with patch(
             "traject.compression.engine._validate_compression_result",
-            side_effect=AxonCompressionError("test failure"),
+            side_effect=TrajectCompressionError("test failure"),
         ):
             result = compress(msgs, _shadow_config())
         assert result.messages == msgs
@@ -608,13 +608,13 @@ class TestDetectAdapter:
     """Tests for _detect_adapter including error paths."""
 
     def test_raises_on_unrecognized_type(self) -> None:
-        """_detect_adapter raises AxonCompressionError for unsupported message types."""
-        with pytest.raises(AxonCompressionError, match="No adapter found"):
+        """_detect_adapter raises TrajectCompressionError for unsupported message types."""
+        with pytest.raises(TrajectCompressionError, match="No adapter found"):
             _detect_adapter("not a valid messages type")
 
     def test_raises_on_empty_non_list(self) -> None:
-        """Non-list input triggers the AxonCompressionError path."""
-        with pytest.raises(AxonCompressionError):
+        """Non-list input triggers the TrajectCompressionError path."""
+        with pytest.raises(TrajectCompressionError):
             _detect_adapter({"role": "user", "content": "not a list"})
 
     def test_langchain_dependency_error_falls_through(self) -> None:
@@ -628,15 +628,15 @@ class TestDetectAdapter:
             patch(
                 "traject.compression.adapters.langchain.LangChainAdapter",
                 side_effect=TrajectDependencyError("langchain not installed"),
-            ),pytest.raises(AxonCompressionError, match="No adapter found")
+            ),pytest.raises(TrajectCompressionError, match="No adapter found")
         ):
             _detect_adapter([{"role": "user", "content": "hi"}])
 
     def test_autogen_dependency_error_falls_through(self) -> None:
         """When AutoGen import raises TrajectDependencyError, falls through to error."""
         # Passing an integer ensures neither RawOpenAI, LangChain, nor AutoGen
-        # accept it, reaching the final AxonCompressionError raise.
-        with pytest.raises(AxonCompressionError, match="No adapter found"):
+        # accept it, reaching the final TrajectCompressionError raise.
+        with pytest.raises(TrajectCompressionError, match="No adapter found"):
             _detect_adapter(42)
 
     def test_langchain_and_autogen_both_raise_dependency_error(self) -> None:
@@ -647,10 +647,10 @@ class TestDetectAdapter:
                 "traject.compression.adapters.raw_openai.RawOpenAIAdapter.accepts",
                 return_value=False,
             ),
-            pytest.raises(AxonCompressionError, match="No adapter found"),
+            pytest.raises(TrajectCompressionError, match="No adapter found"),
         ):
             # LangChain and AutoGen raise TrajectDependencyError (not installed),
-            # engine swallows them and raises AxonCompressionError.
+            # engine swallows them and raises TrajectCompressionError.
             _detect_adapter([{"role": "user", "content": "hello"}])
 
     def test_autogen_adapter_accept_path(self) -> None:
@@ -699,7 +699,7 @@ class TestValidationErrorPaths:
 
         with patch(
             "traject.compression.engine._validate_compression_result",
-            side_effect=AxonCompressionError("forced failure"),
+            side_effect=TrajectCompressionError("forced failure"),
         ):
             result = compress(msgs, config)
 
@@ -720,7 +720,7 @@ class TestValidationErrorPaths:
 
         with patch(
             "traject.compression.engine._validate_compression_result",
-            side_effect=AxonCompressionError("live mode failure"),
+            side_effect=TrajectCompressionError("live mode failure"),
         ):
             result = compress(msgs, config)
 
@@ -743,9 +743,9 @@ class TestValidationErrorPaths:
             compress(msgs, bad_config)
 
     def test_compress_raises_on_unrecognized_messages_type(self) -> None:
-        """compress() propagates AxonCompressionError from _detect_adapter."""
+        """compress() propagates TrajectCompressionError from _detect_adapter."""
         config = _shadow_config()
-        with pytest.raises(AxonCompressionError, match="No adapter found"):
+        with pytest.raises(TrajectCompressionError, match="No adapter found"):
             compress("not a list", config)  # type: ignore[arg-type]
 
     def test_validate_compression_result_empty_list_raises(self) -> None:
@@ -756,7 +756,7 @@ class TestValidationErrorPaths:
         artifact_types = [ArtifactType.USER_MESSAGE]
         config = _shadow_config()
 
-        with pytest.raises(AxonCompressionError, match="empty message list"):
+        with pytest.raises(TrajectCompressionError, match="empty message list"):
             _validate_compression_result(original, [], artifact_types, config)
 
     def test_validate_compression_result_system_prompt_removed_raises(self) -> None:
@@ -772,7 +772,7 @@ class TestValidationErrorPaths:
         # Compressed list has only the user message — system prompt removed
         compressed = [{"role": "user", "content": "Hi"}]
 
-        with pytest.raises(AxonCompressionError, match="system prompt"):
+        with pytest.raises(TrajectCompressionError, match="system prompt"):
             _validate_compression_result(original, compressed, artifact_types, config)
 
 

@@ -1,4 +1,4 @@
-"""Unit and property-based tests for axon.tracer.
+"""Unit and property-based tests for traject.tracer.
 
 Covers the W3C TraceContext propagator (context_propagator.py) and the
 CascadeTracer orchestration API (cascade_tracer.py).
