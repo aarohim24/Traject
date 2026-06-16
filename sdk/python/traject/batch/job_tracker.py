@@ -5,7 +5,7 @@ Provides :class:`BatchJobORM` (the SQLAlchemy ORM model for the
 (the async service that wraps CRUD operations on that table).
 
 All public methods on :class:`JobTracker` operate on
-:class:`~axon.batch.batch_router.BatchJobRecord` dataclasses and convert
+:class:`~traject.batch.batch_router.BatchJobRecord` dataclasses and convert
 internally to/from the ORM layer so that callers never depend on SQLAlchemy
 objects directly.
 """
@@ -34,9 +34,9 @@ _log = structlog.get_logger(__name__)
 
 
 class _BatchBase(DeclarativeBase):
-    """Declarative base for the Axon SDK batch ORM models.
+    """Declarative base for the Traject SDK batch ORM models.
 
-    Intentionally scoped to the ``axon.batch`` sub-package so that the SDK
+    Intentionally scoped to the ``traject.batch`` sub-package so that the SDK
     does not depend on the backend's ``axon_backend.models.base.Base``.
     """
 
@@ -57,7 +57,7 @@ class BatchJobORM(_BatchBase):
         id: UUID primary key, generated server-side by ``gen_random_uuid()``.
         job_id: Provider-assigned batch job identifier.  Unique, indexed.
         provider: Provider name — ``"openai"`` or ``"anthropic"``.
-        status: Current :class:`~axon.batch.batch_router.BatchJobStatus`
+        status: Current :class:`~traject.batch.batch_router.BatchJobStatus`
             value stored as a string.
         submitted_at: UTC timestamp of batch submission.
         span_count: Number of spans included in this batch.
@@ -149,7 +149,7 @@ class JobTracker:
     background-job context manager.
 
     Converts between :class:`BatchJobORM` rows and
-    :class:`~axon.batch.batch_router.BatchJobRecord` dataclasses, keeping
+    :class:`~traject.batch.batch_router.BatchJobRecord` dataclasses, keeping
     the SQLAlchemy implementation detail fully encapsulated.
     """
 
@@ -177,7 +177,7 @@ class JobTracker:
         await db.flush()
         await db.refresh(orm_obj)
         _log.info(
-            "axon.job_tracker.created",
+            "traject.job_tracker.created",
             job_id=orm_obj.job_id,
             provider=orm_obj.provider,
             status=orm_obj.status,
@@ -215,18 +215,18 @@ class JobTracker:
         """Update the status of an existing batch job.
 
         Validates that ``status`` is a member of
-        :class:`~axon.batch.batch_router.BatchJobStatus` before issuing the
+        :class:`~traject.batch.batch_router.BatchJobStatus` before issuing the
         database update.
 
         Args:
             db: Active async SQLAlchemy session.
             job_id: Provider-assigned batch job identifier to update.
             status: New status value; must be one of the
-                :class:`~axon.batch.batch_router.BatchJobStatus` enum values.
+                :class:`~traject.batch.batch_router.BatchJobStatus` enum values.
 
         Raises:
             ValueError: If ``status`` is not a valid
-                :class:`~axon.batch.batch_router.BatchJobStatus` value.
+                :class:`~traject.batch.batch_router.BatchJobStatus` value.
         """
         valid_values = {s.value for s in BatchJobStatus}
         if status not in valid_values:
@@ -240,7 +240,7 @@ class JobTracker:
         row: BatchJobORM | None = result.scalars().first()
         if row is None:
             _log.warning(
-                "axon.job_tracker.update_status.not_found",
+                "traject.job_tracker.update_status.not_found",
                 job_id=job_id,
                 requested_status=status,
             )
@@ -249,7 +249,7 @@ class JobTracker:
         row.status = status
         await db.flush()
         _log.info(
-            "axon.job_tracker.status_updated",
+            "traject.job_tracker.status_updated",
             job_id=job_id,
             new_status=status,
         )
@@ -260,7 +260,7 @@ class JobTracker:
     ) -> list[BatchJobRecord]:
         """Return all batch jobs that are still active (PENDING or IN_PROGRESS).
 
-        Used by :meth:`~axon.batch.batch_router.BatchRouter.poll_and_collect`
+        Used by :meth:`~traject.batch.batch_router.BatchRouter.poll_and_collect`
         to determine which jobs to poll for status updates.
 
         Args:
@@ -268,8 +268,8 @@ class JobTracker:
 
         Returns:
             A list of :class:`BatchJobRecord` objects whose ``status`` is
-            :attr:`~axon.batch.batch_router.BatchJobStatus.PENDING` or
-            :attr:`~axon.batch.batch_router.BatchJobStatus.IN_PROGRESS`.
+            :attr:`~traject.batch.batch_router.BatchJobStatus.PENDING` or
+            :attr:`~traject.batch.batch_router.BatchJobStatus.IN_PROGRESS`.
             Returns an empty list when no such rows exist.
         """
         stmt = select(BatchJobORM).where(

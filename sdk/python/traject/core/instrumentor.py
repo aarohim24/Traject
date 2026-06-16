@@ -1,8 +1,8 @@
-"""Instrumentation decorator and patch function for Axon SDK.
+"""Instrumentation decorator and patch function for Traject SDK.
 
 Provides @instrument() decorator and patch() for wrapping OpenAI and
 Anthropic LLM calls with zero behavioral change to the caller. Orchestrates
-the full Axon pipeline: compression (shadow mode), token extraction, cost
+the full Traject pipeline: compression (shadow mode), token extraction, cost
 calculation, artifact classification, and OTEL span emission.
 """
 from __future__ import annotations
@@ -28,7 +28,7 @@ from traject.compression.strategies import (
 )
 from traject.core.cost_calculator import calculate_cost
 from traject.core.provider_adapter import UsageData, get_adapter
-from traject.exceptions import AxonError
+from traject.exceptions import TrajectError
 from traject.models import CompressionResult, InferenceSpan
 from traject.telemetry.otel_exporter import configure_exporter, emit_span
 
@@ -165,9 +165,9 @@ def _run_pipeline(
     environment: str,
     config: CompressionConfig,
 ) -> None:
-    """Run the post-call Axon pipeline (usage extraction → cost → span emit).
+    """Run the post-call Traject pipeline (usage extraction → cost → span emit).
 
-    Never raises. All AxonError subclasses are caught and logged.
+    Never raises. All TrajectError subclasses are caught and logged.
     """
     duration_ms = int((time.perf_counter() - start_time) * 1000)
 
@@ -188,8 +188,8 @@ def _run_pipeline(
         cached_tokens = usage.cached_tokens
         token_count_method = usage.token_count_method
         cost = calculate_cost(model, input_tokens, output_tokens, cached_tokens)
-    except AxonError as exc:
-        _logger.warning("axon.usage_extraction.failed", error=str(exc))
+    except TrajectError as exc:
+        _logger.warning("traject.usage_extraction.failed", error=str(exc))
 
     # Classify first message
     artifact_type = ArtifactType.UNKNOWN
@@ -197,7 +197,7 @@ def _run_pipeline(
         try:
             artifact_type = classify(messages[0], 0, len(messages))
         except Exception as exc:
-            _logger.warning("axon.classification.failed", error=str(exc))
+            _logger.warning("traject.classification.failed", error=str(exc))
 
     # Build and emit span
     try:
@@ -241,10 +241,10 @@ def _run_pipeline(
                 asyncio.create_task(
                     _backend_client.send_span(span)
                 )
-    except AxonError as exc:
-        _logger.warning("axon.span_emission.failed", error=str(exc))
+    except TrajectError as exc:
+        _logger.warning("traject.span_emission.failed", error=str(exc))
     except Exception as exc:
-        _logger.warning("axon.span_emission.unexpected_error", error=str(exc))
+        _logger.warning("traject.span_emission.unexpected_error", error=str(exc))
 
 
 # ---------------------------------------------------------------------------
@@ -269,7 +269,7 @@ def instrument(
     6. Calculates cost via the static pricing table
     7. Emits an OTEL span
 
-    If any Axon pipeline step raises an AxonError, it is caught, logged via
+    If any Traject pipeline step raises an TrajectError, it is caught, logged via
     structlog, and the original response is returned unchanged. Caller
     exceptions are never suppressed.
 
@@ -298,15 +298,15 @@ def instrument(
                 if messages:
                     try:
                         compression_result = compress(messages, config)
-                    except AxonError as exc:
-                        _logger.warning("axon.compression.failed", error=str(exc))
+                    except TrajectError as exc:
+                        _logger.warning("traject.compression.failed", error=str(exc))
 
                 # Apply router if configured — logs and records routing decision
                 if _router is not None and messages is not None:
                     requested_model: str = kwargs.get("model", "unknown") or "unknown"
                     routing_decision = _router.route(messages, requested_model)
                     _logger.info(
-                        "axon.router.decision",
+                        "traject.router.decision",
                         selected_model=routing_decision.selected_model,
                         original_model=routing_decision.original_model,
                         task_type=routing_decision.task_type,
@@ -346,8 +346,8 @@ def instrument(
                 if messages:
                     try:
                         compression_result = compress(messages, config)
-                    except AxonError as exc:
-                        _logger.warning("axon.compression.failed", error=str(exc))
+                    except TrajectError as exc:
+                        _logger.warning("traject.compression.failed", error=str(exc))
 
                 # Apply router if configured — logs and records routing decision
                 if _router is not None and messages is not None:
@@ -358,7 +358,7 @@ def instrument(
                         messages, requested_model_sync
                     )
                     _logger.info(
-                        "axon.router.decision",
+                        "traject.router.decision",
                         selected_model=routing_decision_sync.selected_model,
                         original_model=routing_decision_sync.original_model,
                         task_type=routing_decision_sync.task_type,
@@ -435,7 +435,7 @@ def patch(
         pass
 
     _logger.warning(
-        "axon.patch.no_method_found",
+        "traject.patch.no_method_found",
         client_type=type(client).__name__,
         message=(
             "Could not find chat.completions.create or messages.create on "
@@ -452,12 +452,12 @@ def configure(
     backend_api_key: str | None = None,
     router: RuleRouter | None = None,
 ) -> None:
-    """Configure the Axon SDK telemetry exporter, optional backend client, and router.
+    """Configure the Traject SDK telemetry exporter, optional backend client, and router.
 
     Delegates OTEL setup to
-    :func:`~axon.telemetry.otel_exporter.configure_exporter`.
+    :func:`~traject.telemetry.otel_exporter.configure_exporter`.
     When ``backend_url`` is provided, creates a
-    :class:`~axon.backend_client.BackendClient` that receives a copy of
+    :class:`~traject.backend_client.BackendClient` that receives a copy of
     every span in addition to the OTEL export path.  Both paths run
     independently — a backend error never affects OTEL export.
 
@@ -476,12 +476,12 @@ def configure(
         export_to_stdout: Whether to also export to stdout (console).
         local_span_log: Reserved for Phase 2 local SQLite logging.
             Currently unused.
-        backend_url: Base URL of the Axon backend service.  When set,
+        backend_url: Base URL of the Traject backend service.  When set,
             spans are also sent to ``POST /v1/spans`` via
-            :class:`~axon.backend_client.BackendClient`.
+            :class:`~traject.backend_client.BackendClient`.
         backend_api_key: API key for the backend service.  Required when
             ``backend_url`` is set.
-        router: Optional :class:`~axon.router.rule_router.RuleRouter`
+        router: Optional :class:`~traject.router.rule_router.RuleRouter`
             instance.  When provided, ``route()`` is called before each
             LLM call and the routing decision is recorded in structlog
             output.  When ``None``, no routing logic executes.

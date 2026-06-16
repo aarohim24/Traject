@@ -1,6 +1,6 @@
-"""Batch routing for the Axon SDK.
+"""Batch routing for the Traject SDK.
 
-Routes batch-eligible :class:`~axon.models.InferenceSpan` objects to
+Routes batch-eligible :class:`~traject.models.InferenceSpan` objects to
 provider batch APIs — OpenAI Batch API (``POST /v1/batches``) and Anthropic
 Message Batches (``POST /v1/messages/batches``).  Non-eligible spans are
 filtered out before submission.  All public methods are non-raising: errors
@@ -148,7 +148,7 @@ class BatchRouter:
             eligible = [s for s in spans if s.batch_eligible]
             if not eligible:
                 _log.warning(
-                    "axon.batch.submit_skipped",
+                    "traject.batch.submit_skipped",
                     reason="no_eligible_spans",
                     provider=provider,
                     total_spans=len(spans),
@@ -161,14 +161,14 @@ class BatchRouter:
                 return await self._submit_anthropic(eligible)
 
             _log.error(
-                "axon.batch.unknown_provider",
+                "traject.batch.unknown_provider",
                 provider=provider,
             )
             return self._failed_record(provider=provider, span_count=len(eligible))
 
         except Exception as exc:
             _log.error(
-                "axon.batch.submit_failed",
+                "traject.batch.submit_failed",
                 provider=provider,
                 error=str(exc),
                 exc_info=exc,
@@ -183,11 +183,11 @@ class BatchRouter:
         """Poll all PENDING/IN_PROGRESS jobs and update their status.
 
         This is a stub implementation.  The full implementation is provided
-        after :mod:`axon.batch.job_tracker` is available (task 19).
+        after :mod:`traject.batch.job_tracker` is available (task 19).
 
         Args:
             db: An async SQLAlchemy session used by the
-                :class:`~axon.batch.job_tracker.JobTracker` to query and
+                :class:`~traject.batch.job_tracker.JobTracker` to query and
                 update job records.
             provider_client: Provider-specific client used to poll job status
                 (e.g. ``openai.AsyncOpenAI`` or
@@ -201,7 +201,7 @@ class BatchRouter:
             return 0
         except Exception as exc:
             _log.error(
-                "axon.batch.poll_failed",
+                "traject.batch.poll_failed",
                 error=str(exc),
                 exc_info=exc,
             )

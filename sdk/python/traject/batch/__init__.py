@@ -1,8 +1,8 @@
-"""Batch routing components for the Axon SDK.
+"""Batch routing components for the Traject SDK.
 
-Provides :class:`~axon.batch.batch_router.BatchRouter`,
-:class:`~axon.batch.batch_router.BatchJobRecord`, and
-:class:`~axon.batch.batch_router.BatchJobStatus` for submitting
+Provides :class:`~traject.batch.batch_router.BatchRouter`,
+:class:`~traject.batch.batch_router.BatchJobRecord`, and
+:class:`~traject.batch.batch_router.BatchJobStatus` for submitting
 batch-eligible spans to provider batch APIs (OpenAI Batch API and
 Anthropic Message Batches).
 

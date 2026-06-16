@@ -1,8 +1,8 @@
-"""Segment parser for the Axon compression pipeline.
+"""Segment parser for the Traject compression pipeline.
 
 Converts a flat list of message dicts (already classified by
-:func:`axon.classifier.artifact_type.classify_sequence`) into a list of
-:class:`~axon.models.Segment` objects enriched with token counts, turn
+:func:`traject.classifier.artifact_type.classify_sequence`) into a list of
+:class:`~traject.models.Segment` objects enriched with token counts, turn
 indices, and protection flags.  Token counting uses ``tiktoken``'s
 ``cl100k_base`` encoding, which is cached internally by ``tiktoken`` and
 therefore safe to call repeatedly without performance penalties.
@@ -15,7 +15,7 @@ from typing import Any
 import tiktoken
 
 from traject.classifier.artifact_type import ArtifactType
-from traject.exceptions import AxonCompressionError
+from traject.exceptions import TrajectCompressionError
 from traject.models import Segment
 
 
@@ -34,24 +34,24 @@ def parse(
             at minimum a ``"role"`` key and a ``"content"`` key.  Missing
             keys are handled gracefully without raising.
         artifact_types: Ordered list of
-            :class:`~axon.classifier.artifact_type.ArtifactType`
+            :class:`~traject.classifier.artifact_type.ArtifactType`
             values, one per message.  Must be produced by calling
-            :func:`~axon.classifier.artifact_type.classify_sequence` on the
+            :func:`~traject.classifier.artifact_type.classify_sequence` on the
             *same* ``messages`` list to guarantee index alignment.
 
     Returns:
-        List of :class:`~axon.models.Segment` objects of the same length as
+        List of :class:`~traject.models.Segment` objects of the same length as
         ``messages``, in the same order.  Returns an empty list when
         ``messages`` is empty.
 
     Raises:
-        AxonCompressionError: If ``len(messages) != len(artifact_types)``.
+        TrajectCompressionError: If ``len(messages) != len(artifact_types)``.
             This typically indicates that ``classify_sequence`` was called on
             a different messages array.  Ensure both lists share the same
             origin before calling ``parse``.
     """
     if len(messages) != len(artifact_types):
-        raise AxonCompressionError(
+        raise TrajectCompressionError(
             f"messages length {len(messages)} != artifact_types length "
             f"{len(artifact_types)}. Ensure classify_sequence was called on "
             f"the same messages array."

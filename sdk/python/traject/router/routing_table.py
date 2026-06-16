@@ -1,4 +1,4 @@
-"""Routing table definitions for the Axon adaptive model router.
+"""Routing table definitions for the Traject adaptive model router.
 
 Defines model tiers, complexity tiers, the ``RoutingDecision`` dataclass, and
 the default routing table and model map that map (TaskType, ComplexityTier)

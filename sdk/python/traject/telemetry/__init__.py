@@ -1,4 +1,4 @@
-"""OpenTelemetry span emission for the Axon SDK.
+"""OpenTelemetry span emission for the Traject SDK.
 
 Provides ``configure_exporter`` and ``emit_span`` for converting Axon
 ``InferenceSpan`` objects into structured OTEL spans and exporting them

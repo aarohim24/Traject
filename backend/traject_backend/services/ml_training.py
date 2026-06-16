@@ -1,4 +1,4 @@
-"""ML training service for the Axon backend.
+"""ML training service for the Traject backend.
 
 Queries ``InferenceSpanRecord`` rows with non-null ``routing_decision``
 labels, extracts 18-dimensional feature vectors, fits a logistic regression

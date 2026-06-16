@@ -1,9 +1,9 @@
-"""Google Vertex AI provider adapter for the Axon SDK.
+"""Google Vertex AI provider adapter for the Traject SDK.
 
 Wraps the ``google-cloud-aiplatform`` (``vertexai``) package to expose a
 :class:`VertexAdapter` that translates Axon's generic message format into
 Vertex AI ``generateContent`` requests and returns a normalised
-:class:`~axon.providers.ProviderResponse`.
+:class:`~traject.providers.ProviderResponse`.
 
 The heavyweight ``vertexai`` import is deferred to :meth:`VertexAdapter.__init__`
 so that the module can be imported unconditionally without requiring the
@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from traject.exceptions import AxonDependencyError
+from traject.exceptions import TrajectDependencyError
 from traject.providers import ProviderResponse
 
 
@@ -35,7 +35,7 @@ class VertexAdapter:
             Defaults to ``"us-central1"``.
 
     Raises:
-        AxonDependencyError: If ``google-cloud-aiplatform`` is not installed.
+        TrajectDependencyError: If ``google-cloud-aiplatform`` is not installed.
 
     Example::
 
@@ -60,15 +60,15 @@ class VertexAdapter:
             location: GCP region for the Vertex AI endpoint.
 
         Raises:
-            AxonDependencyError: If ``google-cloud-aiplatform`` is not installed.
+            TrajectDependencyError: If ``google-cloud-aiplatform`` is not installed.
         """
         try:
             import vertexai
             from vertexai.generative_models import GenerativeModel
         except ImportError as exc:
-            raise AxonDependencyError(
+            raise TrajectDependencyError(
                 "Google Vertex AI support requires google-cloud-aiplatform. "
-                "Install it with: pip install 'axon-sdk[vertex]'"
+                "Install it with: pip install 'traject-sdk[vertex]'"
             ) from exc
 
         self._vertexai: Any = vertexai  # Any: vertexai module has no stubs
@@ -80,7 +80,7 @@ class VertexAdapter:
 
     def complete(
         self,
-        messages: list[dict[str, Any]],  # Any: Axon generic message format
+        messages: list[dict[str, Any]],  # Any: Traject generic message format
         model: str,
         **kwargs: Any,  # Any: forwarded to Vertex generateContent call
     ) -> ProviderResponse:
@@ -100,7 +100,7 @@ class VertexAdapter:
                 ``GenerativeModel.generate_content``.
 
         Returns:
-            A :class:`~axon.providers.ProviderResponse` with
+            A :class:`~traject.providers.ProviderResponse` with
             ``provider="vertex"`` populated.
 
         Raises:

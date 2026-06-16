@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from traject.exceptions import AxonProviderError
+from traject.exceptions import TrajectProviderError
 
 
 @dataclass
@@ -247,7 +247,7 @@ def get_adapter(provider: str) -> ProviderAdapter:
         A concrete ``ProviderAdapter`` instance for the requested provider.
 
     Raises:
-        AxonProviderError: If ``provider`` is not a supported provider string.
+        TrajectProviderError: If ``provider`` is not a supported provider string.
 
     Example:
         adapter = get_adapter("openai")
@@ -257,7 +257,7 @@ def get_adapter(provider: str) -> ProviderAdapter:
         return OpenAIAdapter()
     if provider == "anthropic":
         return AnthropicAdapter()
-    raise AxonProviderError(
+    raise TrajectProviderError(
         f"Unknown provider {provider!r}. Supported providers are: 'openai',"
         " 'anthropic'. Pass the provider name as a string to get_adapter()."
     )

@@ -1,4 +1,4 @@
-"""A/B test configuration and deterministic group assignment for the Axon router.
+"""A/B test configuration and deterministic group assignment for the Traject router.
 
 Provides ``ABTestConfig``, a dataclass that encapsulates treatment model,
 traffic split percentage, an optional feature tag, and a seed for
@@ -11,7 +11,7 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass, field
 
-from traject.exceptions import AxonConfigError
+from traject.exceptions import TrajectConfigError
 
 
 @dataclass
@@ -41,7 +41,7 @@ class ABTestConfig:
             prevent cross-experiment correlation. Defaults to 42.
 
     Raises:
-        AxonConfigError: If ``treatment_pct`` is outside [0.0, 1.0].
+        TrajectConfigError: If ``treatment_pct`` is outside [0.0, 1.0].
     """
 
     treatment_model: str
@@ -53,11 +53,11 @@ class ABTestConfig:
         """Validate that ``treatment_pct`` is within [0.0, 1.0].
 
         Raises:
-            AxonConfigError: If ``treatment_pct`` is less than 0.0 or
+            TrajectConfigError: If ``treatment_pct`` is less than 0.0 or
                 greater than 1.0.
         """
         if not (0.0 <= self.treatment_pct <= 1.0):
-            raise AxonConfigError(
+            raise TrajectConfigError(
                 f"ABTestConfig.treatment_pct must be in [0.0, 1.0], "
                 f"got {self.treatment_pct!r}. "
                 "Set treatment_pct to a value between 0.0 (no treatment traffic) "

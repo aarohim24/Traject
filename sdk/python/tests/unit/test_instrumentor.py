@@ -77,7 +77,7 @@ class TestInstrumentDecorator:
         def call(messages: list) -> Any:
             return resp
 
-        with patch("axon.core.instrumentor.emit_span"):
+        with patch("traject.core.instrumentor.emit_span"):
             result = call(messages=[{"role": "user", "content": "hi"}])
         assert result is resp
 
@@ -89,7 +89,7 @@ class TestInstrumentDecorator:
         async def call_async(messages: list) -> Any:
             return resp
 
-        with patch("axon.core.instrumentor.emit_span"):
+        with patch("traject.core.instrumentor.emit_span"):
             result = await call_async(messages=[{"role": "user", "content": "hi"}])
         assert result is resp
 
@@ -99,13 +99,13 @@ class TestInstrumentDecorator:
             raise ValueError("provider blew up")
 
         with (
-            patch("axon.core.instrumentor.emit_span"),
+            patch("traject.core.instrumentor.emit_span"),
             pytest.raises(ValueError, match="provider blew up"),
         ):
             call(messages=[{"role": "user", "content": "hi"}])
 
     def test_axon_error_does_not_suppress_response(self) -> None:
-        """AxonError during pipeline still returns original response."""
+        """TrajectError during pipeline still returns original response."""
         from traject.exceptions import AxonCompressionError
 
         resp = _mock_response()
@@ -116,10 +116,10 @@ class TestInstrumentDecorator:
 
         with (
             patch(
-                "axon.core.instrumentor.compress",
+                "traject.core.instrumentor.compress",
                 side_effect=AxonCompressionError("oops"),
             ),
-            patch("axon.core.instrumentor.emit_span"),
+            patch("traject.core.instrumentor.emit_span"),
         ):
             result = call(messages=[{"role": "user", "content": "hi"}])
         assert result is resp
@@ -133,7 +133,7 @@ class TestInstrumentDecorator:
             return resp
 
         with patch(
-            "axon.core.instrumentor.emit_span",
+            "traject.core.instrumentor.emit_span",
             side_effect=lambda s: spans.append(s),
         ):
             call(messages=[{"role": "user", "content": "hi"}])
@@ -148,7 +148,7 @@ class TestInstrumentDecorator:
             return resp
 
         with patch(
-            "axon.core.instrumentor.emit_span",
+            "traject.core.instrumentor.emit_span",
             side_effect=lambda s: spans.append(s),
         ):
             call(messages=[{"role": "user", "content": "hi"}])
@@ -163,7 +163,7 @@ class TestInstrumentDecorator:
             return resp
 
         with patch(
-            "axon.core.instrumentor.emit_span",
+            "traject.core.instrumentor.emit_span",
             side_effect=lambda s: spans.append(s),
         ):
             call(messages=[{"role": "user", "content": "hi"}])
@@ -184,7 +184,7 @@ class TestPatch:
         traject.patch(mock_client, feature_tag="patch-test", shadow_mode=True)
 
         with patch(
-            "axon.core.instrumentor.emit_span",
+            "traject.core.instrumentor.emit_span",
             side_effect=lambda s: spans.append(s),
         ):
             result = mock_client.chat.completions.create(
@@ -208,7 +208,7 @@ class TestPatch:
         traject.patch(mock_client, feature_tag="anthropic-patch", shadow_mode=True)
 
         with patch(
-            "axon.core.instrumentor.emit_span",
+            "traject.core.instrumentor.emit_span",
             side_effect=lambda s: spans.append(s),
         ):
             result = mock_client.messages.create(

@@ -1,10 +1,10 @@
-"""AWS Bedrock provider adapter for the Axon SDK.
+"""AWS Bedrock provider adapter for the Traject SDK.
 
-Translates the Axon message format into Bedrock InvokeModel request bodies
+Translates the Traject message format into Bedrock InvokeModel request bodies
 for three model families (Amazon Titan, Anthropic Claude, Meta Llama) and
-normalises the response into a :class:`~axon.providers.ProviderResponse`.
+normalises the response into a :class:`~traject.providers.ProviderResponse`.
 
-boto3 is an optional dependency; an :class:`~axon.exceptions.AxonDependencyError`
+boto3 is an optional dependency; an :class:`~traject.exceptions.TrajectDependencyError`
 is raised at construction time if it is not installed.
 """
 from __future__ import annotations
@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from traject.exceptions import AxonDependencyError
+from traject.exceptions import TrajectDependencyError
 from traject.providers import ProviderResponse
 
 _logger_name = __name__
@@ -21,7 +21,7 @@ _logger_name = __name__
 class BedrockAdapter:
     """AWS Bedrock provider adapter.
 
-    Translates Axon message format → Bedrock InvokeModel request body
+    Translates Traject message format → Bedrock InvokeModel request body
     for three model families.
 
     Args:
@@ -29,7 +29,7 @@ class BedrockAdapter:
             the ``AWS_DEFAULT_REGION`` environment variable when ``None``.
 
     Raises:
-        AxonDependencyError: If boto3 is not installed.
+        TrajectDependencyError: If boto3 is not installed.
     """
 
     # Supported model-family prefixes
@@ -46,7 +46,7 @@ class BedrockAdapter:
                 environment variable or the active AWS profile.
 
         Raises:
-            AxonDependencyError: If boto3 is not installed.
+            TrajectDependencyError: If boto3 is not installed.
         """
         try:
             import boto3
@@ -54,9 +54,9 @@ class BedrockAdapter:
                 "bedrock-runtime", region_name=region_name
             )
         except ImportError as exc:
-            raise AxonDependencyError(
+            raise TrajectDependencyError(
                 "AWS Bedrock support requires boto3. "
-                "Install it with: pip install 'axon-sdk[bedrock]'"
+                "Install it with: pip install 'traject-sdk[bedrock]'"
             ) from exc
 
     # ------------------------------------------------------------------
@@ -190,7 +190,7 @@ class BedrockAdapter:
                 (e.g. ``max_tokens`` for Claude, ``max_gen_len`` for Llama).
 
         Returns:
-            A :class:`~axon.providers.ProviderResponse` with
+            A :class:`~traject.providers.ProviderResponse` with
             ``provider="bedrock"``.
 
         Raises:

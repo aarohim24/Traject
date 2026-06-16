@@ -1,4 +1,4 @@
-"""Async SQLAlchemy database engine and session management for the Axon backend.
+"""Async SQLAlchemy database engine and session management for the Traject backend.
 
 Provides the async engine, session factory, and FastAPI dependency ``get_db()``
 that yields a transactional ``AsyncSession`` per request.  The ``init_db()``

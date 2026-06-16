@@ -1,4 +1,4 @@
-"""Semantic cache service for the Axon backend.
+"""Semantic cache service for the Traject backend.
 
 Provides exact-hash and pgvector cosine-similarity lookup against the
 ``cache_entries`` table, and stores new entries with upsert semantics.

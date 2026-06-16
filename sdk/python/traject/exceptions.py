@@ -1,18 +1,18 @@
-"""Exception hierarchy for the Axon SDK.
+"""Exception hierarchy for the Traject SDK.
 
-All exceptions raised by library code within the ``axon`` package are
-subclasses of :class:`AxonError`.  Callers can catch ``AxonError`` to handle
+All exceptions raised by library code within the ``traject`` package are
+subclasses of :class:`TrajectError`.  Callers can catch ``TrajectError`` to handle
 any SDK-specific failure, or catch a specific subclass when finer-grained
 handling is needed.  No exception in this module imports anything beyond the
 Python standard library.
 """
 
 
-class AxonError(Exception):
-    """Base class for all Axon SDK exceptions.
+class TrajectError(Exception):
+    """Base class for all Traject SDK exceptions.
 
-    Every exception raised by library code within the ``axon`` package is an
-    instance of this class or one of its subclasses.  Catching ``AxonError``
+    Every exception raised by library code within the ``traject`` package is an
+    instance of this class or one of its subclasses.  Catching ``TrajectError``
     is sufficient to suppress all SDK-originated errors without accidentally
     masking unrelated exceptions.
 
@@ -25,7 +25,7 @@ class AxonError(Exception):
         super().__init__(message)
 
 
-class AxonConfigError(AxonError):
+class TrajectConfigError(TrajectError):
     """Raised when the SDK is misconfigured with invalid configuration values.
 
     Args:
@@ -37,7 +37,7 @@ class AxonConfigError(AxonError):
         super().__init__(message)
 
 
-class AxonDependencyError(AxonError):
+class TrajectDependencyError(TrajectError):
     """Raised when a required optional framework dependency is not installed.
 
     Args:
@@ -49,12 +49,12 @@ class AxonDependencyError(AxonError):
         super().__init__(message)
 
 
-class AxonCompressionError(AxonError):
+class TrajectCompressionError(TrajectError):
     """Raised when the compression pipeline produces an invalid result.
 
     The compression engine catches this exception internally, falls back to
     returning the original messages, and logs a warning.  This exception
-    never propagates to the caller of :func:`axon.compression.engine.compress`.
+    never propagates to the caller of :func:`traject.compression.engine.compress`.
 
     Args:
         message: Human-readable description of the compression failure.
@@ -64,7 +64,7 @@ class AxonCompressionError(AxonError):
         super().__init__(message)
 
 
-class AxonProviderError(AxonError):
+class TrajectProviderError(TrajectError):
     """Raised when a provider response cannot be parsed or an unknown provider is used.
 
     Args:
@@ -76,7 +76,7 @@ class AxonProviderError(AxonError):
         super().__init__(message)
 
 
-class InsufficientDataError(AxonError):
+class InsufficientDataError(TrajectError):
     """Raised when a training or analytics operation lacks enough data to proceed.
 
     This exception signals that the operation requires a minimum number of

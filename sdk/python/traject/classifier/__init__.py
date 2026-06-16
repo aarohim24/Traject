@@ -1,4 +1,4 @@
-"""Artifact type classifier for the Axon SDK.
+"""Artifact type classifier for the Traject SDK.
 
 Classifies context segments into typed artifact categories (system prompt,
 user message, tool result, reasoning block, etc.) to enable per-type

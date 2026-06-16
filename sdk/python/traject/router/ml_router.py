@@ -1,4 +1,4 @@
-"""ML-based model router using logistic regression for the Axon routing layer.
+"""ML-based model router using logistic regression for the Traject routing layer.
 
 Defines ``MLModelArtifact`` (the serialized trained model dataclass) and
 ``_extract_features`` (the 18-dimensional feature extractor used at both
@@ -26,7 +26,7 @@ from typing import Any
 import numpy as np
 import structlog
 
-from traject.exceptions import AxonDependencyError
+from traject.exceptions import TrajectDependencyError
 from traject.router.routing_table import (
     DEFAULT_MODEL_MAP,
     ComplexityTier,
@@ -240,7 +240,7 @@ class MLRouter:
             ``RuleRouter`` when ``rule_router`` is ``None``.
 
     Raises:
-        AxonDependencyError: If scikit-learn is not installed when this
+        TrajectDependencyError: If scikit-learn is not installed when this
             class is instantiated.
     """
 
@@ -266,9 +266,9 @@ class MLRouter:
             model_map: Optional custom model map for the fallback router.
 
         Raises:
-            AxonDependencyError: If scikit-learn is not installed.
+            TrajectDependencyError: If scikit-learn is not installed.
         """
-        # Lazy sklearn import — raises AxonDependencyError if not installed.
+        # Lazy sklearn import — raises TrajectDependencyError if not installed.
         try:
             import sklearn  # noqa: F401
             from sklearn.linear_model import (
@@ -277,9 +277,9 @@ class MLRouter:
 
             self._LogisticRegression = LogisticRegression
         except ImportError as exc:
-            raise AxonDependencyError(
+            raise TrajectDependencyError(
                 "ML routing requires scikit-learn. "
-                "Install it with: pip install 'axon-sdk[ml]'"
+                "Install it with: pip install 'traject-sdk[ml]'"
             ) from exc
 
         self._provider = provider
@@ -331,7 +331,7 @@ class MLRouter:
 
         except Exception as exc:  # broad catch is intentional — never raise
             _log.warning(
-                "axon.ml_router.artifact_load_failed",
+                "traject.ml_router.artifact_load_failed",
                 path=path,
                 error=str(exc),
             )

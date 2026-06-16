@@ -1,22 +1,22 @@
-"""AutoGen message format adapter for the Axon compression pipeline.
+"""AutoGen message format adapter for the Traject compression pipeline.
 
 Normalizes AutoGen-style message dicts (which include a 'name' field in
 addition to 'role' and 'content') to the canonical list[dict] format, and
 converts results back. Requires the pyautogen optional dependency
-(pip install axon-sdk[autogen]).
+(pip install traject-sdk[autogen]).
 """
 from __future__ import annotations
 
 from typing import Any
 
-from traject.exceptions import AxonDependencyError
+from traject.exceptions import TrajectDependencyError
 
 try:
     import autogen  # noqa: F401  # optional dep — stubs handled via mypy override
 except ImportError as exc:
-    raise AxonDependencyError(
+    raise TrajectDependencyError(
         "AutoGen adapter requires pyautogen. "
-        "Install it with: pip install axon-sdk[autogen]"
+        "Install it with: pip install traject-sdk[autogen]"
     ) from exc
 
 from traject.compression.adapters.base import FrameworkAdapter

@@ -1,4 +1,4 @@
-"""Axon SDK command-line interface.
+"""Traject SDK command-line interface.
 
 Provides three commands: analyze (read JSONL span logs and display cost
 summary), version (print the SDK version), and doctor (check that all
@@ -63,7 +63,7 @@ def analyze(
                 span = InferenceSpan.model_validate_json(line)
             except Exception as exc:
                 _log.warning(
-                    "axon.cli.analyze.skip_malformed_line",
+                    "traject.cli.analyze.skip_malformed_line",
                     line=line_number,
                     error=str(exc),
                 )
@@ -103,7 +103,7 @@ def analyze(
         return
 
     # Default: rich table
-    table = Table(title="Axon Cost Analysis")
+    table = Table(title="Traject Cost Analysis")
     table.add_column("Model", style="cyan")
     table.add_column("Feature Tag", style="magenta")
     table.add_column("Calls", justify="right")
@@ -130,10 +130,10 @@ def analyze(
 
 @app.command()
 def version() -> None:
-    """Print the axon-sdk version."""
-    from axon import __version__
+    """Print the traject-sdk version."""
+    from traject import __version__
 
-    console.print(f"axon-sdk {__version__}")
+    console.print(f"traject-sdk {__version__}")
 
 
 @app.command(name="cache-advisor")
@@ -157,7 +157,7 @@ def cache_advisor(
 ) -> None:
     """Analyse spans from a JSONL file for prompt cache optimisation opportunities.
 
-    Reads a JSONL file produced by the Axon instrumentor, groups spans by their
+    Reads a JSONL file produced by the Traject instrumentor, groups spans by their
     prompt hash, and prints a rich table summarising any detected caching
     opportunities.
 
@@ -207,7 +207,7 @@ def doctor() -> None:
         ("anthropic (optional)", "anthropic"),
     ]
 
-    table = Table(title="Axon Dependency Check")
+    table = Table(title="Traject Dependency Check")
     table.add_column("Package", style="bold")
     table.add_column("Status")
 
@@ -228,12 +228,12 @@ def doctor() -> None:
         except ImportError:
             table.add_row(display_name, "[yellow]✗ not installed (optional)[/yellow]")
 
-    # Check AXON_OTLP_ENDPOINT env var
-    otlp_endpoint = os.environ.get("AXON_OTLP_ENDPOINT")
+    # Check TRAJECT_OTLP_ENDPOINT env var
+    otlp_endpoint = os.environ.get("TRAJECT_OTLP_ENDPOINT")
     if otlp_endpoint:
-        table.add_row("AXON_OTLP_ENDPOINT", f"[green]set ({otlp_endpoint})[/green]")
+        table.add_row("TRAJECT_OTLP_ENDPOINT", f"[green]set ({otlp_endpoint})[/green]")
     else:
-        table.add_row("AXON_OTLP_ENDPOINT", "[dim]not set[/dim]")
+        table.add_row("TRAJECT_OTLP_ENDPOINT", "[dim]not set[/dim]")
 
     console.print(table)
     raise typer.Exit(code=0 if all_required_ok else 1)

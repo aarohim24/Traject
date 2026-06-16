@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from traject.exceptions import AxonDependencyError
+from traject.exceptions import TrajectDependencyError
 
 
 class TestLangChainAdapterImport:
@@ -26,11 +26,11 @@ class TestLangChainAdapterImport:
                 raise ImportError(f"No module named '{name}'")
             return orig(name, *args, **kwargs)
 
-        key = "axon.compression.adapters.langchain"
+        key = "traject.compression.adapters.langchain"
         monkeypatch.delitem(sys.modules, key, raising=False)
         with monkeypatch.context() as m:
             m.setattr(builtins, "__import__", mock_import)
-            with pytest.raises(AxonDependencyError, match="langchain-core"):
+            with pytest.raises(TrajectDependencyError, match="langchain-core"):
                 importlib.import_module(key)
 
 
@@ -51,11 +51,11 @@ class TestAutoGenAdapterImport:
                 raise ImportError("No module named 'autogen'")
             return orig(name, *args, **kwargs)
 
-        key = "axon.compression.adapters.autogen"
+        key = "traject.compression.adapters.autogen"
         monkeypatch.delitem(sys.modules, key, raising=False)
         with monkeypatch.context() as m:
             m.setattr(builtins, "__import__", mock_import)
-            with pytest.raises(AxonDependencyError, match="pyautogen"):
+            with pytest.raises(TrajectDependencyError, match="pyautogen"):
                 importlib.import_module(key)
 
 

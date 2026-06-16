@@ -1,4 +1,4 @@
-"""Compression engine for the Axon SDK trajectory compression pipeline.
+"""Compression engine for the Traject SDK trajectory compression pipeline.
 
 Orchestrates the full 8-step compression pipeline: config validation,
 adapter detection, message normalization, artifact classification, segment
@@ -26,14 +26,14 @@ from traject.compression.strategies import (
     CompressionStrategy,
     validate_config,
 )
-from traject.exceptions import AxonCompressionError, AxonDependencyError
+from traject.exceptions import TrajectCompressionError, TrajectDependencyError
 from traject.models import CompressionResult, Segment
 
 logger = structlog.get_logger(__name__)
 
 
 def _detect_adapter(messages: Any) -> FrameworkAdapter:  # noqa: ANN401
-    """Return the first adapter that accepts *messages*, or raise AxonCompressionError.
+    """Return the first adapter that accepts *messages*, or raise TrajectCompressionError.
 
     Any is unavoidable here — this function accepts messages from any supported
     framework (OpenAI, LangChain, AutoGen) before the adapter is selected.
@@ -47,7 +47,7 @@ def _detect_adapter(messages: Any) -> FrameworkAdapter:  # noqa: ANN401
 
         if LangChainAdapter.accepts(messages):
             return LangChainAdapter()
-    except AxonDependencyError:
+    except TrajectDependencyError:
         pass
 
     # Guarded import for AutoGen adapter (optional dependency)
@@ -56,14 +56,14 @@ def _detect_adapter(messages: Any) -> FrameworkAdapter:  # noqa: ANN401
 
         if AutoGenAdapter.accepts(messages):
             return AutoGenAdapter()
-    except AxonDependencyError:
+    except TrajectDependencyError:
         pass
 
-    raise AxonCompressionError(
+    raise TrajectCompressionError(
         f"No adapter found for messages of type {type(messages).__name__}. "
         "Supported formats: raw OpenAI list[dict], LangChain BaseMessage list, "
         "AutoGen message list. Install the appropriate optional dependency: "
-        "pip install axon-sdk[langchain] or axon-sdk[autogen]."
+        "pip install traject-sdk[langchain] or traject-sdk[autogen]."
     )
 
 
@@ -81,7 +81,7 @@ def _apply_strategy(
     Args:
         segment: The segment to evaluate. Must not be protected.
         score: Relevance score in ``[0.0, 1.0]`` from the relevance scorer.
-        strategy: The active :class:`~axon.compression.strategies.CompressionStrategy`.
+        strategy: The active :class:`~traject.compression.strategies.CompressionStrategy`.
         max_turn: The highest ``turn_index`` across all segments in the batch,
             used to compute how many turns ago this segment occurred.
 
@@ -130,12 +130,12 @@ def _validate_compression_result(
     """Validate the compressed message list for structural invariants.
 
     Raises:
-        AxonCompressionError: If any system prompt from *original* is absent
+        TrajectCompressionError: If any system prompt from *original* is absent
             from *compressed* (checked by content equality on ``["content"]``).
-        AxonCompressionError: If *compressed* is empty.
+        TrajectCompressionError: If *compressed* is empty.
     """
     if len(compressed) < 1:
-        raise AxonCompressionError(
+        raise TrajectCompressionError(
             "Compression produced an empty message list. "
             "At least one message must be retained."
         )
@@ -151,7 +151,7 @@ def _validate_compression_result(
 
     for sys_content in system_contents:
         if sys_content not in compressed_contents:
-            raise AxonCompressionError(
+            raise TrajectCompressionError(
                 "Compression removed a system prompt. "
                 "System prompts must always be preserved in the compressed output."
             )
@@ -163,7 +163,7 @@ def compress(
     task_hint: str | None = None,
     adapter: FrameworkAdapter | None = None,
 ) -> CompressionResult:
-    """Run the full 8-step Axon compression pipeline on *messages*.
+    """Run the full 8-step Traject compression pipeline on *messages*.
 
     The pipeline normalizes the input into canonical ``list[dict]`` form,
     classifies each message, parses segments with token counts, protects the
@@ -176,28 +176,28 @@ def compress(
             ``list[dict]``, LangChain ``BaseMessage`` list, or AutoGen dicts).
             The original list is never mutated.
         config: Immutable compression configuration produced by
-            :func:`~axon.compression.strategies.get_config` or constructed
+            :func:`~traject.compression.strategies.get_config` or constructed
             directly.  Validated at the start of the pipeline.
         task_hint: Optional natural-language description of the active task.
             When provided, the relevance scorer uses semantic similarity
             against this hint to weight segment scores.  When ``None``,
             the semantic component defaults to ``1.0`` for all segments.
         adapter: Optional pre-constructed
-            :class:`~axon.compression.adapters.base.FrameworkAdapter`.
+            :class:`~traject.compression.adapters.base.FrameworkAdapter`.
             When ``None``, the adapter is auto-detected from the *messages*
             type via :func:`_detect_adapter`.
 
     Returns:
-        A :class:`~axon.models.CompressionResult` populated with token counts,
+        A :class:`~traject.models.CompressionResult` populated with token counts,
         segment statistics, and the final message list.  In shadow mode,
         ``messages`` in the result is the original unmodified input and
         ``tokens_saved`` is ``0``.  If result validation fails, the pipeline
         falls back to returning the original messages with a warning entry.
 
     Raises:
-        AxonCompressionError: Propagated from :func:`_detect_adapter` when
+        TrajectCompressionError: Propagated from :func:`_detect_adapter` when
             no adapter accepts the *messages* type.
-        AxonConfigError: If *config* fails validation.
+        TrajectConfigError: If *config* fails validation.
     """
     # ------------------------------------------------------------------ #
     # Step 1: VALIDATE CONFIG                                              #
@@ -286,8 +286,8 @@ def compress(
         _validate_compression_result(
             normalized, compressed_messages, artifact_types, config
         )
-    except AxonCompressionError as exc:
-        logger.warning("axon.compression.validation_failed", error=str(exc))
+    except TrajectCompressionError as exc:
+        logger.warning("traject.compression.validation_failed", error=str(exc))
         return CompressionResult(
             original_tokens=original_tokens,
             compressed_tokens=original_tokens,

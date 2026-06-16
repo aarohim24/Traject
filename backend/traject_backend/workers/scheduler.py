@@ -1,4 +1,4 @@
-"""APScheduler background workers for the Axon backend.
+"""APScheduler background workers for the Traject backend.
 
 Defines four recurring jobs:
 - ``materialize_attribution``: runs every hour at :05 to aggregate spans.
@@ -108,7 +108,7 @@ async def _run_recompute_budget_counters() -> None:
                     )
                 )
                 spent = spend_result.scalar() or 0
-                redis_key = f"axon:budget:{budget.feature_tag}"
+                redis_key = f"traject:budget:{budget.feature_tag}"
                 await redis.set(
                     redis_key,
                     str(spent),

@@ -1,8 +1,8 @@
-"""Provider adapter interfaces and shared response types for Axon SDK.
+"""Provider adapter interfaces and shared response types for Traject SDK.
 
 Contains the :class:`ProviderResponse` dataclass that all provider adapters
 (``BedrockAdapter``, ``VertexAdapter``) return, plus lazy-import guards so
-that adapters are importable from ``axon.providers`` without requiring their
+that adapters are importable from ``traject.providers`` without requiring their
 optional cloud-SDK dependencies to be installed.
 """
 from __future__ import annotations
@@ -16,7 +16,7 @@ class ProviderResponse:
     """Normalized response from any supported LLM provider.
 
     All provider adapters (``BedrockAdapter``, ``VertexAdapter``) return an
-    instance of this dataclass so that downstream Axon components can work
+    instance of this dataclass so that downstream Traject components can work
     with a single, consistent response type regardless of the underlying
     cloud SDK.
 
@@ -62,4 +62,4 @@ def __getattr__(name: str) -> Any:  # Any: dynamic module attribute
         from traject.providers.vertex import VertexAdapter
 
         return VertexAdapter
-    raise AttributeError(f"module 'axon.providers' has no attribute {name!r}")
+    raise AttributeError(f"module 'traject.providers' has no attribute {name!r}")

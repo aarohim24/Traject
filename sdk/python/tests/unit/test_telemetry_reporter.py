@@ -5,7 +5,7 @@ Covers:
 - Correct POST URL and body when reporter is enabled.
 - TelemetryPayload model never includes PII fields.
 - Silent failure (returns False, no exception) on network errors.
-- AXON_TELEMETRY_ENABLED=false env var overrides constructor enabled=True.
+- TRAJECT_TELEMETRY_ENABLED=false env var overrides constructor enabled=True.
 
 **Validates: Requirements 24.1, 24.2, 24.3**
 """
@@ -178,7 +178,7 @@ class TestTelemetryReporterEnvVar:
     """Tests for environment-variable override behaviour."""
 
     def test_env_var_false_keeps_disabled(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """AXON_TELEMETRY_ENABLED=false overrides constructor enabled=True.
+        """TRAJECT_TELEMETRY_ENABLED=false overrides constructor enabled=True.
 
         When the env var is set to ``"false"`` (case-insensitive), the
         reporter must be disabled even if the constructor was called with
@@ -186,33 +186,33 @@ class TestTelemetryReporterEnvVar:
 
         **Validates: Requirements 24.2**
         """
-        monkeypatch.setenv("AXON_TELEMETRY_ENABLED", "false")
+        monkeypatch.setenv("TRAJECT_TELEMETRY_ENABLED", "false")
         reporter = TelemetryReporter(enabled=True)
         assert reporter._enabled is False, (
-            "Expected _enabled=False when AXON_TELEMETRY_ENABLED=false, "
+            "Expected _enabled=False when TRAJECT_TELEMETRY_ENABLED=false, "
             f"got _enabled={reporter._enabled}"
         )
 
     def test_env_var_true_enables_reporter(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """AXON_TELEMETRY_ENABLED=true enables reporter even when enabled=False.
+        """TRAJECT_TELEMETRY_ENABLED=true enables reporter even when enabled=False.
 
         **Validates: Requirements 24.2**
         """
-        monkeypatch.setenv("AXON_TELEMETRY_ENABLED", "true")
+        monkeypatch.setenv("TRAJECT_TELEMETRY_ENABLED", "true")
         reporter = TelemetryReporter(enabled=False)
         assert reporter._enabled is True, (
-            "Expected _enabled=True when AXON_TELEMETRY_ENABLED=true, "
+            "Expected _enabled=True when TRAJECT_TELEMETRY_ENABLED=true, "
             f"got _enabled={reporter._enabled}"
         )
 
     def test_env_var_not_set_uses_constructor_value(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """When AXON_TELEMETRY_ENABLED is unset, constructor value is used.
+        """When TRAJECT_TELEMETRY_ENABLED is unset, constructor value is used.
 
         **Validates: Requirements 24.2**
         """
-        monkeypatch.delenv("AXON_TELEMETRY_ENABLED", raising=False)
+        monkeypatch.delenv("TRAJECT_TELEMETRY_ENABLED", raising=False)
         reporter_on = TelemetryReporter(enabled=True)
         reporter_off = TelemetryReporter(enabled=False)
         assert reporter_on._enabled is True

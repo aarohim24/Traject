@@ -1,8 +1,8 @@
-"""Client-side semantic cache for the Axon SDK.
+"""Client-side semantic cache for the Traject SDK.
 
 Provides :class:`SemanticCacheClient` which computes embeddings locally
 using the Phase 1 ``all-MiniLM-L6-v2`` singleton and delegates cache
-lookups and stores to the Axon backend via :class:`~axon.backend_client.BackendClient`.
+lookups and stores to the Traject backend via :class:`~traject.backend_client.BackendClient`.
 
 All public methods are fail-open: they catch every exception and return
 ``None`` / no-op rather than raising.  The inference path must never be
@@ -43,7 +43,7 @@ class CacheLookupResult:
 def _hash_messages(messages: list[dict[str, Any]]) -> str:
     """Compute a SHA-256 hex digest from normalized message content.
 
-    Mirrors the normalization in :func:`axon.core.instrumentor._hash_prompt`:
+    Mirrors the normalization in :func:`traject.core.instrumentor._hash_prompt`:
     concatenate all text content strings, strip whitespace, lowercase.
 
     Args:
@@ -71,7 +71,7 @@ def _get_embedding_model() -> Any:  # noqa: ANN401 — SentenceTransformer avoid
     """Return the Phase 1 all-MiniLM-L6-v2 model singleton.
 
     Reuses the module-level singleton from
-    :mod:`axon.compression.relevance_scorer` so that no additional model
+    :mod:`traject.compression.relevance_scorer` so that no additional model
     load is required.
 
     Returns:
@@ -83,15 +83,15 @@ def _get_embedding_model() -> Any:  # noqa: ANN401 — SentenceTransformer avoid
 
 
 class SemanticCacheClient:
-    """Client-side semantic cache that delegates to the Axon backend.
+    """Client-side semantic cache that delegates to the Traject backend.
 
     Computes embeddings locally using the Phase 1 ``all-MiniLM-L6-v2``
     singleton (no extra model load) and calls the backend cache endpoints
-    via the provided :class:`~axon.backend_client.BackendClient`.
+    via the provided :class:`~traject.backend_client.BackendClient`.
 
     Args:
-        backend_client: A configured :class:`~axon.backend_client.BackendClient`
-            instance pointing at the Axon backend service.
+        backend_client: A configured :class:`~traject.backend_client.BackendClient`
+            instance pointing at the Traject backend service.
     """
 
     def __init__(self, backend_client: BackendClient) -> None:
@@ -145,7 +145,7 @@ class SemanticCacheClient:
             )
 
         except Exception as exc:
-            _log.warning("axon.cache.lookup.error", error=str(exc))
+            _log.warning("traject.cache.lookup.error", error=str(exc))
             return None
 
     async def store(
@@ -190,4 +190,4 @@ class SemanticCacheClient:
                 },
             )
         except Exception as exc:
-            _log.warning("axon.cache.store.error", error=str(exc))
+            _log.warning("traject.cache.store.error", error=str(exc))

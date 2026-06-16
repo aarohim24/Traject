@@ -84,7 +84,7 @@ async def _build_status_response(
     status = await check_budget(record.feature_tag, db, redis)
 
     # Get actual spend from Redis cache or compute
-    redis_key = f"axon:budget:{record.feature_tag}"
+    redis_key = f"traject:budget:{record.feature_tag}"
     cached = await redis.get(redis_key)
     spent = Decimal(str(cached)) if cached else Decimal("0")
 
@@ -243,4 +243,4 @@ async def delete_budget(
 
     # Invalidate Redis cache
     redis = get_redis()
-    await redis.delete(f"axon:budget:{feature_tag}")
+    await redis.delete(f"traject:budget:{feature_tag}")

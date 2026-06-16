@@ -1,4 +1,4 @@
-"""Trajectory compression engine for the Axon SDK.
+"""Trajectory compression engine for the Traject SDK.
 
 Provides the main ``compress`` function for reducing LLM context window
 size before provider calls, plus the ``CompressionStrategy`` enum for
@@ -16,4 +16,4 @@ def __getattr__(name: str) -> object:
     if name == "CompressionStrategy":
         from traject.compression.strategies import CompressionStrategy  # noqa: PLC0415
         return CompressionStrategy
-    raise AttributeError(f"module 'axon.compression' has no attribute {name!r}")
+    raise AttributeError(f"module 'traject.compression' has no attribute {name!r}")

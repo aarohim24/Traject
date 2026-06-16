@@ -16,7 +16,7 @@ from traject.compression.strategies import (
     CompressionConfig,
     CompressionStrategy,
 )
-from traject.exceptions import AxonCompressionError, AxonDependencyError
+from traject.exceptions import AxonCompressionError, TrajectDependencyError
 from traject.models import Segment
 
 
@@ -213,7 +213,7 @@ class TestValidationFallback:
     def test_fallback_returns_original_on_validation_failure(self) -> None:
         msgs = _msgs(("system", "sys"), ("user", "Q"), ("assistant", "A"))
         with patch(
-            "axon.compression.engine._validate_compression_result",
+            "traject.compression.engine._validate_compression_result",
             side_effect=AxonCompressionError("test failure"),
         ):
             result = compress(msgs, _shadow_config())
@@ -275,7 +275,7 @@ class TestLiveCompression:
         def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
-        with patch("axon.compression.engine.score_segments", side_effect=mock_scores):
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
             result = compress(msgs, config)
 
         assert result.shadow_mode is False
@@ -299,7 +299,7 @@ class TestLiveCompression:
         def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
-        with patch("axon.compression.engine.score_segments", side_effect=mock_scores):
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
             result = compress(msgs, config)
 
         assert result.shadow_mode is False
@@ -322,7 +322,7 @@ class TestLiveCompression:
         def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
             return [0.01 if not s.protected else 1.0 for s in segments]
 
-        with patch("axon.compression.engine.score_segments", side_effect=mock_scores):
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
             result = compress(msgs, config)
 
         contents = [m.get("content") for m in result.messages]
@@ -358,7 +358,7 @@ class TestLiveCompression:
                     scores.append(1.0)
             return scores
 
-        with patch("axon.compression.engine.score_segments", side_effect=mock_scores):
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
             result = compress(msgs, config)
 
         summarized_contents = [
@@ -514,7 +514,7 @@ class TestDecisionBranchesViaCompress:
         def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
-        with patch("axon.compression.engine.score_segments", side_effect=mock_scores):
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
             result = compress(msgs, config)
 
         assert result.segments_dropped >= 1
@@ -539,7 +539,7 @@ class TestDecisionBranchesViaCompress:
         def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
-        with patch("axon.compression.engine.score_segments", side_effect=mock_scores):
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
             result = compress(msgs, config)
 
         assert result.segments_dropped >= 1
@@ -556,7 +556,7 @@ class TestDecisionBranchesViaCompress:
         def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
-        with patch("axon.compression.engine.score_segments", side_effect=mock_scores):
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
             result = compress(msgs, config)
 
         # At least one segment was evaluated — few-shot may or may not be dropped
@@ -590,11 +590,11 @@ class TestDecisionBranchesViaCompress:
                 for s in segments
             ]
 
-        with patch("axon.compression.engine.score_segments", side_effect=mock_scores):
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
             result = compress(msgs, config)
 
         assert result.segments_summarized >= 1
-        # Summarized message contains the Axon marker
+        # Summarized message contains the Traject marker
         summarized = [
             m for m in result.messages
             if "[summarized by Axon]" in str(m.get("content", ""))
@@ -618,38 +618,38 @@ class TestDetectAdapter:
             _detect_adapter({"role": "user", "content": "not a list"})
 
     def test_langchain_dependency_error_falls_through(self) -> None:
-        """When LangChain import raises AxonDependencyError, falls through to error."""
+        """When LangChain import raises TrajectDependencyError, falls through to error."""
         # Patch RawOpenAIAdapter.accepts to reject so we reach the LangChain branch
         with (
             patch(
-                "axon.compression.adapters.raw_openai.RawOpenAIAdapter.accepts",
+                "traject.compression.adapters.raw_openai.RawOpenAIAdapter.accepts",
                 return_value=False,
             ),
             patch(
-                "axon.compression.adapters.langchain.LangChainAdapter",
-                side_effect=AxonDependencyError("langchain not installed"),
+                "traject.compression.adapters.langchain.LangChainAdapter",
+                side_effect=TrajectDependencyError("langchain not installed"),
             ),pytest.raises(AxonCompressionError, match="No adapter found")
         ):
             _detect_adapter([{"role": "user", "content": "hi"}])
 
     def test_autogen_dependency_error_falls_through(self) -> None:
-        """When AutoGen import raises AxonDependencyError, falls through to error."""
+        """When AutoGen import raises TrajectDependencyError, falls through to error."""
         # Passing an integer ensures neither RawOpenAI, LangChain, nor AutoGen
         # accept it, reaching the final AxonCompressionError raise.
         with pytest.raises(AxonCompressionError, match="No adapter found"):
             _detect_adapter(42)
 
     def test_langchain_and_autogen_both_raise_dependency_error(self) -> None:
-        """Both guarded imports raising AxonDependencyError triggers the final raise."""
+        """Both guarded imports raising TrajectDependencyError triggers the final raise."""
         # Patch RawOpenAI to reject so we enter the optional-dep branches
         with (
             patch(
-                "axon.compression.adapters.raw_openai.RawOpenAIAdapter.accepts",
+                "traject.compression.adapters.raw_openai.RawOpenAIAdapter.accepts",
                 return_value=False,
             ),
             pytest.raises(AxonCompressionError, match="No adapter found"),
         ):
-            # LangChain and AutoGen raise AxonDependencyError (not installed),
+            # LangChain and AutoGen raise TrajectDependencyError (not installed),
             # engine swallows them and raises AxonCompressionError.
             _detect_adapter([{"role": "user", "content": "hello"}])
 
@@ -664,13 +664,13 @@ class TestDetectAdapter:
 
         with (
             patch(
-                "axon.compression.adapters.raw_openai.RawOpenAIAdapter.accepts",
+                "traject.compression.adapters.raw_openai.RawOpenAIAdapter.accepts",
                 return_value=False,
             ),
             patch.dict(
                 "sys.modules",
                 {
-                    "axon.compression.adapters.autogen": type(
+                    "traject.compression.adapters.autogen": type(
                         "module",
                         (),
                         {"AutoGenAdapter": mock_adapter_class},
@@ -678,7 +678,7 @@ class TestDetectAdapter:
                 },
             ),
             patch(
-                "axon.compression.engine._detect_adapter",
+                "traject.compression.engine._detect_adapter",
                 wraps=lambda msgs: mock_adapter_instance,
             ),
         ):
@@ -698,7 +698,7 @@ class TestValidationErrorPaths:
         config = _shadow_config()
 
         with patch(
-            "axon.compression.engine._validate_compression_result",
+            "traject.compression.engine._validate_compression_result",
             side_effect=AxonCompressionError("forced failure"),
         ):
             result = compress(msgs, config)
@@ -719,7 +719,7 @@ class TestValidationErrorPaths:
         config = _live_config()
 
         with patch(
-            "axon.compression.engine._validate_compression_result",
+            "traject.compression.engine._validate_compression_result",
             side_effect=AxonCompressionError("live mode failure"),
         ):
             result = compress(msgs, config)
@@ -728,8 +728,8 @@ class TestValidationErrorPaths:
         assert len(result.warnings) > 0
 
     def test_compress_raises_on_invalid_config(self) -> None:
-        """Invalid config raises AxonConfigError before any processing."""
-        from traject.exceptions import AxonConfigError
+        """Invalid config raises TrajectConfigError before any processing."""
+        from traject.exceptions import TrajectConfigError
 
         msgs = _msgs(("user", "hi"))
         bad_config = CompressionConfig(
@@ -739,7 +739,7 @@ class TestValidationErrorPaths:
             protect_system_prompt=True,
             shadow_mode=True,
         )
-        with pytest.raises(AxonConfigError):
+        with pytest.raises(TrajectConfigError):
             compress(msgs, bad_config)
 
     def test_compress_raises_on_unrecognized_messages_type(self) -> None:

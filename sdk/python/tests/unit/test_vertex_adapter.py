@@ -3,7 +3,7 @@
 Validates: Requirements 5.3 (VertexAdapter — token extraction, dependency guard).
 
 Tests cover:
-- AxonDependencyError raised when google-cloud-aiplatform is not installed
+- TrajectDependencyError raised when google-cloud-aiplatform is not installed
 - Correct token extraction from usage_metadata (prompt_token_count,
   candidates_token_count)
 - content and provider label returned correctly
@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from traject.exceptions import AxonDependencyError
+from traject.exceptions import TrajectDependencyError
 from traject.providers import ProviderResponse
 
 # ---------------------------------------------------------------------------
@@ -84,8 +84,8 @@ def _make_vertex_adapter(response: MagicMock) -> Any:
             "vertexai.generative_models": generative_models_mock,
         },
     ):
-        if "axon.providers.vertex" in sys.modules:
-            del sys.modules["axon.providers.vertex"]
+        if "traject.providers.vertex" in sys.modules:
+            del sys.modules["traject.providers.vertex"]
         from traject.providers.vertex import VertexAdapter
 
         adapter = VertexAdapter(project="test-project", location="us-central1")
@@ -103,13 +103,13 @@ def _make_vertex_adapter(response: MagicMock) -> Any:
 
 
 class TestVertexAdapterDependencyGuard:
-    """VertexAdapter raises AxonDependencyError when google-cloud-aiplatform is absent.
+    """VertexAdapter raises TrajectDependencyError when google-cloud-aiplatform is absent.
 
     **Validates: Requirements 5.3**
     """
 
     def test_raises_dependency_error_when_vertexai_missing(self) -> None:
-        """Instantiating VertexAdapter without vertexai raises AxonDependencyError.
+        """Instantiating VertexAdapter without vertexai raises TrajectDependencyError.
 
         Both ``vertexai`` and ``vertexai.generative_models`` are patched out
         so the import guard inside __init__ fires an ImportError.
@@ -123,20 +123,20 @@ class TestVertexAdapterDependencyGuard:
                 "vertexai.generative_models": None,
             },
         ):
-            if "axon.providers.vertex" in sys.modules:
-                del sys.modules["axon.providers.vertex"]
+            if "traject.providers.vertex" in sys.modules:
+                del sys.modules["traject.providers.vertex"]
 
             from traject.providers.vertex import VertexAdapter
 
-            with pytest.raises(AxonDependencyError, match="google-cloud-aiplatform"):
+            with pytest.raises(TrajectDependencyError, match="google-cloud-aiplatform"):
                 VertexAdapter()
 
-        if "axon.providers.vertex" in sys.modules:
-            del sys.modules["axon.providers.vertex"]
-        importlib.import_module("axon.providers.vertex")
+        if "traject.providers.vertex" in sys.modules:
+            del sys.modules["traject.providers.vertex"]
+        importlib.import_module("traject.providers.vertex")
 
     def test_dependency_error_message_includes_install_hint(self) -> None:
-        """The AxonDependencyError message tells the caller how to install the package.
+        """The TrajectDependencyError message tells the caller how to install the package.
 
         **Validates: Requirements 5.3**
         """
@@ -147,17 +147,17 @@ class TestVertexAdapterDependencyGuard:
                 "vertexai.generative_models": None,
             },
         ):
-            if "axon.providers.vertex" in sys.modules:
-                del sys.modules["axon.providers.vertex"]
+            if "traject.providers.vertex" in sys.modules:
+                del sys.modules["traject.providers.vertex"]
 
             from traject.providers.vertex import VertexAdapter
 
-            with pytest.raises(AxonDependencyError, match="pip install"):
+            with pytest.raises(TrajectDependencyError, match="pip install"):
                 VertexAdapter()
 
-        if "axon.providers.vertex" in sys.modules:
-            del sys.modules["axon.providers.vertex"]
-        importlib.import_module("axon.providers.vertex")
+        if "traject.providers.vertex" in sys.modules:
+            del sys.modules["traject.providers.vertex"]
+        importlib.import_module("traject.providers.vertex")
 
 
 # ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-"""Async HTTP client for sending spans to the Axon backend service.
+"""Async HTTP client for sending spans to the Traject backend service.
 
 Provides :class:`BackendClient` which wraps ``httpx.AsyncClient`` with a
 fire-and-forget span-send method and a fail-open budget-check method.
@@ -6,7 +6,7 @@ All methods catch every exception and log via structlog — they never raise
 to the caller.
 
 The backend integration is opt-in: a client is only created when
-:func:`~axon.core.instrumentor.configure` is called with ``backend_url``.
+:func:`~traject.core.instrumentor.configure` is called with ``backend_url``.
 """
 
 from __future__ import annotations
@@ -38,14 +38,14 @@ class BudgetStatus(StrEnum):
 
 
 class BackendClient:
-    """Async HTTP client for communicating with the Axon backend service.
+    """Async HTTP client for communicating with the Traject backend service.
 
     All public methods are fire-and-forget: they never raise exceptions.
     Errors are logged via structlog at warning level.  A 2-second timeout
     ensures that backend latency cannot block the inference path.
 
     Args:
-        base_url: Base URL of the Axon backend (e.g. ``"http://localhost:8000"``).
+        base_url: Base URL of the Traject backend (e.g. ``"http://localhost:8000"``).
         api_key: API key sent in the ``X-Axon-API-Key`` header.
     """
 
@@ -63,7 +63,7 @@ class BackendClient:
         the request.  Any HTTP or network error is caught and logged.
 
         Args:
-            span: A fully populated :class:`~axon.models.InferenceSpan`
+            span: A fully populated :class:`~traject.models.InferenceSpan`
                 instance produced by the instrumentation layer.
         """
         try:
@@ -71,11 +71,11 @@ class BackendClient:
             response = await self._client.post("/v1/spans", json=payload)
             if not response.is_success:
                 _log.warning(
-                    "axon.backend_client.send_span.http_error",
+                    "traject.backend_client.send_span.http_error",
                     status_code=response.status_code,
                 )
         except Exception as exc:
-            _log.warning("axon.backend_client.send_span.error", error=str(exc))
+            _log.warning("traject.backend_client.send_span.error", error=str(exc))
 
     async def check_budget(self, feature_tag: str) -> BudgetStatus:
         """GET the current budget status for a feature tag.
@@ -98,7 +98,7 @@ class BackendClient:
             return BudgetStatus.OK
         except Exception as exc:
             _log.warning(
-                "axon.backend_client.check_budget.error",
+                "traject.backend_client.check_budget.error",
                 feature_tag=feature_tag,
                 error=str(exc),
             )

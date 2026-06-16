@@ -1,4 +1,4 @@
-"""Redis client singleton and health-check utilities for the Axon backend.
+"""Redis client singleton and health-check utilities for the Traject backend.
 
 Provides a module-level singleton ``redis.asyncio.Redis`` instance created
 lazily on first access, plus an async ``ping_redis()`` health-check helper
@@ -8,12 +8,12 @@ Key namespace convention
 ------------------------
 All Redis keys written by this service follow the pattern::
 
-    "axon:{key_type}:{identifier}"
+    "traject:{key_type}:{identifier}"
 
 Examples:
 
-* ``"axon:budget:{feature_tag}"``   — cached budget spend counter
-* ``"axon:cache:{prompt_hash}"``    — semantic-cache TTL marker
+* ``"traject:budget:{feature_tag}"``   — cached budget spend counter
+* ``"traject:cache:{prompt_hash}"``    — semantic-cache TTL marker
 """
 
 from __future__ import annotations

@@ -55,7 +55,7 @@ class TestOpenAIInstrumentation:
         def call(messages: list) -> Any:
             return resp
 
-        with patch("axon.core.instrumentor.emit_span"):
+        with patch("traject.core.instrumentor.emit_span"):
             result = call(messages=[{"role": "user", "content": "Hi"}])
         assert result is resp
 
@@ -67,7 +67,7 @@ class TestOpenAIInstrumentation:
             return _mock_response()
 
         with patch(
-            "axon.core.instrumentor.emit_span",
+            "traject.core.instrumentor.emit_span",
             side_effect=lambda s: spans.append(s),
         ):
             call(messages=[{"role": "user", "content": "Hi"}])
@@ -81,7 +81,7 @@ class TestOpenAIInstrumentation:
             return _mock_response()
 
         with patch(
-            "axon.core.instrumentor.emit_span",
+            "traject.core.instrumentor.emit_span",
             side_effect=lambda s: spans.append(s),
         ):
             call(messages=[{"role": "user", "content": "Hi"}])
@@ -93,7 +93,7 @@ class TestOpenAIInstrumentation:
             raise ValueError("boom")
 
         with (
-            patch("axon.core.instrumentor.emit_span"),
+            patch("traject.core.instrumentor.emit_span"),
             pytest.raises(ValueError, match="boom"),
         ):
             call(messages=[{"role": "user", "content": "Hi"}])
@@ -106,7 +106,7 @@ class TestOpenAIInstrumentation:
             return _mock_response()
 
         with patch(
-            "axon.core.instrumentor.emit_span",
+            "traject.core.instrumentor.emit_span",
             side_effect=lambda s: spans.append(s),
         ):
             call(messages=[{"role": "user", "content": "Hi"}])
@@ -123,7 +123,7 @@ class TestOpenAIInstrumentation:
         traject.patch(mock_client, feature_tag="patch-test", shadow_mode=True)
 
         with patch(
-            "axon.core.instrumentor.emit_span",
+            "traject.core.instrumentor.emit_span",
             side_effect=lambda s: spans.append(s),
         ):
             result = mock_client.chat.completions.create(

@@ -10,7 +10,7 @@ from traject.compression.strategies import (
     get_config,
     validate_config,
 )
-from traject.exceptions import AxonConfigError
+from traject.exceptions import TrajectConfigError
 
 
 class TestCompressionStrategy:
@@ -81,25 +81,25 @@ class TestValidateConfig:
         validate_config(self._base_config())  # should not raise
 
     def test_target_0_raises(self) -> None:
-        with pytest.raises(AxonConfigError):
+        with pytest.raises(TrajectConfigError):
             validate_config(self._base_config(target_reduction_pct=0.0))
 
     def test_target_1_raises(self) -> None:
-        with pytest.raises(AxonConfigError):
+        with pytest.raises(TrajectConfigError):
             validate_config(self._base_config(target_reduction_pct=1.0))
 
     def test_target_negative_raises(self) -> None:
-        with pytest.raises(AxonConfigError):
+        with pytest.raises(TrajectConfigError):
             validate_config(self._base_config(target_reduction_pct=-0.1))
 
     def test_target_above_1_raises(self) -> None:
-        with pytest.raises(AxonConfigError):
+        with pytest.raises(TrajectConfigError):
             validate_config(self._base_config(target_reduction_pct=1.1))
 
     def test_min_turns_negative_raises(self) -> None:
-        with pytest.raises(AxonConfigError):
+        with pytest.raises(TrajectConfigError):
             validate_config(self._base_config(min_turns_protected=-1))
 
     def test_protect_system_prompt_false_raises(self) -> None:
-        with pytest.raises(AxonConfigError):
+        with pytest.raises(TrajectConfigError):
             validate_config(self._base_config(protect_system_prompt=False))

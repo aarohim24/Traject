@@ -1,15 +1,15 @@
 """Static pricing table for supported LLM providers.
 
 This module implements the authoritative, auditable pricing reference for all
-models supported by the Axon SDK. Per ADR-006, all monetary values are stored
+models supported by the Traject SDK. Per ADR-006, all monetary values are stored
 as ``Decimal`` instances constructed from string literals — never float
 literals — to eliminate floating-point representation drift. Per ADR-010, the
 table is a plain, human-readable data structure that can be diffed, audited,
 and updated in a single pull-request without touching any computation logic.
 
 The ``ModelPricing`` dataclass is defined here (frozen) so that the pricing
-table can be imported by ``axon.core.cost_calculator`` without creating a
-circular dependency. ``axon.models`` will re-export ``ModelPricing`` from this
+table can be imported by ``traject.core.cost_calculator`` without creating a
+circular dependency. ``traject.models`` will re-export ``ModelPricing`` from this
 module once it is implemented in Task 6.
 """
 

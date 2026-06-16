@@ -1,4 +1,4 @@
-"""Cost attribution aggregation service for the Axon backend.
+"""Cost attribution aggregation service for the Traject backend.
 
 Materialises hourly aggregates from ``inference_spans`` into the
 ``cost_attribution`` table and provides query helpers used by the

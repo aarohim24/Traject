@@ -1,9 +1,9 @@
-"""In-process singleton registry for Axon plugins.
+"""In-process singleton registry for Traject plugins.
 
 Maintains three separate ordered lists — one for each recognized plugin ABC
-(:class:`~axon.plugins.base.CompressionPlugin`,
-:class:`~axon.plugins.base.RoutingPlugin`,
-:class:`~axon.plugins.base.ArtifactClassifierPlugin`) — and exposes a
+(:class:`~traject.plugins.base.CompressionPlugin`,
+:class:`~traject.plugins.base.RoutingPlugin`,
+:class:`~traject.plugins.base.ArtifactClassifierPlugin`) — and exposes a
 thread-safe API for registering plugins and retrieving them by type.
 
 The registry follows the singleton pattern: exactly one
@@ -34,7 +34,7 @@ _AnyPlugin = CompressionPlugin | RoutingPlugin | ArtifactClassifierPlugin
 
 
 class PluginRegistry:
-    """In-process registry for all registered Axon plugins.
+    """In-process registry for all registered Traject plugins.
 
     Maintains three separate ordered lists (one per plugin type).
     Thread-safe via a module-level lock (not needed in most single-threaded
@@ -45,9 +45,9 @@ class PluginRegistry:
 
     Raises:
         TypeError: When :meth:`register` receives an argument that is not an
-            instance of :class:`~axon.plugins.base.CompressionPlugin`,
-            :class:`~axon.plugins.base.RoutingPlugin`, or
-            :class:`~axon.plugins.base.ArtifactClassifierPlugin`.
+            instance of :class:`~traject.plugins.base.CompressionPlugin`,
+            :class:`~traject.plugins.base.RoutingPlugin`, or
+            :class:`~traject.plugins.base.ArtifactClassifierPlugin`.
     """
 
     _instance: PluginRegistry | None = None
@@ -83,9 +83,9 @@ class PluginRegistry:
 
         Args:
             plugin: A concrete instance of
-                :class:`~axon.plugins.base.CompressionPlugin`,
-                :class:`~axon.plugins.base.RoutingPlugin`, or
-                :class:`~axon.plugins.base.ArtifactClassifierPlugin`.
+                :class:`~traject.plugins.base.CompressionPlugin`,
+                :class:`~traject.plugins.base.RoutingPlugin`, or
+                :class:`~traject.plugins.base.ArtifactClassifierPlugin`.
 
         Raises:
             TypeError: If ``plugin`` is not an instance of one of the three
@@ -95,21 +95,21 @@ class PluginRegistry:
             if isinstance(plugin, CompressionPlugin):
                 self._compression_plugins.append(plugin)
                 _log.info(
-                    "axon.plugins.registered",
+                    "traject.plugins.registered",
                     plugin_type="CompressionPlugin",
                     plugin_class=type(plugin).__name__,
                 )
             elif isinstance(plugin, RoutingPlugin):
                 self._routing_plugins.append(plugin)
                 _log.info(
-                    "axon.plugins.registered",
+                    "traject.plugins.registered",
                     plugin_type="RoutingPlugin",
                     plugin_class=type(plugin).__name__,
                 )
             elif isinstance(plugin, ArtifactClassifierPlugin):
                 self._classifier_plugins.append(plugin)
                 _log.info(
-                    "axon.plugins.registered",
+                    "traject.plugins.registered",
                     plugin_type="ArtifactClassifierPlugin",
                     plugin_class=type(plugin).__name__,
                 )
@@ -118,7 +118,7 @@ class PluginRegistry:
                     f"Expected an instance of CompressionPlugin, RoutingPlugin, or "
                     f"ArtifactClassifierPlugin, got {type(plugin).__name__!r}.  "
                     "Ensure your plugin class inherits from one of the ABCs in "
-                    "axon.plugins.base."
+                    "traject.plugins.base."
                 )
 
     def get_compression_plugins(self) -> list[CompressionPlugin]:
@@ -126,7 +126,7 @@ class PluginRegistry:
 
         Returns:
             Ordered list of registered
-            :class:`~axon.plugins.base.CompressionPlugin` instances.
+            :class:`~traject.plugins.base.CompressionPlugin` instances.
         """
         with _registry_lock:
             return list(self._compression_plugins)
@@ -136,7 +136,7 @@ class PluginRegistry:
 
         Returns:
             Ordered list of registered
-            :class:`~axon.plugins.base.RoutingPlugin` instances.
+            :class:`~traject.plugins.base.RoutingPlugin` instances.
         """
         with _registry_lock:
             return list(self._routing_plugins)
@@ -146,7 +146,7 @@ class PluginRegistry:
 
         Returns:
             Ordered list of registered
-            :class:`~axon.plugins.base.ArtifactClassifierPlugin` instances.
+            :class:`~traject.plugins.base.ArtifactClassifierPlugin` instances.
         """
         with _registry_lock:
             return list(self._classifier_plugins)

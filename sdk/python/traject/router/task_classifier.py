@@ -1,4 +1,4 @@
-"""Heuristic task-type classifier for the Axon adaptive model router.
+"""Heuristic task-type classifier for the Traject adaptive model router.
 
 Provides ``TaskType``, ``classify_task``, and ``estimate_complexity`` — three
 public symbols that give the router a cheap (< 1 ms), dependency-free signal

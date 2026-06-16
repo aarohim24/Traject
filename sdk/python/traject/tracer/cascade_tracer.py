@@ -12,7 +12,7 @@ Provides three public symbols consumed by multi-agent workloads:
   :class:`decimal.Decimal` (ADR-006).
 
 * :class:`CascadeTracer` — stateless helper class whose methods generate or
-  parse W3C ``traceparent`` headers and, optionally, query the Axon backend
+  parse W3C ``traceparent`` headers and, optionally, query the Traject backend
   for per-span cost data.
 
 All trace and span identifiers are generated with :func:`uuid.uuid4` and
@@ -76,7 +76,7 @@ class CascadeCostSummary:
     """Aggregated cost report for a complete multi-agent cascade trace.
 
     All monetary fields are :class:`decimal.Decimal` instances (ADR-006).
-    When the Axon backend is unavailable or ``backend_client`` is ``None``,
+    When the Traject backend is unavailable or ``backend_client`` is ``None``,
     all cost fields default to ``Decimal("0")``.
 
     Attributes:
@@ -218,7 +218,7 @@ class CascadeTracer:
         Args:
             trace_id: The 32-char lowercase hex W3C trace identifier whose
                 cost should be aggregated.
-            backend_client: An optional Axon backend client object that
+            backend_client: An optional Traject backend client object that
                 exposes ``get_spans_by_trace_id(trace_id: str) -> list[Any]``.
                 Pass ``None`` to receive an empty summary without a backend
                 query.

@@ -1,4 +1,4 @@
-"""Application configuration for the Axon backend service.
+"""Application configuration for the Traject backend service.
 
 Reads all settings from environment variables with sensible local defaults.
 Override any value by setting the corresponding environment variable or by
@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Centralised runtime configuration for axon-backend.
+    """Centralised runtime configuration for traject-backend.
 
     All fields map directly to environment variables of the same name
     (case-insensitive). A ``.env`` file is loaded automatically when
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     """
 
     # Database
-    database_url: str = "postgresql+asyncpg://axon:axon@localhost:5432/axon"
+    database_url: str = "postgresql+asyncpg://traject:traject@localhost:5432/traject"
     database_pool_size: int = 10
     database_max_overflow: int = 20
 

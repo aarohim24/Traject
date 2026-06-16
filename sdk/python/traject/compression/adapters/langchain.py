@@ -1,14 +1,14 @@
-"""LangChain message format adapter for the Axon compression pipeline.
+"""LangChain message format adapter for the Traject compression pipeline.
 
 Normalizes LangChain BaseMessage subclasses to the canonical list[dict] format
 required by the compression engine, and converts results back. Requires the
-langchain-core optional dependency (pip install axon-sdk[langchain]).
+langchain-core optional dependency (pip install traject-sdk[langchain]).
 """
 from __future__ import annotations
 
 from typing import Any
 
-from traject.exceptions import AxonDependencyError
+from traject.exceptions import TrajectDependencyError
 
 try:
     from langchain_core.messages import (
@@ -19,9 +19,9 @@ try:
         ToolMessage,
     )
 except ImportError as exc:
-    raise AxonDependencyError(
+    raise TrajectDependencyError(
         "LangChain adapter requires langchain-core. "
-        "Install it with: pip install axon-sdk[langchain]"
+        "Install it with: pip install traject-sdk[langchain]"
     ) from exc
 
 from traject.compression.adapters.base import FrameworkAdapter

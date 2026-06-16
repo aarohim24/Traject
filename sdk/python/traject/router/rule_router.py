@@ -1,4 +1,4 @@
-"""Rule-based model router for the Axon adaptive routing layer.
+"""Rule-based model router for the Traject adaptive routing layer.
 
 Implements ``RuleRouter``, which classifies an incoming LLM conversation by
 task type and estimated complexity, looks up the appropriate model tier from a
@@ -161,7 +161,7 @@ class RuleRouter:
 
         if selected_model != requested_model:
             _log.warning(
-                "axon.router.model_substituted",
+                "traject.router.model_substituted",
                 original_model=requested_model,
                 selected_model=selected_model,
                 routing_rule=routing_rule,
@@ -227,7 +227,7 @@ def _compute_cost_delta_pct(original_model: str, selected_model: str) -> float:
     """Compute the signed percentage cost change between two models.
 
     Uses the ``input_cost_per_1m_tokens`` field from
-    ``axon.core.pricing.PROVIDER_PRICING`` for both models.  Returns
+    ``traject.core.pricing.PROVIDER_PRICING`` for both models.  Returns
     ``0.0`` when either model is absent from the pricing table or when the
     original model's price is zero (to avoid division by zero).
 

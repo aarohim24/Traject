@@ -1,4 +1,4 @@
-"""Span ingestion service for the Axon backend.
+"""Span ingestion service for the Traject backend.
 
 Receives batches of ``InferenceSpanPayload`` objects from the SDK,
 validates timestamps, bulk-inserts accepted spans, and triggers budget

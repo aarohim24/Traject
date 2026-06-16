@@ -1,9 +1,9 @@
-"""Opt-in production telemetry reporter for the Axon SDK.
+"""Opt-in production telemetry reporter for the Traject SDK.
 
 Collects aggregate, anonymised performance metrics (no PII, no prompt content)
-and submits them to the Axon benchmark registry endpoint.  The reporter is
+and submits them to the Traject benchmark registry endpoint.  The reporter is
 **disabled by default** and must be explicitly enabled by the caller or via the
-``AXON_TELEMETRY_ENABLED`` environment variable.
+``TRAJECT_TELEMETRY_ENABLED`` environment variable.
 
 Data collected when enabled: SDK version, Python version, sample count, p50/p95
 cost in USD (as strings), p50/p95 compression ratio, average routing accuracy,
@@ -33,7 +33,7 @@ class TelemetryPayload(BaseModel):
     information, prompt content, feature tags, or API keys are included.
 
     Attributes:
-        sdk_version: Axon SDK version string (e.g. ``"0.1.0"``).
+        sdk_version: Traject SDK version string (e.g. ``"0.1.0"``).
         python_version: Python interpreter version string (e.g. ``"3.11.9"``).
         sample_count: Number of inference spans included in the aggregation.
         p50_cost_usd: Median cost in USD, serialised as a decimal string.
@@ -67,7 +67,7 @@ class TelemetryReporter:
     Telemetry is **disabled by default**.  It can be enabled in two ways:
 
     1. Pass ``enabled=True`` to the constructor.
-    2. Set the ``AXON_TELEMETRY_ENABLED`` environment variable to ``"true"``
+    2. Set the ``TRAJECT_TELEMETRY_ENABLED`` environment variable to ``"true"``
        (case-insensitive).  Setting it to ``"false"`` overrides a
        constructor-level ``enabled=True``.
 
@@ -76,8 +76,8 @@ class TelemetryReporter:
 
     Args:
         enabled: Whether telemetry is enabled.  May be overridden by the
-            ``AXON_TELEMETRY_ENABLED`` environment variable.
-        base_url: Base URL of the Axon backend service.  Defaults to
+            ``TRAJECT_TELEMETRY_ENABLED`` environment variable.
+        base_url: Base URL of the Traject backend service.  Defaults to
             ``"http://localhost:8000"``.
     """
 
@@ -92,7 +92,7 @@ class TelemetryReporter:
         self._enabled: bool = enabled
 
         # Environment variable takes precedence over constructor argument
-        env_val: str = os.environ.get("AXON_TELEMETRY_ENABLED", "").strip().lower()
+        env_val: str = os.environ.get("TRAJECT_TELEMETRY_ENABLED", "").strip().lower()
         if env_val == "true":
             self._enabled = True
         elif env_val == "false":
@@ -101,7 +101,7 @@ class TelemetryReporter:
 
         if self._enabled:
             _log.info(
-                "axon.telemetry_reporter.enabled",
+                "traject.telemetry_reporter.enabled",
                 collected_fields=[
                     "sdk_version",
                     "python_version",
@@ -148,18 +148,18 @@ class TelemetryReporter:
                 response = client.post(url, json=body)
             if 200 <= response.status_code < 300:
                 _log.info(
-                    "axon.telemetry_reporter.submit_ok",
+                    "traject.telemetry_reporter.submit_ok",
                     status_code=response.status_code,
                 )
                 return True
             _log.warning(
-                "axon.telemetry_reporter.submit_non_2xx",
+                "traject.telemetry_reporter.submit_non_2xx",
                 status_code=response.status_code,
             )
             return False
         except Exception as exc:
             _log.warning(
-                "axon.telemetry_reporter.submit_error",
+                "traject.telemetry_reporter.submit_error",
                 error=str(exc),
             )
             return False

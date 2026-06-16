@@ -29,7 +29,7 @@ def get_pricing(model: str) -> ModelPricing | None:
             (e.g. ``"gpt-4o"``).
 
     Returns:
-        A :class:`~axon.core.pricing.ModelPricing` instance if the model is
+        A :class:`~traject.core.pricing.ModelPricing` instance if the model is
         present in the pricing table, or ``None`` if it is unknown.
     """
     return PROVIDER_PRICING.get(model)
@@ -83,7 +83,7 @@ def calculate_cost(
     """
     pricing = get_pricing(model)
     if pricing is None:
-        _log.warning("axon.cost.unknown_model", model=model)
+        _log.warning("traject.cost.unknown_model", model=model)
         return None
 
     million = Decimal("1000000")

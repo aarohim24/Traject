@@ -39,7 +39,7 @@ class BenchmarkSubmitRequest(BaseModel):
     are accepted or stored.
 
     Attributes:
-        sdk_version: Axon SDK version string that produced the submission.
+        sdk_version: Traject SDK version string that produced the submission.
         python_version: CPython version string on the submitting host.
         sample_count: Number of inference spans included in the benchmark run.
         p50_cost_usd: Median per-call cost in USD (Decimal-serialised string).
@@ -68,7 +68,7 @@ class BenchmarkRecord(BaseModel):
 
     Attributes:
         id: UUID primary key assigned server-side.
-        sdk_version: Axon SDK version string.
+        sdk_version: Traject SDK version string.
         python_version: CPython version string.
         sample_count: Number of inference spans in the run.
         p50_cost_usd: Median per-call cost in USD as a string.

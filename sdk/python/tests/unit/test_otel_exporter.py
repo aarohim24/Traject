@@ -98,7 +98,7 @@ class TestConfigureExporter:
 
     def test_env_var_otlp_endpoint(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import axon.telemetry.otel_exporter as mod
-        monkeypatch.setenv("AXON_OTLP_ENDPOINT", "http://localhost:4317")
+        monkeypatch.setenv("TRAJECT_OTLP_ENDPOINT", "http://localhost:4317")
         mod.configure_exporter(export_to_stdout=False)
         assert mod._tracer_provider is not None
 
@@ -130,7 +130,7 @@ class TestEmitSpan:
         mod.emit_span(_make_span(cost_usd=cost))
         attrs = exporter.get_finished_spans()[0].attributes
         assert attrs is not None
-        assert attrs["axon.cost_usd"] == str(cost)
+        assert attrs["traject.cost_usd"] == str(cost)
 
     def test_cost_usd_none_is_empty_string(self) -> None:
         exporter, _ = _setup_in_memory_exporter()
@@ -138,7 +138,7 @@ class TestEmitSpan:
         mod.emit_span(_make_span(cost_usd=None))
         attrs = exporter.get_finished_spans()[0].attributes
         assert attrs is not None
-        assert attrs["axon.cost_usd"] == ""
+        assert attrs["traject.cost_usd"] == ""
 
     def test_tokens_saved_none_is_zero(self) -> None:
         exporter, _ = _setup_in_memory_exporter()
@@ -146,7 +146,7 @@ class TestEmitSpan:
         mod.emit_span(_make_span(tokens_saved=None))
         attrs = exporter.get_finished_spans()[0].attributes
         assert attrs is not None
-        assert attrs["axon.compression.tokens_saved"] == 0
+        assert attrs["traject.compression.tokens_saved"] == 0
 
     def test_all_fifteen_attributes_present(self) -> None:
         exporter, _ = _setup_in_memory_exporter()
@@ -157,11 +157,11 @@ class TestEmitSpan:
         required = {
             "gen_ai.system", "gen_ai.request.model",
             "gen_ai.usage.input_tokens", "gen_ai.usage.output_tokens",
-            "axon.cost_usd", "axon.feature_tag", "axon.prompt_hash",
-            "axon.artifact_type", "axon.compression.applied",
-            "axon.compression.shadow_mode", "axon.compression.tokens_saved",
-            "axon.cache_hit", "axon.environment", "axon.duration_ms",
-            "axon.token_count_method",
+            "traject.cost_usd", "traject.feature_tag", "traject.prompt_hash",
+            "traject.artifact_type", "traject.compression.applied",
+            "traject.compression.shadow_mode", "traject.compression.tokens_saved",
+            "traject.cache_hit", "traject.environment", "traject.duration_ms",
+            "traject.token_count_method",
         }
         assert required.issubset(set(attrs.keys()))
 

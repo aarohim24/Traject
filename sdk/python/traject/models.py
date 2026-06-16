@@ -1,9 +1,9 @@
-"""Pydantic v2 data models for the Axon SDK.
+"""Pydantic v2 data models for the Traject SDK.
 
 This module defines the canonical cross-boundary data structures used
 throughout the SDK: :class:`InferenceSpan`, :class:`Segment`, and
 :class:`CompressionResult`. It also re-exports :class:`ModelPricing` from
-:mod:`axon.core.pricing` so callers can import all model types from a single
+:mod:`traject.core.pricing` so callers can import all model types from a single
 location.
 
 All monetary fields use :class:`decimal.Decimal` (ADR-006). Enums are used
@@ -223,7 +223,7 @@ class Segment(BaseModel):
 class CompressionResult(BaseModel):
     """Result of a single compression pipeline run.
 
-    Produced by :func:`axon.compression.engine.compress` after every call,
+    Produced by :func:`traject.compression.engine.compress` after every call,
     regardless of whether compression was actually applied. In shadow mode,
     ``messages`` contains the original unmodified message list and
     ``tokens_saved`` is 0.
@@ -242,7 +242,7 @@ class CompressionResult(BaseModel):
         shadow_mode: ``True`` when original messages were returned unchanged
             despite compression analysis running.
         strategy_applied: Name of the
-            :class:`~axon.compression.strategies.CompressionStrategy` that
+            :class:`~traject.compression.strategies.CompressionStrategy` that
             was applied (stored as a string value for forward compatibility).
         messages: The final message list returned to the caller.
         warnings: Human-readable diagnostic messages generated during

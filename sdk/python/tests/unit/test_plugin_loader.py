@@ -132,7 +132,7 @@ class TestLoadAllSuccessCount:
         registry = PluginRegistry.get_instance()
         loader = PluginLoader()
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=[]):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=[]):
             count = loader.load_all(registry)
 
         assert count == 0
@@ -146,7 +146,7 @@ class TestLoadAllSuccessCount:
         loader = PluginLoader()
         ep = _make_entry_point("my_compression", MinimalCompressionPlugin)
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=[ep]):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=[ep]):
             count = loader.load_all(registry)
 
         assert count == 1
@@ -164,7 +164,7 @@ class TestLoadAllSuccessCount:
             _make_entry_point("classifier", MinimalArtifactClassifierPlugin),
         ]
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=eps):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=eps):
             count = loader.load_all(registry)
 
         assert count == 3
@@ -181,7 +181,7 @@ class TestLoadAllSuccessCount:
             _make_failing_entry_point("bad_two"),
         ]
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=eps):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=eps):
             count = loader.load_all(registry)
 
         assert count == 0
@@ -210,7 +210,7 @@ class TestLoadAllSkipsFailingPlugins:
             _make_entry_point("good_plugin", MinimalCompressionPlugin),
         ]
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=eps):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=eps):
             count = loader.load_all(registry)
 
         # Only the good plugin counted
@@ -231,7 +231,7 @@ class TestLoadAllSkipsFailingPlugins:
             _make_failing_entry_point("bad_2"),
         ]
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=eps):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=eps):
             count = loader.load_all(registry)
 
         assert count == 2
@@ -248,7 +248,7 @@ class TestLoadAllSkipsFailingPlugins:
             _make_failing_entry_point("bad_second"),
         ]
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=eps):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=eps):
             loader.load_all(registry)
 
         # The first plugin must still be registered
@@ -276,7 +276,7 @@ class TestLoadAllSkipsFailingPlugins:
             _make_entry_point("good", MinimalCompressionPlugin),
         ]
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=eps):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=eps):
             count = loader.load_all(registry)
 
         assert count == 1
@@ -306,7 +306,7 @@ class TestLoadAllSkipsFailingPlugins:
         good_ep = _make_entry_point("good", MinimalCompressionPlugin)
 
         with patch(
-            "axon.plugins.loader.importlib.metadata.entry_points",
+            "traject.plugins.loader.importlib.metadata.entry_points",
             return_value=[ep, good_ep],
         ):
             count = loader.load_all(registry)
@@ -335,7 +335,7 @@ class TestLoadAllEntryPointIntegration:
         loader = PluginLoader()
         ep = _make_entry_point("my_comp", MinimalCompressionPlugin)
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=[ep]):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=[ep]):
             loader.load_all(registry)
 
         plugins = registry.get_compression_plugins()
@@ -351,7 +351,7 @@ class TestLoadAllEntryPointIntegration:
         loader = PluginLoader()
         ep = _make_entry_point("my_router", MinimalRoutingPlugin)
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=[ep]):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=[ep]):
             loader.load_all(registry)
 
         assert len(registry.get_routing_plugins()) == 1
@@ -367,7 +367,7 @@ class TestLoadAllEntryPointIntegration:
         loader = PluginLoader()
         ep = _make_entry_point("my_classifier", MinimalArtifactClassifierPlugin)
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=[ep]):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=[ep]):
             loader.load_all(registry)
 
         assert len(registry.get_classifier_plugins()) == 1
@@ -375,7 +375,7 @@ class TestLoadAllEntryPointIntegration:
         assert len(registry.get_routing_plugins()) == 0
 
     def test_entry_points_queried_with_correct_group(self) -> None:
-        """load_all() calls entry_points with group='axon.plugins'.
+        """load_all() calls entry_points with group='traject.plugins'.
 
         **Validates: Requirements 5.4**
         """
@@ -383,11 +383,11 @@ class TestLoadAllEntryPointIntegration:
         loader = PluginLoader()
 
         with patch(
-            "axon.plugins.loader.importlib.metadata.entry_points", return_value=[]
+            "traject.plugins.loader.importlib.metadata.entry_points", return_value=[]
         ) as mock_eps:
             loader.load_all(registry)
 
-        mock_eps.assert_called_once_with(group="axon.plugins")
+        mock_eps.assert_called_once_with(group="traject.plugins")
 
     def test_mixed_plugins_all_land_in_correct_typed_lists(self) -> None:
         """Multiple plugin types loaded together each appear in the right list.
@@ -402,7 +402,7 @@ class TestLoadAllEntryPointIntegration:
             _make_entry_point("classifier", MinimalArtifactClassifierPlugin),
         ]
 
-        with patch("axon.plugins.loader.importlib.metadata.entry_points", return_value=eps):
+        with patch("traject.plugins.loader.importlib.metadata.entry_points", return_value=eps):
             count = loader.load_all(registry)
 
         assert count == 3

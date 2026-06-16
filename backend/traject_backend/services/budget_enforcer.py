@@ -1,4 +1,4 @@
-"""Budget enforcement service for the Axon backend.
+"""Budget enforcement service for the Traject backend.
 
 Checks feature-tag spend against configured budgets using Redis as a fast
 read path, and fires HTTP webhook notifications when thresholds are crossed.
@@ -74,7 +74,7 @@ async def check_budget(
         # ------------------------------------------------------------------
         # Fast path: cached spend counter in Redis
         # ------------------------------------------------------------------
-        redis_key = f"axon:budget:{feature_tag}"
+        redis_key = f"traject:budget:{feature_tag}"
         cached_value = await redis.get(redis_key)
         if cached_value is not None:
             spent = Decimal(str(cached_value))

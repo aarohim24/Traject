@@ -1,4 +1,4 @@
-"""Conformal prediction wrappers for quality-coverage guarantees in Axon routing.
+"""Conformal prediction wrappers for quality-coverage guarantees in Traject routing.
 
 Implements ``ConformalPredictor`` (split conformal calibration following Angelopoulos &
 Bates, 2021) and ``ConformalRouter`` (a transparent router wrapper that escalates the
@@ -318,7 +318,7 @@ class ConformalRouter:
 
         if not self._predictor.is_calibrated:
             _log.warning(
-                "axon.conformal_router.uncalibrated",
+                "traject.conformal_router.uncalibrated",
                 message=(
                     "ConformalPredictor is not calibrated; "
                     "returning inner router decision unchanged."

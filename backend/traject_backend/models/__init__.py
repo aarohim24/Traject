@@ -1,4 +1,4 @@
-"""Axon backend SQLAlchemy ORM models.
+"""Traject backend SQLAlchemy ORM models.
 
 Re-exports all record classes and the shared ``Base`` so that migration
 scripts and tests can import from a single location.

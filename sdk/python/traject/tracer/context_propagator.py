@@ -1,7 +1,7 @@
 """W3C TraceContext header injection and extraction for multi-agent tracing.
 
 Implements the subset of the W3C Trace Context Level 1 specification
-(https://www.w3.org/TR/trace-context/) that is required by the Axon cascade
+(https://www.w3.org/TR/trace-context/) that is required by the Traject cascade
 tracer: serialising a ``traceparent`` header from a ``(trace_id, span_id)``
 pair, and deserialising one back into those components. The ``tracestate``
 header is recognised by its constant but is not manipulated; callers may pass

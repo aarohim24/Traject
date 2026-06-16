@@ -1,4 +1,4 @@
-"""Compression strategy definitions, defaults, and validation for the Axon SDK.
+"""Compression strategy definitions, defaults, and validation for the Traject SDK.
 
 This module defines the three built-in compression strategies (CONSERVATIVE,
 MODERATE, AGGRESSIVE), the frozen ``CompressionConfig`` dataclass that
@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-from traject.exceptions import AxonConfigError
+from traject.exceptions import TrajectConfigError
 
 
 class CompressionStrategy(StrEnum):
@@ -45,7 +45,7 @@ class CompressionConfig:
 
     Instances are created either via ``STRATEGY_DEFAULTS`` or by constructing
     directly with custom field values.  Pass a ``CompressionConfig`` to
-    ``axon.compression.engine.compress`` to control how the pipeline behaves.
+    ``traject.compression.engine.compress`` to control how the pipeline behaves.
 
     Attributes:
         strategy: The named strategy this config implements.
@@ -121,23 +121,23 @@ def validate_config(config: CompressionConfig) -> None:
         config: The ``CompressionConfig`` instance to validate.
 
     Raises:
-        AxonConfigError: If ``target_reduction_pct`` is not in the open
+        TrajectConfigError: If ``target_reduction_pct`` is not in the open
             interval ``(0.0, 1.0)``.
-        AxonConfigError: If ``min_turns_protected`` is negative.
-        AxonConfigError: If ``protect_system_prompt`` is ``False`` (not
+        TrajectConfigError: If ``min_turns_protected`` is negative.
+        TrajectConfigError: If ``protect_system_prompt`` is ``False`` (not
             supported in Phase 1).
     """
     if not 0.0 < config.target_reduction_pct < 1.0:
-        raise AxonConfigError(
+        raise TrajectConfigError(
             f"target_reduction_pct must be in (0.0, 1.0), got "
             f"{config.target_reduction_pct}. Use a value like 0.20 for 20% reduction."
         )
     if config.min_turns_protected < 0:
-        raise AxonConfigError(
+        raise TrajectConfigError(
             f"min_turns_protected must be >= 0, got {config.min_turns_protected}."
         )
     if not config.protect_system_prompt:
-        raise AxonConfigError(
+        raise TrajectConfigError(
             "protect_system_prompt must be True. Disabling system prompt "
             "protection is not supported in Phase 1."
         )

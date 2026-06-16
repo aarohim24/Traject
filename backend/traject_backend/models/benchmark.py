@@ -26,7 +26,7 @@ class BenchmarkSubmissionRecord(Base):
 
     Attributes:
         id: UUID primary key, generated server-side by ``gen_random_uuid()``.
-        sdk_version: Axon SDK version string that produced the submission.
+        sdk_version: Traject SDK version string that produced the submission.
         python_version: CPython version string on the submitting host.
         sample_count: Number of inference spans included in the benchmark run.
         p50_cost_usd: Median per-call cost in USD (Decimal-serialised string).

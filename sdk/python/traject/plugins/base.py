@@ -1,4 +1,4 @@
-"""Abstract base classes for the Axon plugin system.
+"""Abstract base classes for the Traject plugin system.
 
 Defines the three plugin ABCs — :class:`CompressionPlugin`,
 :class:`RoutingPlugin`, and :class:`ArtifactClassifierPlugin` — that
@@ -22,7 +22,7 @@ class CompressionPlugin(ABC):
     """Abstract base class for custom compression plugins.
 
     Implement this interface to inject custom segment-level compression logic
-    into the Axon compression pipeline.  Registered plugins are invoked in
+    into the Traject compression pipeline.  Registered plugins are invoked in
     registration order; the output of plugin *N* is passed as input to
     plugin *N+1* before the standard strategy engine runs.
     """
@@ -50,7 +50,7 @@ class RoutingPlugin(ABC):
 
     Implement this interface to override or supplement Axon's default
     routing logic.  When a ``RoutingPlugin`` returns a non-``None``
-    :class:`~axon.router.routing_table.RoutingDecision`, the default router
+    :class:`~traject.router.routing_table.RoutingDecision`, the default router
     is **not** invoked for that request.
     """
 
@@ -71,7 +71,7 @@ class RoutingPlugin(ABC):
             **kwargs: Provider-specific parameters (reserved for future use).
 
         Returns:
-            A :class:`~axon.router.routing_table.RoutingDecision` to
+            A :class:`~traject.router.routing_table.RoutingDecision` to
             override the default router, or ``None`` to defer to the
             default router.
         """
@@ -83,7 +83,7 @@ class ArtifactClassifierPlugin(ABC):
 
     Implement this interface to override or supplement Axon's built-in
     heuristic artifact-type classification.  When a plugin returns a
-    non-``None`` :class:`~axon.classifier.artifact_type.ArtifactType`,
+    non-``None`` :class:`~traject.classifier.artifact_type.ArtifactType`,
     the default classifier is **not** invoked for that message.
     """
 
@@ -100,7 +100,7 @@ class ArtifactClassifierPlugin(ABC):
             **kwargs: Provider-specific parameters (reserved for future use).
 
         Returns:
-            An :class:`~axon.classifier.artifact_type.ArtifactType` to
+            An :class:`~traject.classifier.artifact_type.ArtifactType` to
             override the default classifier, or ``None`` to defer to the
             default classifier.
         """

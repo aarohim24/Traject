@@ -1,4 +1,4 @@
-"""Axon Backend — FastAPI application entry point.
+"""Traject Backend — FastAPI application entry point.
 
 Wires up the lifespan context manager (DB init, Redis ping, scheduler),
 CORS and request-logging middleware, health endpoints, and the v1 router.
@@ -106,7 +106,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="Axon Backend",
+    title="Traject Backend",
     description="Self-hosted LLM observability: span ingestion, cost attribution, semantic cache.",
     version="0.2.0",
     lifespan=lifespan,

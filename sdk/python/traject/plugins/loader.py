@@ -1,9 +1,9 @@
-"""Entry-point-based plugin loader for the Axon plugin system.
+"""Entry-point-based plugin loader for the Traject plugin system.
 
-Discovers and loads third-party plugins published under the ``"axon.plugins"``
+Discovers and loads third-party plugins published under the ``"traject.plugins"``
 entry-point group using :mod:`importlib.metadata`.  Each entry point is
 expected to point to a class that is a concrete subclass of one of the three
-plugin ABCs defined in :mod:`axon.plugins.base`.
+plugin ABCs defined in :mod:`traject.plugins.base`.
 
 Typical usage::
 
@@ -26,16 +26,16 @@ _log = structlog.get_logger(__name__)
 
 
 class PluginLoader:
-    """Discovers and loads Axon plugins from Python entry points.
+    """Discovers and loads Traject plugins from Python entry points.
 
-    Reads all entry points published under the ``"axon.plugins"`` group via
+    Reads all entry points published under the ``"traject.plugins"`` group via
     :func:`importlib.metadata.entry_points`, instantiates each advertised
     class, and registers it with the provided :class:`PluginRegistry`.
 
     Third-party packages register their plugins by adding an entry to their
     ``pyproject.toml``::
 
-        [project.entry-points."axon.plugins"]
+        [project.entry-points."traject.plugins"]
         my_compressor = "my_package.plugins:MyCompressionPlugin"
 
     Each key is an arbitrary label; the value follows the ``module:ClassName``
@@ -50,7 +50,7 @@ class PluginLoader:
         """Discover and load all plugins into *registry*.
 
         Iterates :func:`importlib.metadata.entry_points` for the
-        ``"axon.plugins"`` group, loads each entry point class, instantiates
+        ``"traject.plugins"`` group, loads each entry point class, instantiates
         it with no arguments, and calls :meth:`PluginRegistry.register` with
         the resulting instance.
 
@@ -69,7 +69,7 @@ class PluginLoader:
         """
         success_count: int = 0
 
-        entry_points = importlib.metadata.entry_points(group="axon.plugins")
+        entry_points = importlib.metadata.entry_points(group="traject.plugins")
 
         for ep in entry_points:
             try:
@@ -77,14 +77,14 @@ class PluginLoader:
                 instance = plugin_class()
                 registry.register(instance)
                 _log.info(
-                    "axon.plugins.loaded",
+                    "traject.plugins.loaded",
                     entry_point=ep.name,
                     plugin_class=type(instance).__name__,
                 )
                 success_count += 1
             except Exception as exc:
                 _log.error(
-                    "axon.plugins.load_failed",
+                    "traject.plugins.load_failed",
                     entry_point=ep.name,
                     error=str(exc),
                     exc_info=exc,

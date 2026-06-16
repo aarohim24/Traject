@@ -95,7 +95,7 @@ class PromptCacheAdvisor:
     """Analyses prompts and span logs for prompt-caching optimisation opportunities.
 
     The advisor operates on raw system-prompt text (``analyze_prompt``),
-    on in-memory collections of :class:`~axon.models.InferenceSpan` objects
+    on in-memory collections of :class:`~traject.models.InferenceSpan` objects
     (``analyze_spans``), or directly on JSONL log files (``analyze_directory``).
     """
 
@@ -170,7 +170,7 @@ class PromptCacheAdvisor:
 
         Args:
             spans: A list of objects that each expose a ``prompt_hash``
-                attribute (typically :class:`~axon.models.InferenceSpan`
+                attribute (typically :class:`~traject.models.InferenceSpan`
                 instances or compatible objects).
 
         Returns:
@@ -195,7 +195,7 @@ class PromptCacheAdvisor:
     def analyze_directory(self, jsonl_path: str) -> AdvisorReport:
         """Read a JSONL file of InferenceSpan records and analyse them.
 
-        Each line in the file is parsed as an :class:`~axon.models.InferenceSpan`
+        Each line in the file is parsed as an :class:`~traject.models.InferenceSpan`
         using Pydantic's ``model_validate_json``.  Malformed lines are silently
         skipped.  The collected spans are passed to :meth:`analyze_spans`.
 

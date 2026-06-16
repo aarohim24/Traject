@@ -1,4 +1,4 @@
-"""Axon SDK — LLM observability, cost attribution, and trajectory compression.
+"""Traject SDK — LLM observability, cost attribution, and trajectory compression.
 
 Provides a single decorator and patch function for instrumenting OpenAI and
 Anthropic clients with zero changes to existing call sites. Emits structured
@@ -10,22 +10,22 @@ from __future__ import annotations
 from traject.compression.strategies import CompressionStrategy
 from traject.core.instrumentor import configure, instrument, patch
 from traject.exceptions import (
-    AxonCompressionError,
-    AxonConfigError,
-    AxonDependencyError,
-    AxonError,
-    AxonProviderError,
+    TrajectCompressionError,
+    TrajectConfigError,
+    TrajectDependencyError,
+    TrajectError,
+    TrajectProviderError,
     InsufficientDataError,
 )
 
 __version__ = "0.1.0"
 
 __all__ = [
-    "AxonCompressionError",
-    "AxonConfigError",
-    "AxonDependencyError",
-    "AxonError",
-    "AxonProviderError",
+    "TrajectCompressionError",
+    "TrajectConfigError",
+    "TrajectDependencyError",
+    "TrajectError",
+    "TrajectProviderError",
     "CompressionStrategy",
     "InsufficientDataError",
     "__version__",

@@ -1,10 +1,10 @@
-"""Axon plugin system — public API surface.
+"""Traject plugin system — public API surface.
 
 Re-exports the three plugin ABCs, the :class:`PluginRegistry` singleton, and
 :class:`PluginLoader` so that all plugin-related symbols are importable from
-the single ``axon.plugins`` namespace.
+the single ``traject.plugins`` namespace.
 
-:class:`PluginLoader` is defined in ``axon.plugins.loader`` (implemented in
+:class:`PluginLoader` is defined in ``traject.plugins.loader`` (implemented in
 task 16).  It is exposed here via a lazy ``__getattr__`` guard so that this
 package is importable before ``loader.py`` exists and without requiring its
 runtime dependency on ``importlib.metadata`` to be evaluated eagerly.
@@ -49,4 +49,4 @@ def __getattr__(name: str) -> Any:  # Any: dynamic module attribute
         from traject.plugins.loader import PluginLoader
 
         return PluginLoader
-    raise AttributeError(f"module 'axon.plugins' has no attribute {name!r}")
+    raise AttributeError(f"module 'traject.plugins' has no attribute {name!r}")
