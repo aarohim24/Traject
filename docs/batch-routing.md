@@ -1,6 +1,6 @@
 # Batch Routing Guide
 
-Axon's `BatchRouter` integrates with provider batch APIs to reduce costs on
+Traject's `BatchRouter` integrates with provider batch APIs to reduce costs on
 non-latency-sensitive workloads.
 
 ---
@@ -49,20 +49,20 @@ Completed batch jobs are collected by a background `poll_and_collect` coroutine.
 ### Marking spans as batch-eligible
 
 ```python
-import axon
+import traject
 
-axon.configure()
+traject.configure()
 
 # Mark this feature's spans as eligible for batch submission
 client = openai.OpenAI()
-axon.patch(client, feature_tag="nightly_analysis", batch_eligible=True)
+traject.patch(client, feature_tag="nightly_analysis", batch_eligible=True)
 ```
 
 ### Directly using BatchRouter
 
 ```python
-from axon.batch.batch_router import BatchRouter
-from axon.batch.job_tracker import JobTracker
+from traject.batch.batch_router import BatchRouter
+from traject.batch.job_tracker import JobTracker
 
 router = BatchRouter(
     openai_client=openai_client,
@@ -79,7 +79,7 @@ print(f"Batch job {job.job_id} submitted, status: {job.status}")
 ## BatchJobRecord
 
 ```python
-from axon.batch.batch_router import BatchJobRecord
+from traject.batch.batch_router import BatchJobRecord
 from datetime import datetime
 
 # Fields:

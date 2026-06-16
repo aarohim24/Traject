@@ -1,27 +1,27 @@
 # Quickstart
 
-Get Axon running in under 5 minutes.
+Get Traject running in under 5 minutes.
 
 ## Install
 
 ```bash
 # OpenAI
-pip install axon-sdk[openai]
+pip install traject-sdk[openai]
 
 # Anthropic
-pip install axon-sdk[anthropic]
+pip install traject-sdk[anthropic]
 
 # LangChain
-pip install axon-sdk[openai,langchain]
+pip install traject-sdk[openai,langchain]
 ```
 
-## Example 1: Raw OpenAI with @axon.instrument()
+## Example 1: Raw OpenAI with @traject.instrument()
 
 ```python
-import axon
+import traject
 import openai
 
-@axon.instrument(feature_tag="support-bot", shadow_mode=True)
+@traject.instrument(feature_tag="support-bot", shadow_mode=True)
 def call_llm(messages):
     client = openai.OpenAI()
     return client.chat.completions.create(model="gpt-4o", messages=messages)
@@ -35,18 +35,18 @@ print(response.choices[0].message.content)
 
 The OTEL span printed to stdout will show:
 - `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`
-- `axon.cost_usd` — exact USD cost using Decimal arithmetic
-- `axon.compression.shadow_mode = true` — compression ran but messages were not modified
+- `traject.cost_usd` — exact USD cost using Decimal arithmetic
+- `traject.compression.shadow_mode = true` — compression ran but messages were not modified
 
-## Example 2: LangChain with axon.patch()
+## Example 2: LangChain with traject.patch()
 
 ```python
-import axon
+import traject
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
 model = ChatOpenAI(model="gpt-4o-mini")
-axon.patch(model, feature_tag="langchain-agent", shadow_mode=True)
+traject.patch(model, feature_tag="langchain-agent", shadow_mode=True)
 
 response = model.invoke([
     SystemMessage(content="You are a helpful assistant."),
@@ -55,14 +55,14 @@ response = model.invoke([
 print(response.content)
 ```
 
-## Example 3: Async OpenAI with @axon.instrument()
+## Example 3: Async OpenAI with @traject.instrument()
 
 ```python
 import asyncio
-import axon
+import traject
 import openai
 
-@axon.instrument(feature_tag="async-bot", shadow_mode=True)
+@traject.instrument(feature_tag="async-bot", shadow_mode=True)
 async def call_llm_async(messages):
     client = openai.AsyncOpenAI()
     return await client.chat.completions.create(model="gpt-4o-mini", messages=messages)
@@ -87,13 +87,13 @@ export AXON_OTLP_ENDPOINT=http://localhost:4317
 Or configure programmatically:
 
 ```python
-axon.configure(otlp_endpoint="http://localhost:4317", export_to_stdout=False)
+traject.configure(otlp_endpoint="http://localhost:4317", export_to_stdout=False)
 ```
 
 ## CLI
 
 ```bash
-axon doctor          # check dependencies
-axon version         # print version
-axon analyze --input spans.jsonl  # analyze span log
+traject doctor          # check dependencies
+traject version         # print version
+traject analyze --input spans.jsonl  # analyze span log
 ```

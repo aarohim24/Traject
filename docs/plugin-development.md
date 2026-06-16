@@ -1,6 +1,6 @@
 # Plugin Development Guide
 
-Axon's plugin system lets you extend compression, routing, and artifact
+Traject's plugin system lets you extend compression, routing, and artifact
 classification behavior without modifying the core SDK.  Plugins are discovered
 at runtime via Python entry points and are composed into the existing pipeline.
 
@@ -8,7 +8,7 @@ at runtime via Python entry points and are composed into the existing pipeline.
 
 ## Plugin Types
 
-There are three abstract base classes (ABCs) in `axon.plugins.base`:
+There are three abstract base classes (ABCs) in `traject.plugins.base`:
 
 | Plugin ABC | Method signature | Effect |
 |---|---|---|
@@ -23,7 +23,7 @@ There are three abstract base classes (ABCs) in `axon.plugins.base`:
 ### Compression Plugin
 
 ```python
-from axon.plugins.base import CompressionPlugin
+from traject.plugins.base import CompressionPlugin
 
 class MyCompressionPlugin(CompressionPlugin):
     """Strips XML tags from every segment before compression."""
@@ -36,8 +36,8 @@ class MyCompressionPlugin(CompressionPlugin):
 ### Routing Plugin
 
 ```python
-from axon.plugins.base import RoutingPlugin
-from axon.router.rule_router import RoutingDecision, ModelTier
+from traject.plugins.base import RoutingPlugin
+from traject.router.rule_router import RoutingDecision, ModelTier
 
 class MyRoutingPlugin(RoutingPlugin):
     """Always route requests that mention 'embed' to the embeddings tier."""
@@ -62,8 +62,8 @@ class MyRoutingPlugin(RoutingPlugin):
 ### Artifact Classifier Plugin
 
 ```python
-from axon.plugins.base import ArtifactClassifierPlugin
-from axon.classifier.artifact_type import ArtifactType
+from traject.plugins.base import ArtifactClassifierPlugin
+from traject.classifier.artifact_type import ArtifactType
 
 class MyClassifierPlugin(ArtifactClassifierPlugin):
     """Classify segments beginning with '##METRIC:' as TOOL_RESULT."""
@@ -79,7 +79,7 @@ class MyClassifierPlugin(ArtifactClassifierPlugin):
 ## Registering a Plugin via Entry Points
 
 The recommended way to distribute a plugin is as an installable Python package
-with an entry point in the `"axon.plugins"` group.
+with an entry point in the `"traject.plugins"` group.
 
 ### `pyproject.toml` example
 
@@ -89,17 +89,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "axon-plugin-mycompany"
+name = "traject-plugin-mycompany"
 version = "0.1.0"
-dependencies = ["axon-sdk>=0.5.0"]
+dependencies = ["traject-sdk>=0.5.0"]
 
-[project.entry-points."axon.plugins"]
-my_compression = "axon_plugin_mycompany.compression:MyCompressionPlugin"
-my_router      = "axon_plugin_mycompany.routing:MyRoutingPlugin"
-my_classifier  = "axon_plugin_mycompany.classifier:MyClassifierPlugin"
+[project.entry-points."traject.plugins"]
+my_compression = "traject_plugin_mycompany.compression:MyCompressionPlugin"
+my_router      = "traject_plugin_mycompany.routing:MyRoutingPlugin"
+my_classifier  = "traject_plugin_mycompany.classifier:MyClassifierPlugin"
 ```
 
-After installing your package (`pip install axon-plugin-mycompany`), Axon's
+After installing your package (`pip install traject-plugin-mycompany`), Traject's
 `PluginLoader` will discover and load all registered plugins automatically.
 
 ---
@@ -109,7 +109,7 @@ After installing your package (`pip install axon-plugin-mycompany`), Axon's
 If you prefer to register plugins directly without entry points:
 
 ```python
-from axon.plugins import PluginRegistry, PluginLoader
+from traject.plugins import PluginRegistry, PluginLoader
 
 registry = PluginRegistry()
 
@@ -117,7 +117,7 @@ registry = PluginRegistry()
 registry.register(MyCompressionPlugin())
 registry.register(MyRoutingPlugin())
 
-# Entry-point discovery (loads all installed axon.plugins entry points)
+# Entry-point discovery (loads all installed traject.plugins entry points)
 loader = PluginLoader()
 loaded_count = loader.load_all(registry)
 print(f"Loaded {loaded_count} plugins from entry points")
@@ -148,7 +148,7 @@ wins.  The built-in classifier is skipped for that segment.
 ## Error Handling
 
 Plugin load failures are non-fatal.  If a plugin raises an exception during
-`PluginLoader.load_all()`, Axon logs the error via structlog and continues
+`PluginLoader.load_all()`, Traject logs the error via structlog and continues
 loading remaining plugins.  A partial failure never prevents the SDK from
 operating.
 
@@ -161,7 +161,7 @@ Exceptions in routing plugins are caught by the router and treated as `None`
 ## Testing Your Plugin
 
 ```python
-from axon.plugins import PluginRegistry
+from traject.plugins import PluginRegistry
 
 registry = PluginRegistry()
 registry.register(MyCompressionPlugin())

@@ -1,6 +1,6 @@
-# Axon Project Governance
+# Traject Project Governance
 
-This document describes how the Axon project is governed, how decisions are
+This document describes how the Traject project is governed, how decisions are
 made, and how contributors can participate in shaping its direction.
 
 ---
@@ -8,7 +8,7 @@ made, and how contributors can participate in shaping its direction.
 ## Maintainer Responsibilities
 
 Maintainers are trusted contributors who have demonstrated consistent,
-high-quality contributions and a thorough understanding of Axon's architecture
+high-quality contributions and a thorough understanding of Traject's architecture
 and goals. Their responsibilities include:
 
 - **Code review**: Reviewing pull requests for correctness, adherence to
@@ -29,7 +29,7 @@ Current maintainers are listed in [MAINTAINERS.md](../MAINTAINERS.md).
 
 ## Decision-Making Process
 
-Axon uses a **consensus-seeking** model with a defined escalation path.
+Traject uses a **consensus-seeking** model with a defined escalation path.
 
 ### Day-to-day decisions
 
@@ -86,7 +86,7 @@ Implementation PRs must reference the accepted RFC number in their description.
 
 ## Code of Conduct
 
-All participants in the Axon community are expected to follow the
+All participants in the Traject community are expected to follow the
 [Contributor Covenant Code of Conduct](../CODE_OF_CONDUCT.md).
 
 Reports of unacceptable behavior should be directed to the maintainers listed
@@ -97,7 +97,7 @@ confidentially and investigated promptly.
 
 ## Release Cadence
 
-Axon follows **semantic versioning** (`MAJOR.MINOR.PATCH`).
+Traject follows **semantic versioning** (`MAJOR.MINOR.PATCH`).
 
 | Stream | Cadence | Notes |
 |---|---|---|

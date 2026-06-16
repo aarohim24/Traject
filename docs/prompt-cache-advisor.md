@@ -13,8 +13,8 @@ The catch: the cache only activates when the **exact same token sequence** is pr
 Run the advisor against a JSONL file of recorded `InferenceSpan` records:
 
 ```bash
-axon cache-advisor --input spans.jsonl
-axon cache-advisor --input spans.jsonl --provider openai
+traject cache-advisor --input spans.jsonl
+traject cache-advisor --input spans.jsonl --provider openai
 ```
 
 The advisor reads each span's `prompt_hash` to count unique prompts, identifies cacheable prefixes, and prints a rich table of opportunities.

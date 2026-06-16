@@ -1,4 +1,4 @@
-# Draft: Introducing Axon — Open-Source LLM Cost Optimization Middleware
+# Draft: Introducing Traject — Open-Source LLM Cost Optimization Middleware
 
 > **Draft status:** This post is not ready to publish. The benchmark results
 > section contains placeholders that must be replaced with real production data
@@ -15,8 +15,8 @@ tokens. By step 10 you're sending 5,000 tokens — the same tool outputs, the
 same intermediate reasoning, the same messages — on every round trip. At scale,
 this isn't an efficiency issue. It's a structural cost problem.
 
-We built Axon to address it at the infrastructure layer, not the application
-layer. Axon is a Python middleware library that plugs in between your
+We built Traject to address it at the infrastructure layer, not the application
+layer. Traject is a Python middleware library that plugs in between your
 application code and your LLM provider clients. It compresses context
 trajectories, routes requests to the cheapest qualifying model, attributes cost
 at the feature level, and emits structured telemetry — without changing how you
@@ -35,11 +35,11 @@ production data.)_
 
 ---
 
-## How Axon Works
+## How Traject Works
 
 ### Trajectory Compression
 
-Axon parses each context window into typed segments: `SYSTEM_PROMPT`,
+Traject parses each context window into typed segments: `SYSTEM_PROMPT`,
 `USER_MESSAGE`, `TOOL_RESULT`, `REASONING_BLOCK`, `RAG_CHUNK`, and more.
 It protects the system prompt and the most recent turns (never touched), then
 scores the remaining segments by recency, semantic relevance to the current
@@ -61,7 +61,7 @@ live compression.
 
 ### Model Routing
 
-Axon's router inspects each request and assigns it to the cheapest model tier
+Traject's router inspects each request and assigns it to the cheapest model tier
 that can handle it. In Phase 5, an ML-based router learns from historical
 routing decisions, with conformal prediction guarantees ensuring that the
 routing accuracy claim `P(quality >= threshold) >= 1 - alpha` is
@@ -77,23 +77,23 @@ which parts of their system are spending what.
 ### Budget Controls
 
 Budget limits can be set per feature tag. When a feature approaches or exceeds
-its budget, Axon fires a webhook — before the provider invoice arrives.
+its budget, Traject fires a webhook — before the provider invoice arrives.
 
 ---
 
 ## Getting Started
 
 ```bash
-pip install axon-sdk
+pip install traject-sdk
 ```
 
 ```python
 import openai
-import axon
+import traject
 
-axon.configure(export_to_stdout=True)
+traject.configure(export_to_stdout=True)
 client = openai.OpenAI()
-axon.patch(client, feature_tag="my_agent", shadow_mode=True)
+traject.patch(client, feature_tag="my_agent", shadow_mode=True)
 
 # Your existing code unchanged.
 ```
@@ -101,8 +101,8 @@ axon.patch(client, feature_tag="my_agent", shadow_mode=True)
 For team features (cost dashboard, budget alerts, semantic caching):
 
 ```bash
-git clone https://github.com/aarohimathur/axon
-cd axon
+git clone https://github.com/aarohimathur/traject
+cd traject
 docker compose -f deploy/docker-compose.yml up -d
 ```
 
@@ -115,13 +115,13 @@ production systems deserve to validate before trusting. Every benchmark in the
 repository is reproducible (`python examples/benchmark/run_benchmark.py`) and
 clearly labelled as synthetic until production data confirms it.
 
-**No data leaves your infrastructure.** Axon wraps your existing provider
+**No data leaves your infrastructure.** Traject wraps your existing provider
 client. It never holds API keys. Prompt content is hashed with SHA-256 before
 any telemetry emission. Telemetry collection is opt-in, disabled by default,
 and collects only aggregate metrics.
 
 **Framework-agnostic.** LangChain, AutoGen, LlamaIndex, raw OpenAI,
-raw Anthropic — Axon works with all of them through a single `axon.patch()`
+raw Anthropic — Traject works with all of them through a single `traject.patch()`
 call.
 
 ---
@@ -149,7 +149,7 @@ on that evidence.)_
 
 ## Try It
 
-- GitHub: https://github.com/aarohimathur/axon
-- PyPI: `pip install axon-sdk`
+- GitHub: https://github.com/aarohimathur/traject
+- PyPI: `pip install traject-sdk`
 - Research paper: [docs/research-paper.md](../../docs/research-paper.md)
-- Docs: https://github.com/aarohimathur/axon/tree/main/docs
+- Docs: https://github.com/aarohimathur/traject/tree/main/docs

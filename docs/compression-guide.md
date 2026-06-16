@@ -9,12 +9,12 @@ not been relevant for the last ten turns. A 20-step agent that started with
 a 500-token system prompt may be sending 15,000 tokens of history by step
 15, most of which the model ignores.
 
-Axon's trajectory compression pipeline solves this by identifying low-relevance
+Traject's trajectory compression pipeline solves this by identifying low-relevance
 segments in the history and either summarising them (replacing with a short
 digest) or dropping them entirely before the next provider call. **Critical
 context is always protected**: system prompts are never touched, the most
 recent turns are always kept verbatim, and any message you pin with
-`axon_preserve: True` is immutable.
+`traject_preserve: True` is immutable.
 
 The result is a shorter context with lower input-token cost and, in most
 cases, no meaningful change to response quality.
@@ -32,7 +32,7 @@ provider.
 **Why shadow mode is the default**
 
 Shadow mode is a trust-building mechanism. It lets you observe exactly what
-Axon *would* compress without changing a single byte of your live traffic.
+Traject *would* compress without changing a single byte of your live traffic.
 You can inspect `CompressionResult` fields like `segments_dropped` and
 `tokens_saved` for days or weeks before deciding whether to enable live
 compression. There is no risk of degrading your agent's behaviour.
@@ -50,8 +50,8 @@ compression. There is no risk of degrading your agent's behaviour.
 **Code example**
 
 ```python
-from axon.compression.engine import compress
-from axon.compression.strategies import CompressionConfig, CompressionStrategy
+from traject.compression.engine import compress
+from traject.compression.strategies import CompressionConfig, CompressionStrategy
 
 config = CompressionConfig(
     strategy=CompressionStrategy.MODERATE,
@@ -72,7 +72,7 @@ print(result.messages is messages) # True  (original list returned unchanged)
 All three built-in strategies default to `shadow_mode=True`:
 
 ```python
-from axon.compression.strategies import get_config, CompressionStrategy
+from traject.compression.strategies import get_config, CompressionStrategy
 
 config = get_config(CompressionStrategy.CONSERVATIVE)
 print(config.shadow_mode)  # True
@@ -82,7 +82,7 @@ print(config.shadow_mode)  # True
 
 ## Strategies
 
-Axon ships three strategies. Each specifies a target token reduction and a
+Traject ships three strategies. Each specifies a target token reduction and a
 set of decision rules that govern which segment types are eligible for
 summarisation or removal.
 
@@ -114,14 +114,14 @@ score, or any other factor. Protected segments receive a relevance score of
    recent turns are always kept in full. For `CONSERVATIVE` and `MODERATE`
    this is the last 3 turn pairs; for `AGGRESSIVE` it is the last 2.
 
-3. **Any segment with metadata `axon_preserve: True`** — add this key to
+3. **Any segment with metadata `traject_preserve: True`** — add this key to
    any message dict to pin it permanently, regardless of strategy or score:
 
    ```python
    {
        "role": "user",
        "content": "Always respond in formal English.",
-       "axon_preserve": True,
+       "traject_preserve": True,
    }
    ```
 
@@ -182,8 +182,8 @@ of each field using a representative example from a 20-message conversation
 run with the `MODERATE` strategy in shadow mode.
 
 ```python
-from axon.compression.engine import compress
-from axon.compression.strategies import get_config, CompressionStrategy
+from traject.compression.engine import compress
+from traject.compression.strategies import get_config, CompressionStrategy
 
 config = get_config(CompressionStrategy.MODERATE)  # shadow_mode=True by default
 
@@ -217,7 +217,7 @@ falls back to the original messages. In a live run a value of `0.356` means
 
 **`messages`** in shadow mode: your original list, untouched. In live mode
 (`shadow_mode=False`): the compressed list, with summarised segments replaced
-by `<first 100 chars of original> [summarized by Axon]` and dropped segments
+by `<first 100 chars of original> [summarized by Traject]` and dropped segments
 absent.
 
 **`warnings`** is an empty list on a clean run. A non-empty list means
@@ -228,15 +228,15 @@ the message for the root cause before re-running with live mode.
 
 ## Enabling Live Compression
 
-To have Axon actually shorten the messages sent to the LLM, set
-`shadow_mode=False`. This is a deliberate user decision — Axon never enables
+To have Traject actually shorten the messages sent to the LLM, set
+`shadow_mode=False`. This is a deliberate user decision — Traject never enables
 live compression automatically.
 
 ```python
-import axon
-from axon.compression.strategies import CompressionStrategy
+import traject
+from traject.compression.strategies import CompressionStrategy
 
-@axon.instrument(
+@traject.instrument(
     feature_tag="my-agent",
     shadow_mode=False,                          # Live compression enabled
     strategy=CompressionStrategy.CONSERVATIVE,  # Start conservative
@@ -260,6 +260,6 @@ evaluating that risk for your use case.
    `segments_dropped`, and `segments_summarized` in your span logs.
 2. Switch to `CONSERVATIVE` live mode first — it targets only 20% reduction
    and applies the strictest thresholds.
-3. Pin any message that must never be modified with `"axon_preserve": True`.
+3. Pin any message that must never be modified with `"traject_preserve": True`.
 4. Monitor `CompressionResult.warnings` — a non-empty list signals a
    validation fallback to the original messages.

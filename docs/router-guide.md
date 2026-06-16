@@ -2,9 +2,9 @@
 
 ## What the Router Does
 
-The Axon Adaptive Model Router classifies every LLM call by task type and estimated complexity, then maps that pair to the cheapest capable model tier using a configurable routing table. Classification is heuristic-only (keyword matching) and runs in under 1 ms with no network calls, so it adds negligible overhead to every request. The result is a `RoutingDecision` dataclass that records the original model, the selected model, the routing rule applied, and the estimated cost delta — giving you full visibility into every substitution.
+The Traject Adaptive Model Router classifies every LLM call by task type and estimated complexity, then maps that pair to the cheapest capable model tier using a configurable routing table. Classification is heuristic-only (keyword matching) and runs in under 1 ms with no network calls, so it adds negligible overhead to every request. The result is a `RoutingDecision` dataclass that records the original model, the selected model, the routing rule applied, and the estimated cost delta — giving you full visibility into every substitution.
 
-The router is purely advisory by default: when integrated with the Axon instrumentor via `configure(router=...)`, it logs routing decisions through structlog before each LLM call. If you want the router to actually substitute the model, call `router.apply(decision, client, messages)` instead of the provider client directly. This separation lets you audit routing behaviour in shadow mode before committing to automatic substitution.
+The router is purely advisory by default: when integrated with the Traject instrumentor via `configure(router=...)`, it logs routing decisions through structlog before each LLM call. If you want the router to actually substitute the model, call `router.apply(decision, client, messages)` instead of the provider client directly. This separation lets you audit routing behaviour in shadow mode before committing to automatic substitution.
 
 ---
 
@@ -35,15 +35,15 @@ The router is purely advisory by default: when integrated with the Axon instrume
 ## Basic Usage
 
 ```python
-import axon
-from axon.router.rule_router import RuleRouter
+import traject
+from traject.router.rule_router import RuleRouter
 
 router = RuleRouter(provider="anthropic")
-axon.configure(router=router)
+traject.configure(router=router)
 
 # All subsequent patch()/instrument() calls now log routing decisions
 client = anthropic.Anthropic()
-axon.patch(client, feature_tag="summariser")
+traject.patch(client, feature_tag="summariser")
 ```
 
 ---
@@ -53,10 +53,10 @@ axon.patch(client, feature_tag="summariser")
 Override the routing table or model map at construction time:
 
 ```python
-from axon.router.routing_table import (
+from traject.router.routing_table import (
     ModelTier, ComplexityTier, DEFAULT_ROUTING_TABLE, DEFAULT_MODEL_MAP
 )
-from axon.router.task_classifier import TaskType
+from traject.router.task_classifier import TaskType
 
 # Send ALL summarization to the cheapest model regardless of complexity
 custom_table = {
@@ -74,7 +74,7 @@ router = RuleRouter(provider="openai", routing_table=custom_table)
 Use `override_task_type` when you already know the task:
 
 ```python
-from axon.router.task_classifier import TaskType
+from traject.router.task_classifier import TaskType
 
 decision = router.route(
     messages,
@@ -88,8 +88,8 @@ decision = router.route(
 ## A/B Testing
 
 ```python
-from axon.router.ab_test import ABTestConfig
-from axon.router.rule_router import RuleRouter
+from traject.router.ab_test import ABTestConfig
+from traject.router.rule_router import RuleRouter
 
 ab = ABTestConfig(
     treatment_model="gpt-4o-mini",

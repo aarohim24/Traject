@@ -11,7 +11,7 @@ When an orchestrator agent spawns sub-agents, each agent makes independent LLM c
 The orchestrator generates the root trace and injects the `traceparent` header into every outbound HTTP request to sub-agents:
 
 ```python
-from axon.tracer.cascade_tracer import CascadeTracer
+from traject.tracer.cascade_tracer import CascadeTracer
 
 tracer = CascadeTracer()
 ctx = tracer.start_orchestration(
@@ -38,7 +38,7 @@ response = httpx.post(
 Sub-agents extract the trace context from inbound headers and continue the same trace:
 
 ```python
-from axon.tracer.cascade_tracer import CascadeTracer
+from traject.tracer.cascade_tracer import CascadeTracer
 
 # In a FastAPI or Flask handler:
 def handle_task(request):
@@ -61,9 +61,9 @@ The `join_trace` method never raises — if the `traceparent` header is absent o
 
 ## Reading Cascade Cost in Grafana
 
-When the Axon backend is running, all spans share the same `trace_id`. Query them in Grafana using the provisioned **Cascade Cost** dashboard:
+When the Traject backend is running, all spans share the same `trace_id`. Query them in Grafana using the provisioned **Cascade Cost** dashboard:
 
-1. Open **Dashboards → Axon → Cascade Cost Summary**
+1. Open **Dashboards → Traject → Cascade Cost Summary**
 2. Filter by `trace_id` or `feature_tag`
 3. The **Per-Agent Cost Breakdown** panel shows orchestrator vs. sub-agent costs
 4. The **Total Cascade Cost** stat shows the end-to-end USD cost for the full pipeline
@@ -88,6 +88,6 @@ traceparent: 00-<trace_id>-<parent_id>-<trace_flags>
 
 - `trace_id`: 32 lowercase hexadecimal digits (128-bit random UUID)
 - `parent_id`: 16 lowercase hexadecimal digits (64-bit random UUID slice)
-- `trace_flags`: `01` (sampled — Axon always samples)
+- `trace_flags`: `01` (sampled — Traject always samples)
 
-This format is compatible with all W3C-compliant observability backends including Jaeger, Zipkin, Honeycomb, DataDog, and OpenTelemetry collectors. Axon does not implement the `tracestate` header beyond defining its constant name.
+This format is compatible with all W3C-compliant observability backends including Jaeger, Zipkin, Honeycomb, DataDog, and OpenTelemetry collectors. Traject does not implement the `tracestate` header beyond defining its constant name.

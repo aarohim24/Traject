@@ -1,6 +1,6 @@
 # Provider Expansion Guide
 
-Axon Phase 5 adds native adapters for **AWS Bedrock** and **Google Vertex AI**,
+Traject Phase 5 adds native adapters for **AWS Bedrock** and **Google Vertex AI**,
 extending the existing OpenAI and Anthropic support.
 
 ---
@@ -8,7 +8,7 @@ extending the existing OpenAI and Anthropic support.
 ## AWS Bedrock (`BedrockAdapter`)
 
 `BedrockAdapter` calls the AWS Bedrock `InvokeModel` API via `boto3` and
-translates between Axon's message format and the model-family-specific request
+translates between Traject's message format and the model-family-specific request
 body formats.
 
 ### Supported model families
@@ -22,11 +22,11 @@ body formats.
 ### Installation
 
 ```bash
-pip install "axon-sdk[bedrock]"
+pip install "traject-sdk[bedrock]"
 ```
 
 This installs `boto3`.  If `boto3` is not installed and you attempt to
-instantiate `BedrockAdapter`, you will receive an `AxonDependencyError` with
+instantiate `BedrockAdapter`, you will receive an `TrajectDependencyError` with
 installation instructions.
 
 ### AWS credentials
@@ -43,13 +43,13 @@ export AWS_DEFAULT_REGION=us-east-1
 # Or use ~/.aws/credentials / IAM roles
 ```
 
-Axon never reads, stores, or logs AWS credentials.  It calls boto3 which
-manages credentials entirely outside of Axon.
+Traject never reads, stores, or logs AWS credentials.  It calls boto3 which
+manages credentials entirely outside of Traject.
 
 ### Usage
 
 ```python
-from axon.providers.bedrock import BedrockAdapter
+from traject.providers.bedrock import BedrockAdapter
 
 adapter = BedrockAdapter(region_name="us-east-1")
 
@@ -94,11 +94,11 @@ class ProviderResponse:
 ### Installation
 
 ```bash
-pip install "axon-sdk[vertex]"
+pip install "traject-sdk[vertex]"
 ```
 
 This installs `google-cloud-aiplatform`.  If not installed and you attempt to
-instantiate `VertexAdapter`, you will receive an `AxonDependencyError`.
+instantiate `VertexAdapter`, you will receive an `TrajectDependencyError`.
 
 ### Google Cloud credentials
 
@@ -112,7 +112,7 @@ gcloud auth application-default login
 ### Usage
 
 ```python
-from axon.providers.vertex import VertexAdapter
+from traject.providers.vertex import VertexAdapter
 
 adapter = VertexAdapter(project="my-gcp-project", location="us-central1")
 
@@ -129,15 +129,15 @@ print(f"Tokens: {response.input_tokens} in / {response.output_tokens} out")
 
 ## Importing Adapters
 
-Both adapters are importable from `axon.providers` without installing optional
+Both adapters are importable from `traject.providers` without installing optional
 dependencies — lazy import guards ensure that the import only fails when you
 actually instantiate the adapter:
 
 ```python
 # Always safe — no boto3 or google-cloud required
-from axon.providers import BedrockAdapter, VertexAdapter, ProviderResponse
+from traject.providers import BedrockAdapter, VertexAdapter, ProviderResponse
 
-# Instantiation raises AxonDependencyError if dependency not installed
+# Instantiation raises TrajectDependencyError if dependency not installed
 adapter = BedrockAdapter()  # fails cleanly if boto3 missing
 ```
 
@@ -145,14 +145,14 @@ adapter = BedrockAdapter()  # fails cleanly if boto3 missing
 
 ## Using Adapters with the Router
 
-Provider adapters integrate with Axon's routing layer.  When the `MLRouter`
-or `RuleRouter` selects a model on Bedrock or Vertex, Axon automatically
+Provider adapters integrate with Traject's routing layer.  When the `MLRouter`
+or `RuleRouter` selects a model on Bedrock or Vertex, Traject automatically
 routes the request to the appropriate adapter:
 
 ```python
-import axon
+import traject
 
-axon.configure(
+traject.configure(
     providers={
         "bedrock": BedrockAdapter(region_name="us-east-1"),
         "vertex": VertexAdapter(project="my-project", location="us-central1"),

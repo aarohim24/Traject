@@ -1,4 +1,4 @@
-# Axon: Production-Grade Context Trajectory Compression and Intelligent Routing for Multi-Step LLM Agents
+# Traject: Production-Grade Context Trajectory Compression and Intelligent Routing for Multi-Step LLM Agents
 
 **Authors:** [Author names redacted for blind review]
 
@@ -12,11 +12,11 @@ Large language model (LLM) agents accumulate context over multi-step
 trajectories, causing each inference call to re-transmit all prior tool
 outputs, reasoning traces, and message history.  This quadratic growth in
 input tokens constitutes the dominant cost driver in agentic AI systems.
-We present **Axon**, an open-source Python middleware library that addresses
+We present **Traject**, an open-source Python middleware library that addresses
 this problem at the infrastructure layer through typed artifact classification,
 selective trajectory compression, ML-based model routing with conformal
 prediction quality guarantees, and feature-level cost attribution via
-OpenTelemetry.  Axon operates as a drop-in patch over existing provider
+OpenTelemetry.  Traject operates as a drop-in patch over existing provider
 clients (OpenAI, Anthropic, AWS Bedrock, Google Vertex AI), requiring no
 changes to application code.  A shadow mode enables safe production validation
 before live compression is activated.  Evaluation results are reported in
@@ -41,7 +41,7 @@ growth inherent in agentic trajectories.
 
 We make the following contributions:
 
-1. **Typed artifact classification**: A nine-type taxonomy of context segments
+1. **Typed artifact classification**: A nine-type ttrajectomy of context segments
    (system prompts, user messages, tool results, reasoning blocks, RAG chunks,
    etc.) enabling per-type optimization policies that respect the semantics of
    each segment type.
@@ -68,13 +68,13 @@ We make the following contributions:
 
 **Context window management.**  AgentDiet (FSE 2026) proposes systematic
 pruning of agentic context by categorizing segments and applying
-compression policies.  Axon extends this direction with a production
+compression policies.  Traject extends this direction with a production
 middleware implementation that is framework-agnostic and operates on live
 inference traffic without requiring changes to agent code.
 
 **LLM cost optimization.**  FrugalGPT (Chen et al., 2023) demonstrates that
 cascade routing — trying cheaper models first and escalating on failure — can
-achieve significant cost reduction with quality bounds.  Axon's ML router
+achieve significant cost reduction with quality bounds.  Traject's ML router
 incorporates a related idea, adding conformal prediction to provide
 finite-sample coverage guarantees rather than empirical estimates.
 
@@ -83,7 +83,7 @@ treatment of split conformal prediction for machine learning.  We adopt their
 quantile-based calibration method to calibrate the routing quality threshold.
 
 **Observability.**  OpenTelemetry (CNCF, 2023) provides a vendor-neutral
-telemetry API.  Axon emits all instrumentation as OTEL spans, ensuring
+telemetry API.  Traject emits all instrumentation as OTEL spans, ensuring
 compatibility with the full observability ecosystem.
 
 ---
@@ -94,10 +94,10 @@ compatibility with the full observability ecosystem.
 
 ```
 Application Code
-      │  axon.patch(client)
+      │  traject.patch(client)
       ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Axon Instrumentation Layer                                  │
+│  Traject Instrumentation Layer                                  │
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
 │  │  Artifact    │  │  Compression │  │  ML Router /     │  │
@@ -161,7 +161,7 @@ Bates (2021, Theorem 1).
 
 ### 3.5 Cost Attribution and Budget Controls
 
-Axon emits structured OTEL spans with `feature_tag`, `model`, `input_tokens`,
+Traject emits structured OTEL spans with `feature_tag`, `model`, `input_tokens`,
 `output_tokens`, and `cost_usd` (Decimal-precise).  The backend aggregates
 these into hourly totals per feature tag, enabling per-feature budget limits
 with webhook alerting.
@@ -170,7 +170,7 @@ with webhook alerting.
 
 ## 4. Implementation
 
-Axon is implemented in Python 3.11+ with full type annotations
+Traject is implemented in Python 3.11+ with full type annotations
 (`mypy --strict`, zero errors).  Key implementation decisions:
 
 - **Decimal arithmetic** for all monetary values (ADR-006).
@@ -178,7 +178,7 @@ Axon is implemented in Python 3.11+ with full type annotations
   optimization logic (ADR-003).
 - **Shadow mode default** — compression never applied without explicit opt-in
   (ADR-004).
-- **No credential storage** — Axon wraps the user's existing provider client
+- **No credential storage** — Traject wraps the user's existing provider client
   and never holds API keys (ADR-007).
 - **Plugin system** — compression, routing, and artifact classification are
   extensible via registered entry-point plugins.
@@ -236,7 +236,7 @@ once sufficient opted-in production submissions are available.]
 
 ## 6. Conclusion
 
-Axon addresses the structural cost growth of multi-step LLM agents through
+Traject addresses the structural cost growth of multi-step LLM agents through
 infrastructure-layer middleware rather than application-layer changes.  The
 combination of typed artifact classification, selective trajectory compression,
 conformal-prediction-guaranteed routing, and OpenTelemetry-native observability
@@ -274,8 +274,8 @@ rather than synthetic benchmarks alone.
 All experiments can be reproduced using the open-source repository:
 
 ```bash
-git clone https://github.com/aarohimathur/axon
-cd axon
+git clone https://github.com/aarohimathur/traject
+cd traject
 pip install -e "sdk/python[dev]"
 python examples/benchmark/run_benchmark.py
 ```

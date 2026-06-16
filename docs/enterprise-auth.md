@@ -1,6 +1,6 @@
 # Enterprise Auth Guide
 
-Axon Phase 4 ships a full API key management system with role-based access control (RBAC)
+Traject Phase 4 ships a full API key management system with role-based access control (RBAC)
 and an append-only audit log. This guide covers how to manage keys, what each role can do,
 how to rotate keys safely, and how to read the audit log.
 
@@ -10,23 +10,23 @@ how to rotate keys safely, and how to read the audit log.
 
 ### How keys work
 
-Every Axon API key is a 42-character token in the format:
+Every Traject API key is a 42-character token in the format:
 
 ```
-axon_live_<32 hex characters>
+traject_live_<32 hex characters>
 ```
 
-Example: `axon_live_a3f8c2d1e4b5f6a7b8c9d0e1f2a3b4c5`
+Example: `traject_live_a3f8c2d1e4b5f6a7b8c9d0e1f2a3b4c5`
 
-When a key is created, the **raw key is returned exactly once** in the API response. Axon
+When a key is created, the **raw key is returned exactly once** in the API response. Traject
 stores only a bcrypt hash of the key — the raw value is never persisted. If a key is lost,
 it must be rotated (revoked and replaced).
 
 ### Creating a key
 
 ```bash
-curl -X POST https://axon.internal.example.com/v1/auth/keys \
-  -H "X-Axon-API-Key: $AXON_ADMIN_KEY" \
+curl -X POST https://traject.internal.example.com/v1/auth/keys \
+  -H "X-Traject-API-Key: $AXON_ADMIN_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "ci-pipeline-prod",
@@ -39,10 +39,10 @@ Response (HTTP 201):
 
 ```json
 {
-  "key_prefix": "axon_liv",
+  "key_prefix": "traject_liv",
   "name": "ci-pipeline-prod",
   "role": "engineer",
-  "raw_key": "axon_live_a3f8c2d1e4b5f6a7b8c9d0e1f2a3b4c5",
+  "raw_key": "traject_live_a3f8c2d1e4b5f6a7b8c9d0e1f2a3b4c5",
   "created_at": "2024-11-01T12:00:00Z",
   "expires_at": "2025-01-30T12:00:00Z"
 }
@@ -53,8 +53,8 @@ Store `raw_key` immediately in your secrets manager. It will not be shown again.
 ### Listing keys
 
 ```bash
-curl https://axon.internal.example.com/v1/auth/keys \
-  -H "X-Axon-API-Key: $AXON_ADMIN_KEY"
+curl https://traject.internal.example.com/v1/auth/keys \
+  -H "X-Traject-API-Key: $AXON_ADMIN_KEY"
 ```
 
 The response lists all non-revoked keys with their prefix, name, role, `created_at`,
@@ -63,8 +63,8 @@ The response lists all non-revoked keys with their prefix, name, role, `created_
 ### Revoking a key
 
 ```bash
-curl -X DELETE https://axon.internal.example.com/v1/auth/keys/axon_liv \
-  -H "X-Axon-API-Key: $AXON_ADMIN_KEY"
+curl -X DELETE https://traject.internal.example.com/v1/auth/keys/traject_liv \
+  -H "X-Traject-API-Key: $AXON_ADMIN_KEY"
 ```
 
 Returns HTTP 204 on success. The key is immediately invalid. Returns HTTP 404 if the prefix
@@ -74,7 +74,7 @@ is not found. All revocations are recorded in the audit log.
 
 ## Roles and Permissions
 
-Axon uses three roles in a strict hierarchy: `viewer < engineer < admin`.
+Traject uses three roles in a strict hierarchy: `viewer < engineer < admin`.
 
 ### viewer
 
@@ -93,7 +93,7 @@ Read-only access to observability data.
 | `DELETE /v1/auth/keys/{prefix}` | ✗ |
 | `GET /v1/audit` | ✗ |
 
-Assign `viewer` keys to the Axon dashboard in environments where the JS bundle is accessible
+Assign `viewer` keys to the Traject dashboard in environments where the JS bundle is accessible
 to untrusted users, or to read-only monitoring integrations.
 
 ### engineer
@@ -111,7 +111,7 @@ Read access plus the ability to manage budgets and submit spans.
 | `GET /v1/auth/keys` | ✗ |
 | `GET /v1/audit` | ✗ |
 
-Assign `engineer` keys to CI pipelines, the Axon SDK backend client, and application services
+Assign `engineer` keys to CI pipelines, the Traject SDK backend client, and application services
 that need to write spans and manage budgets.
 
 ### admin
@@ -138,8 +138,8 @@ Rotation is a three-step process: create a replacement, update consumers, revoke
 ### Step 1 — Create a replacement key
 
 ```bash
-curl -X POST https://axon.internal.example.com/v1/auth/keys \
-  -H "X-Axon-API-Key: $AXON_ADMIN_KEY" \
+curl -X POST https://traject.internal.example.com/v1/auth/keys \
+  -H "X-Traject-API-Key: $AXON_ADMIN_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "ci-pipeline-prod-v2",
@@ -157,8 +157,8 @@ secret version. Verify each consumer is working correctly with the new key befor
 
 ```bash
 # Verify the new key works
-curl https://axon.internal.example.com/v1/health \
-  -H "X-Axon-API-Key: $NEW_KEY"
+curl https://traject.internal.example.com/v1/health \
+  -H "X-Traject-API-Key: $NEW_KEY"
 ```
 
 ### Step 3 — Revoke the old key
@@ -166,8 +166,8 @@ curl https://axon.internal.example.com/v1/health \
 Once all consumers have been migrated, revoke the old key by its prefix:
 
 ```bash
-curl -X DELETE https://axon.internal.example.com/v1/auth/keys/<old_prefix> \
-  -H "X-Axon-API-Key: $AXON_ADMIN_KEY"
+curl -X DELETE https://traject.internal.example.com/v1/auth/keys/<old_prefix> \
+  -H "X-Traject-API-Key: $AXON_ADMIN_KEY"
 ```
 
 Verify revocation by confirming the old key returns HTTP 401.
@@ -186,8 +186,8 @@ If a key is believed to be compromised:
 ### Accessing the audit log
 
 ```bash
-curl "https://axon.internal.example.com/v1/audit?limit=100" \
-  -H "X-Axon-API-Key: $AXON_ADMIN_KEY"
+curl "https://traject.internal.example.com/v1/audit?limit=100" \
+  -H "X-Traject-API-Key: $AXON_ADMIN_KEY"
 ```
 
 Query parameters:
@@ -219,20 +219,20 @@ Each audit log entry has the following fields:
 
 **Who created keys in the last 7 days?**
 ```bash
-curl "https://axon.internal.example.com/v1/audit?action=create_key&from_ts=2024-10-25T00:00:00Z" \
-  -H "X-Axon-API-Key: $AXON_ADMIN_KEY"
+curl "https://traject.internal.example.com/v1/audit?action=create_key&from_ts=2024-10-25T00:00:00Z" \
+  -H "X-Traject-API-Key: $AXON_ADMIN_KEY"
 ```
 
 **All actions by a specific key:**
 ```bash
-curl "https://axon.internal.example.com/v1/audit?actor_prefix=axon_liv" \
-  -H "X-Axon-API-Key: $AXON_ADMIN_KEY"
+curl "https://traject.internal.example.com/v1/audit?actor_prefix=traject_liv" \
+  -H "X-Traject-API-Key: $AXON_ADMIN_KEY"
 ```
 
 **Failed authorization attempts:**
 ```bash
-curl "https://axon.internal.example.com/v1/audit?result=denied" \
-  -H "X-Axon-API-Key: $AXON_ADMIN_KEY"
+curl "https://traject.internal.example.com/v1/audit?result=denied" \
+  -H "X-Traject-API-Key: $AXON_ADMIN_KEY"
 ```
 
 The audit log is append-only. There is no API to delete or modify entries.
@@ -241,7 +241,7 @@ The audit log is append-only. There is no API to delete or modify entries.
 
 ## Backward Compatibility: Environment Variable Key
 
-Axon Phases 1–3 used a single `AXON_API_KEY` environment variable to authenticate all
+Traject Phases 1–3 used a single `AXON_API_KEY` environment variable to authenticate all
 requests to the backend. This mechanism is fully supported in Phase 4.
 
 If a request arrives with a raw key that matches `settings.api_key` (the `AXON_API_KEY`

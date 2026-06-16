@@ -1,6 +1,6 @@
 # Kubernetes Deployment Guide
 
-Axon ships a Helm chart located at `deploy/kubernetes/helm/axon`. This guide covers
+Traject ships a Helm chart located at `deploy/kubernetes/helm/traject`. This guide covers
 prerequisites, installation, production customization, upgrades, and resource requirements.
 
 ---
@@ -30,12 +30,12 @@ Add the chart and install with default values:
 
 ```bash
 # Clone the repo (chart is not yet published to a Helm registry)
-git clone https://github.com/aarohimathur/axon
-cd axon
+git clone https://github.com/aarohimathur/traject
+cd traject
 
-# Install into the 'axon' namespace (creates it if absent)
-helm install axon deploy/kubernetes/helm/axon \
-  --namespace axon \
+# Install into the 'traject' namespace (creates it if absent)
+helm install traject deploy/kubernetes/helm/traject \
+  --namespace traject \
   --create-namespace \
   --set backend.image.tag=0.4.0 \
   --set dashboard.image.tag=0.4.0
@@ -44,29 +44,29 @@ helm install axon deploy/kubernetes/helm/axon \
 After installation, check pod status:
 
 ```bash
-kubectl get pods -n axon
+kubectl get pods -n traject
 ```
 
 Expected output once healthy:
 
 ```
 NAME                                READY   STATUS    RESTARTS   AGE
-axon-backend-7d4f8b9c6-xxxxx        1/1     Running   0          2m
-axon-backend-7d4f8b9c6-yyyyy        1/1     Running   0          2m
-axon-dashboard-5c8b9d4f7-zzzzz      1/1     Running   0          2m
+traject-backend-7d4f8b9c6-xxxxx        1/1     Running   0          2m
+traject-backend-7d4f8b9c6-yyyyy        1/1     Running   0          2m
+traject-dashboard-5c8b9d4f7-zzzzz      1/1     Running   0          2m
 ```
 
 Access the backend API:
 
 ```bash
-kubectl port-forward svc/axon-backend 8000:8000 -n axon
+kubectl port-forward svc/traject-backend 8000:8000 -n traject
 curl http://localhost:8000/health
 ```
 
 Access the dashboard:
 
 ```bash
-kubectl port-forward svc/axon-dashboard 5173:80 -n axon
+kubectl port-forward svc/traject-dashboard 5173:80 -n traject
 # Open http://localhost:5173 in your browser
 ```
 
@@ -84,7 +84,7 @@ Create `production.yaml`:
 backend:
   replicaCount: 3
   image:
-    repository: ghcr.io/aarohimathur/axon-backend
+    repository: ghcr.io/aarohimathur/traject-backend
     tag: "0.4.0"
     pullPolicy: IfNotPresent
   resources:
@@ -102,7 +102,7 @@ backend:
 dashboard:
   replicaCount: 2
   image:
-    repository: ghcr.io/aarohimathur/axon-dashboard
+    repository: ghcr.io/aarohimathur/traject-dashboard
     tag: "0.4.0"
     pullPolicy: IfNotPresent
   resources:
@@ -122,45 +122,45 @@ redis:
 
 ingress:
   enabled: true
-  host: "axon.internal.example.com"
+  host: "traject.internal.example.com"
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   tls:
-    - secretName: axon-tls
+    - secretName: traject-tls
       hosts:
-        - axon.internal.example.com
+        - traject.internal.example.com
 ```
 
 Install with your production values:
 
 ```bash
-helm install axon deploy/kubernetes/helm/axon \
-  --namespace axon \
+helm install traject deploy/kubernetes/helm/traject \
+  --namespace traject \
   --create-namespace \
   --values production.yaml
 ```
 
 ### Secrets management
 
-The chart creates a Kubernetes Secret (`axon-secrets`) for `DATABASE_URL`, `REDIS_URL`, and
+The chart creates a Kubernetes Secret (`traject-secrets`) for `DATABASE_URL`, `REDIS_URL`, and
 `AXON_API_KEY`. For production, provide these via an external secrets operator
 (e.g., External Secrets Operator, Sealed Secrets, or Vault Agent Injector) rather than
 inline values:
 
 ```bash
 # Example: create the secret manually (not recommended for GitOps — use ESO instead)
-kubectl create secret generic axon-secrets \
-  --namespace axon \
-  --from-literal=DATABASE_URL="postgresql+asyncpg://axon:password@postgres.internal:5432/axon" \
+kubectl create secret generic traject-secrets \
+  --namespace traject \
+  --from-literal=DATABASE_URL="postgresql+asyncpg://traject:password@postgres.internal:5432/traject" \
   --from-literal=REDIS_URL="redis://redis.internal:6379/0" \
-  --from-literal=AXON_API_KEY="axon_live_your_admin_key"
+  --from-literal=AXON_API_KEY="traject_live_your_admin_key"
 ```
 
 ### Using a managed Postgres and Redis
 
 Set `postgres.enabled=false` and `redis.enabled=false` in your values file, and provide the
-connection strings via the `axon-secrets` Secret. The bundled Postgres and Redis are suitable
+connection strings via the `traject-secrets` Secret. The bundled Postgres and Redis are suitable
 for development and staging only — they use single-instance deployments with no HA or backups.
 
 ---
@@ -170,8 +170,8 @@ for development and staging only — they use single-instance deployments with n
 ### Standard upgrade
 
 ```bash
-helm upgrade axon deploy/kubernetes/helm/axon \
-  --namespace axon \
+helm upgrade traject deploy/kubernetes/helm/traject \
+  --namespace traject \
   --values production.yaml \
   --set backend.image.tag=0.4.1
 ```
@@ -187,29 +187,29 @@ pre-upgrade Helm hook or manually:
 
 ```bash
 # Manual migration (run before helm upgrade)
-kubectl run axon-migrate \
-  --namespace axon \
-  --image=ghcr.io/aarohimathur/axon-backend:0.4.1 \
+kubectl run traject-migrate \
+  --namespace traject \
+  --image=ghcr.io/aarohimathur/traject-backend:0.4.1 \
   --restart=Never \
-  --env="DATABASE_URL=$(kubectl get secret axon-secrets -n axon -o jsonpath='{.data.DATABASE_URL}' | base64 -d)" \
+  --env="DATABASE_URL=$(kubectl get secret traject-secrets -n traject -o jsonpath='{.data.DATABASE_URL}' | base64 -d)" \
   --command -- alembic upgrade head
 
 # Wait for migration to complete
-kubectl wait --for=condition=complete pod/axon-migrate --namespace axon --timeout=120s
-kubectl delete pod axon-migrate --namespace axon
+kubectl wait --for=condition=complete pod/traject-migrate --namespace traject --timeout=120s
+kubectl delete pod traject-migrate --namespace traject
 ```
 
 ### Rollback
 
 ```bash
-helm rollback axon 0 --namespace axon
+helm rollback traject 0 --namespace traject
 # '0' rolls back to the previous release; specify a revision number for a specific version
 ```
 
 List release history:
 
 ```bash
-helm history axon --namespace axon
+helm history traject --namespace traject
 ```
 
 ---
@@ -218,7 +218,7 @@ helm history axon --namespace axon
 
 These are the default `values.yaml` resource settings and recommended production minimums.
 
-### Backend (`axon-backend`)
+### Backend (`traject-backend`)
 
 | | Default (values.yaml) | Production minimum | Notes |
 |---|---|---|---|
@@ -231,7 +231,7 @@ These are the default `values.yaml` resource settings and recommended production
 The backend readiness probe (`GET /health`, periodSeconds 10, failureThreshold 3) gates all
 traffic routing. The liveness probe (periodSeconds 20, failureThreshold 3) restarts stuck pods.
 
-### Dashboard (`axon-dashboard`)
+### Dashboard (`traject-dashboard`)
 
 | | Default (values.yaml) | Production minimum | Notes |
 |---|---|---|---|

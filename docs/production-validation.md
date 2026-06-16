@@ -1,6 +1,6 @@
 # Production Validation Guide
 
-This document explains how to validate Axon's compression and routing
+This document explains how to validate Traject's compression and routing
 performance on your own production workloads, and how to optionally submit
 aggregate benchmark data to the community registry.
 
@@ -17,29 +17,29 @@ patterns.  Production validation gives you ground truth.
 
 ## Step 1: Enable Shadow Mode
 
-Shadow mode is Axon's default.  It runs the full compression pipeline and logs
+Shadow mode is Traject's default.  It runs the full compression pipeline and logs
 what *would* be compressed, but returns the original uncompressed context to
 the LLM.  This means you can measure compression potential with zero risk.
 
 ```python
 import openai
-import axon
+import traject
 
-axon.configure(export_to_stdout=True)
+traject.configure(export_to_stdout=True)
 client = openai.OpenAI()
 
 # shadow_mode=True is the default — explicit here for clarity
-axon.patch(client, feature_tag="my_agent", shadow_mode=True)
+traject.patch(client, feature_tag="my_agent", shadow_mode=True)
 ```
 
 Run your agent workload normally.  Each call emits an OTEL span with:
 
 | Attribute | Description |
 |---|---|
-| `axon.compression.tokens_saved` | Tokens that would have been saved |
-| `axon.compression.compression_ratio` | Ratio of compressed to original tokens |
-| `axon.compression.strategy` | Compression strategy used |
-| `axon.compression.shadow_mode` | `true` (shadow mode was active) |
+| `traject.compression.tokens_saved` | Tokens that would have been saved |
+| `traject.compression.compression_ratio` | Ratio of compressed to original tokens |
+| `traject.compression.strategy` | Compression strategy used |
+| `traject.compression.shadow_mode` | `true` (shadow mode was active) |
 
 ---
 
@@ -54,7 +54,7 @@ import httpx
 
 resp = httpx.get(
     "http://localhost:8000/v1/attribution",
-    headers={"X-Axon-API-Key": "your-key"},
+    headers={"X-Traject-API-Key": "your-key"},
     params={"feature_tag": "my_agent", "days": 7},
 )
 print(resp.json())
@@ -72,7 +72,7 @@ Look for:
 Once you're satisfied with the shadow mode results, flip the flag:
 
 ```python
-axon.patch(client, feature_tag="my_agent", shadow_mode=False)
+traject.patch(client, feature_tag="my_agent", shadow_mode=False)
 ```
 
 Monitor for at least 100 calls before drawing conclusions.  The OTEL spans
@@ -86,11 +86,11 @@ If you'd like to contribute your aggregate, anonymized benchmark results to
 the community registry, use `TelemetryReporter`:
 
 ```python
-from axon.core.telemetry_reporter import TelemetryReporter, TelemetryPayload
+from traject.core.telemetry_reporter import TelemetryReporter, TelemetryPayload
 from datetime import datetime, timezone
 
 # Disabled by default — explicit opt-in required
-reporter = TelemetryReporter(enabled=True, backend_url="https://axon.example.com")
+reporter = TelemetryReporter(enabled=True, backend_url="https://traject.example.com")
 
 payload = TelemetryPayload(
     sdk_version="0.5.0",
@@ -131,8 +131,8 @@ no data is ever collected or transmitted.
 
 Submitted benchmarks are publicly visible at:
 
-- **Dashboard**: `http://your-axon-backend/benchmarks`
-- **API**: `GET http://your-axon-backend/v1/benchmarks`
+- **Dashboard**: `http://your-traject-backend/benchmarks`
+- **API**: `GET http://your-traject-backend/v1/benchmarks`
 
 No authentication is required to read the registry.
 

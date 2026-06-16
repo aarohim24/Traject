@@ -1,6 +1,6 @@
 # ML Router Guide
 
-Axon's Phase 5 router adds a machine-learning layer on top of the existing
+Traject's Phase 5 router adds a machine-learning layer on top of the existing
 rule-based router.  The `MLRouter` trains a logistic regression model on
 historical routing decisions and progressively improves routing accuracy as
 more data accumulates.  When insufficient data exists, it falls back
@@ -51,23 +51,23 @@ directly to the inner router and logs a warning.
 ## Quick Start
 
 ```python
-from axon.router.ml_router import MLRouter
-from axon.router.rule_router import RuleRouter
-from axon.router.conformal import ConformalRouter
+from traject.router.ml_router import MLRouter
+from traject.router.rule_router import RuleRouter
+from traject.router.conformal import ConformalRouter
 
 # Create ML router (falls back to rules until 500 examples exist)
 rule_router = RuleRouter()
 ml_router = MLRouter(
     fallback_router=rule_router,
-    model_artifact_path=".axon/ml_model.pkl",  # optional pre-trained artifact
+    model_artifact_path=".traject/ml_model.pkl",  # optional pre-trained artifact
 )
 
 # Wrap with conformal prediction for quality guarantees
 router = ConformalRouter(inner_router=ml_router, alpha=0.1)
 
-# Use with Axon instrumentation
-import axon
-axon.configure(router=router)
+# Use with Traject instrumentation
+import traject
+traject.configure(router=router)
 ```
 
 ---
@@ -79,8 +79,8 @@ You can also trigger training manually:
 
 ```python
 import asyncio
-from axon_backend.services.ml_training import MLTrainingService
-from axon_backend.core.database import get_db
+from traject_backend.services.ml_training import MLTrainingService
+from traject_backend.core.database import get_db
 
 async def train():
     async with get_db() as db:
@@ -102,7 +102,7 @@ Before the `ConformalRouter` can provide quality guarantees, you must calibrate
 the `ConformalPredictor` with a held-out calibration set:
 
 ```python
-from axon.router.conformal import ConformalPredictor
+from traject.router.conformal import ConformalPredictor
 import numpy as np
 
 predictor = ConformalPredictor(quality_threshold=0.85)
@@ -142,11 +142,11 @@ Custom features can be injected via the plugin system — see
 The ML router requires scikit-learn, which is an optional dependency:
 
 ```bash
-pip install "axon-sdk[ml]"
+pip install "traject-sdk[ml]"
 ```
 
 If scikit-learn is not installed and `MLRouter` is instantiated, you will
-receive an `AxonDependencyError` with installation instructions.
+receive an `TrajectDependencyError` with installation instructions.
 
 ---
 
@@ -156,11 +156,11 @@ The ML router emits structlog events and OTEL span attributes:
 
 | Attribute | Value |
 |---|---|
-| `axon.router.type` | `"ml"` or `"rule"` (fallback) |
-| `axon.router.routing_rule` | e.g. `"ml.tier_selection"` |
-| `axon.conformal.covered` | `true` / `false` |
-| `axon.conformal.q_hat` | Calibrated quantile threshold |
-| `axon.conformal.predicted_quality_lb` | Lower bound on predicted quality |
+| `traject.router.type` | `"ml"` or `"rule"` (fallback) |
+| `traject.router.routing_rule` | e.g. `"ml.tier_selection"` |
+| `traject.conformal.covered` | `true` / `false` |
+| `traject.conformal.q_hat` | Calibrated quantile threshold |
+| `traject.conformal.predicted_quality_lb` | Lower bound on predicted quality |
 
 ---
 

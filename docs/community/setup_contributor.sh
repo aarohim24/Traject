@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# setup_contributor.sh — Bootstrap a complete Axon development environment.
+# setup_contributor.sh — Bootstrap a complete Traject development environment.
 #
 # Checks for required toolchain versions, creates a Python virtual environment,
 # installs all dependencies (SDK + backend + dashboard), and wires up pre-commit
@@ -20,9 +20,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Colour
 
-info()    { echo -e "${GREEN}[axon]${NC} $*"; }
-warning() { echo -e "${YELLOW}[axon]${NC} $*"; }
-error()   { echo -e "${RED}[axon ERROR]${NC} $*" >&2; }
+info()    { echo -e "${GREEN}[traject]${NC} $*"; }
+warning() { echo -e "${YELLOW}[traject]${NC} $*"; }
+error()   { echo -e "${RED}[traject ERROR]${NC} $*" >&2; }
 
 # ── repository root ───────────────────────────────────────────────────────────
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -44,7 +44,7 @@ PYTHON_MAJOR="$(echo "$PYTHON_VERSION" | cut -d. -f1)"
 PYTHON_MINOR="$(echo "$PYTHON_VERSION" | cut -d. -f2)"
 
 if [[ "$PYTHON_MAJOR" -lt 3 || ( "$PYTHON_MAJOR" -eq 3 && "$PYTHON_MINOR" -lt 11 ) ]]; then
-    error "Python $PYTHON_VERSION detected. Axon requires Python 3.11 or later."
+    error "Python $PYTHON_VERSION detected. Traject requires Python 3.11 or later."
     error "  macOS:   brew install python@3.11"
     error "  Ubuntu:  sudo apt install python3.11"
     exit 1
@@ -65,7 +65,7 @@ NODE_VERSION="$(node --version | sed 's/^v//')"
 NODE_MAJOR="$(echo "$NODE_VERSION" | cut -d. -f1)"
 
 if [[ "$NODE_MAJOR" -lt 20 ]]; then
-    error "Node.js $NODE_VERSION detected. Axon requires Node.js 20 or later."
+    error "Node.js $NODE_VERSION detected. Traject requires Node.js 20 or later."
     error "  nvm:   nvm install 20 && nvm use 20"
     error "  brew:  brew install node@20"
     exit 1
@@ -109,7 +109,7 @@ info "pre-commit hooks installed ✓"
 # ── 9. Success ────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║          Axon contributor environment is ready!              ║${NC}"
+echo -e "${GREEN}║          Traject contributor environment is ready!              ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 info "Activate your virtual environment:"
@@ -120,9 +120,9 @@ echo "    pytest sdk/python/tests/          # run Python SDK tests"
 echo "    pytest backend/tests/             # run backend tests"
 echo "    cd sdk/typescript && npm test     # run TypeScript tests"
 echo "    cd dashboard && npm run dev       # start the dashboard dev server"
-echo "    cd backend && uvicorn axon_backend.main:app --reload"
+echo "    cd backend && uvicorn traject_backend.main:app --reload"
 echo "                                      # start the backend API server"
-echo "    ruff check sdk/python/axon        # lint the SDK"
-echo "    mypy sdk/python/axon --strict     # type-check the SDK"
+echo "    ruff check sdk/python/traject        # lint the SDK"
+echo "    mypy sdk/python/traject --strict     # type-check the SDK"
 echo ""
 info "Read CONTRIBUTING.md for the full contribution workflow."
