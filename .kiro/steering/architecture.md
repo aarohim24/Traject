@@ -1,4 +1,4 @@
-# Axon — Architecture Decisions (Locked)
+# Traject — Architecture Decisions (Locked)
 
 These decisions are locked for Phase 1. Do not revisit, redesign,
 or work around them. If a situation arises that appears to conflict
@@ -82,7 +82,7 @@ a single function body.
 
 Phase 1 is SDK + CLI only. The CLI uses SQLite (via
 `aiosqlite`) for local session persistence when the user
-runs `axon analyze`. There is no FastAPI service,
+runs `traject analyze`. There is no FastAPI service,
 no PostgreSQL, no Redis, no Docker Compose requirement
 in Phase 1. Any code that imports or references backend
 infrastructure is out of scope for Phase 1.
@@ -90,16 +90,16 @@ infrastructure is out of scope for Phase 1.
 ## ADR-009: Framework adapters are isolated
 
 Each framework adapter (LangChain, AutoGen, raw OpenAI)
-is a separate module in `axon/compression/adapters/`.
+is a separate module in `traject/compression/adapters/`.
 The compression engine depends only on the `base.py`
 adapter interface, never on a specific framework directly.
 Framework imports inside adapters are guarded with
 `try/except ImportError` and raise a descriptive
-`AxonDependencyError` if the framework is not installed.
+`TrajectDependencyError` if the framework is not installed.
 
 ## ADR-010: Provider pricing table is versioned and auditable
 
-Provider pricing lives in `axon/core/pricing.py` as a
+Provider pricing lives in `traject/core/pricing.py` as a
 Python dict of Decimal values. It is not fetched from
 a network endpoint. A GitHub Actions workflow runs weekly
 to open a PR if prices have changed (Phase 2).

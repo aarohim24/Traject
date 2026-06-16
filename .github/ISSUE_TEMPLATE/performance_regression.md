@@ -1,6 +1,6 @@
 ---
 name: Performance Regression
-about: Token count, latency, or cost is worse than expected after using Axon
+about: Token count, latency, or cost is worse than expected after using Traject
 labels: performance
 ---
 
@@ -8,7 +8,7 @@ labels: performance
 
 | Field | Value |
 |---|---|
-| Axon SDK version | <!-- e.g. 0.2.0 --> |
+| Traject SDK version | <!-- e.g. 0.2.0 --> |
 | Python version | <!-- e.g. 3.11.9 --> |
 | Agent framework | <!-- LangChain / AutoGen / raw OpenAI / raw Anthropic / other --> |
 | OS | <!-- e.g. macOS 14, Ubuntu 22.04 --> |
@@ -24,7 +24,7 @@ labels: performance
 
 ## Token Counts
 
-| Metric | Baseline (no Axon) | With Axon |
+| Metric | Baseline (no Traject) | With Traject |
 |---|---|---|
 | Prompt tokens (avg per run) | | |
 | Completion tokens (avg per run) | | |
@@ -33,7 +33,7 @@ labels: performance
 
 ## Latency
 
-| Metric | Baseline (no Axon) | With Axon |
+| Metric | Baseline (no Traject) | With Traject |
 |---|---|---|
 | End-to-end wall time (avg) | | |
 | p99 wall time | | |

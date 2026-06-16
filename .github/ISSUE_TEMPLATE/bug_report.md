@@ -8,7 +8,7 @@ labels: bug
 
 | Field | Value |
 |---|---|
-| Axon SDK version | <!-- e.g. 0.2.0 --> |
+| Traject SDK version | <!-- e.g. 0.2.0 --> |
 | Python version | <!-- e.g. 3.11.9 --> |
 | Framework | <!-- LangChain / AutoGen / raw OpenAI / raw Anthropic / other --> |
 | OS | <!-- e.g. macOS 14, Ubuntu 22.04 --> |

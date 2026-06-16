@@ -1,4 +1,4 @@
-# Axon — Coding Standards (Non-Negotiable)
+# Traject — Coding Standards (Non-Negotiable)
 
 These rules apply to every file in this repository without
 exception. They are not preferences. They are constraints.
@@ -46,7 +46,7 @@ exception. They are not preferences. They are constraints.
 
 ## Error handling
 
-- Define custom exception classes in `axon/exceptions.py`.
+- Define custom exception classes in `traject/exceptions.py`.
   Never raise bare `RuntimeError` or `ValueError` from library code
   without a descriptive message.
 - Errors must be actionable. The message must tell the caller
@@ -56,8 +56,8 @@ exception. They are not preferences. They are constraints.
 
 - Prompt content is never stored or logged in plaintext.
   Always hash with SHA-256 before any persistence or telemetry.
-- Provider API keys are never read, stored, or logged by Axon.
-  Axon wraps the user's existing client; it never holds credentials.
+- Provider API keys are never read, stored, or logged by Traject.
+  Traject wraps the user's existing client; it never holds credentials.
 - PII scrubbing is opt-in, never opt-out.
 
 ## Commits
@@ -78,7 +78,7 @@ exception. They are not preferences. They are constraints.
   External API calls (OpenAI, Anthropic) are mocked at the
   HTTP transport layer using `pytest-httpx` or `respx`.
 - Parametrize tests that share structure but differ in inputs.
-- Test file mirrors source file: `axon/core/foo.py` →
+- Test file mirrors source file: `traject/core/foo.py` →
   `tests/unit/test_foo.py`
 - Coverage minimum: 80% overall, 90% on compression engine.
 

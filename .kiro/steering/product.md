@@ -1,8 +1,8 @@
-# Axon — Product Context & Boundaries
+# Traject — Product Context & Boundaries
 
-## What Axon is
+## What Traject is
 
-Axon is a Python SDK and self-hosted backend platform that makes
+Traject is a Python SDK and self-hosted backend platform that makes
 AI inference observable, controllable, and economically efficient
 at the infrastructure layer. It instruments LLM calls in real
 time, compresses agentic context trajectories before they hit the
@@ -16,7 +16,7 @@ A TypeScript SDK provides equivalent instrumentation for Node.js.
 The backend is optional for individual use and required for team
 features.
 
-## What Axon is not
+## What Traject is not
 
 - Not a prompt coaching tool. We do not score developer behavior.
 - Not a VS Code extension. We do not read IDE session logs.
@@ -34,7 +34,7 @@ Node.js/TypeScript engineers building AI-native applications.
 
 ## Repository structure
 
-axon/
+traject/
 ├── sdk/python/          ← Phase 1 complete. Core SDK.
 │                           Modify only for router integration
 │                           in instrumentor.py and new
@@ -52,14 +52,14 @@ axon/
 ### Phase 1 — Validation ✓ COMPLETE
 
 All acceptance criteria met and verified:
-- Python SDK published and installable (axon-sdk 0.1.0)
+- Python SDK published and installable (traject-sdk 0.1.0)
 - OpenAI + Anthropic instrumentation
 - Artifact type classifier (9 types, zero false negatives
   on SYSTEM_PROMPT)
 - Trajectory compression engine (shadow mode, 3 strategies,
   engine.py at 100% coverage)
 - OpenTelemetry span emission
-- CLI: axon analyze / axon version / axon doctor
+- CLI: traject analyze / traject version / traject doctor
 - 336 tests passing, 94% overall coverage
 - mypy --strict: 0 errors across 25 source files
 - SDK overhead: 0.166ms p50 (threshold: 5ms)
@@ -71,7 +71,7 @@ Phase 1 code is frozen. No changes without explicit justification.
 ### Phase 2 — MVP ✓ COMPLETE
 
 All acceptance criteria met and verified:
-- FastAPI backend service (axon-backend 0.2.0)
+- FastAPI backend service (traject-backend 0.2.0)
 - PostgreSQL 16 + pgvector schema with Alembic migrations
 - Redis 7 semantic cache (hot layer) and budget counters
 - Feature-level cost attribution (hourly aggregation pipeline)
@@ -93,18 +93,18 @@ adds new files or extends permitted modules only.
 
 In scope:
 - Adaptive model router (rule-based V1)
-  axon/router/: rule_router.py, task_classifier.py,
+  traject/router/: rule_router.py, task_classifier.py,
   routing_table.py, ab_test.py
-- Router integration: update axon/core/instrumentor.py
+- Router integration: update traject/core/instrumentor.py
   configure() to accept router parameter (only permitted
   change to Phase 1 files)
 - TypeScript SDK: sdk/typescript/
   Instrumentation + span emission + cost calculation only.
   No compression logic in TypeScript.
-- Multi-agent cascade tracer: axon/tracer/
+- Multi-agent cascade tracer: traject/tracer/
   W3C TraceContext propagation, CascadeTracer class
-- Prompt cache optimization advisor: axon/advisor/
-  Static analysis, CLI command axon cache-advisor
+- Prompt cache optimization advisor: traject/advisor/
+  Static analysis, CLI command traject cache-advisor
 - Documentation: docs/router-guide.md,
   docs/cascade-tracing.md, docs/prompt-cache-advisor.md
 - CI: TypeScript test job added to ci.yml
