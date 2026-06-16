@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from axon.router.routing_table import (
+from traject.router.routing_table import (
     DEFAULT_MODEL_MAP,
     DEFAULT_ROUTING_TABLE,
     ComplexityTier,
@@ -16,7 +16,7 @@ from axon.router.routing_table import (
     RoutingDecision,
     complexity_score_to_tier,
 )
-from axon.router.task_classifier import TaskType
+from traject.router.task_classifier import TaskType
 
 # ---------------------------------------------------------------------------
 # complexity_score_to_tier — boundary conditions

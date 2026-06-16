@@ -13,7 +13,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from axon.router.task_classifier import TaskType, classify_task, estimate_complexity
+from traject.router.task_classifier import TaskType, classify_task, estimate_complexity
 
 # ---------------------------------------------------------------------------
 # classify_task — parametrized representative prompts

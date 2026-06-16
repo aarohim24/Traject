@@ -13,15 +13,15 @@ from uuid import uuid4
 
 from typer.testing import CliRunner
 
-from axon.advisor.prompt_cache_advisor import (
+from traject.advisor.prompt_cache_advisor import (
     CACHE_THRESHOLDS,
     AdvisorReport,
     CacheOpportunity,
     PromptCacheAdvisor,
 )
-from axon.classifier.artifact_type import ArtifactType
-from axon.cli.main import app
-from axon.models import InferenceSpan
+from traject.classifier.artifact_type import ArtifactType
+from traject.cli.main import app
+from traject.models import InferenceSpan
 
 # ---------------------------------------------------------------------------
 # Helpers

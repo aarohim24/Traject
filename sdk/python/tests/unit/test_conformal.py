@@ -14,17 +14,17 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from axon.router.conformal import (
+from traject.router.conformal import (
     ConformalPredictionResult,
     ConformalPredictor,
     ConformalRouter,
 )
-from axon.router.routing_table import (
+from traject.router.routing_table import (
     ComplexityTier,
     ModelTier,
     RoutingDecision,
 )
-from axon.router.task_classifier import TaskType
+from traject.router.task_classifier import TaskType
 
 # ---------------------------------------------------------------------------
 # Helpers

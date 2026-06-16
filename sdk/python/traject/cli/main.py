@@ -18,7 +18,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from axon.models import InferenceSpan
+from traject.models import InferenceSpan
 
 app = typer.Typer(name="axon", help="Axon SDK developer tools.")
 console = Console()
@@ -169,7 +169,7 @@ def cache_advisor(
         typer.echo(f"Error: file not found: {input}", err=True)
         raise typer.Exit(code=1)
 
-    from axon.advisor.prompt_cache_advisor import PromptCacheAdvisor
+    from traject.advisor.prompt_cache_advisor import PromptCacheAdvisor
 
     advisor = PromptCacheAdvisor()
     report = advisor.analyze_directory(str(input))

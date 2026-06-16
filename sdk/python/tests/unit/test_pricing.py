@@ -9,7 +9,7 @@ from decimal import Decimal
 
 import pytest
 
-from axon.core.pricing import PROVIDER_PRICING
+from traject.core.pricing import PROVIDER_PRICING
 
 _EXPECTED_MODELS = [
     "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo",

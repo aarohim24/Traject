@@ -16,18 +16,18 @@ from typing import Any, Literal
 import structlog
 import tiktoken
 
-from axon.classifier.artifact_type import ArtifactType, classify_sequence
-from axon.compression.adapters.base import FrameworkAdapter
-from axon.compression.adapters.raw_openai import RawOpenAIAdapter
-from axon.compression.relevance_scorer import score_segments
-from axon.compression.segment_parser import parse
-from axon.compression.strategies import (
+from traject.classifier.artifact_type import ArtifactType, classify_sequence
+from traject.compression.adapters.base import FrameworkAdapter
+from traject.compression.adapters.raw_openai import RawOpenAIAdapter
+from traject.compression.relevance_scorer import score_segments
+from traject.compression.segment_parser import parse
+from traject.compression.strategies import (
     CompressionConfig,
     CompressionStrategy,
     validate_config,
 )
-from axon.exceptions import AxonCompressionError, AxonDependencyError
-from axon.models import CompressionResult, Segment
+from traject.exceptions import AxonCompressionError, AxonDependencyError
+from traject.models import CompressionResult, Segment
 
 logger = structlog.get_logger(__name__)
 
@@ -43,7 +43,7 @@ def _detect_adapter(messages: Any) -> FrameworkAdapter:  # noqa: ANN401
 
     # Guarded import for LangChain adapter (optional dependency)
     try:
-        from axon.compression.adapters.langchain import LangChainAdapter
+        from traject.compression.adapters.langchain import LangChainAdapter
 
         if LangChainAdapter.accepts(messages):
             return LangChainAdapter()
@@ -52,7 +52,7 @@ def _detect_adapter(messages: Any) -> FrameworkAdapter:  # noqa: ANN401
 
     # Guarded import for AutoGen adapter (optional dependency)
     try:
-        from axon.compression.adapters.autogen import AutoGenAdapter
+        from traject.compression.adapters.autogen import AutoGenAdapter
 
         if AutoGenAdapter.accepts(messages):
             return AutoGenAdapter()

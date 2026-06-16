@@ -19,18 +19,18 @@ from typing import Any
 
 import structlog
 
-from axon.classifier.artifact_type import ArtifactType, classify
-from axon.compression.engine import compress
-from axon.compression.strategies import (
+from traject.classifier.artifact_type import ArtifactType, classify
+from traject.compression.engine import compress
+from traject.compression.strategies import (
     CompressionConfig,
     CompressionStrategy,
     get_config,
 )
-from axon.core.cost_calculator import calculate_cost
-from axon.core.provider_adapter import UsageData, get_adapter
-from axon.exceptions import AxonError
-from axon.models import CompressionResult, InferenceSpan
-from axon.telemetry.otel_exporter import configure_exporter, emit_span
+from traject.core.cost_calculator import calculate_cost
+from traject.core.provider_adapter import UsageData, get_adapter
+from traject.exceptions import AxonError
+from traject.models import CompressionResult, InferenceSpan
+from traject.telemetry.otel_exporter import configure_exporter, emit_span
 
 _logger = structlog.get_logger(__name__)
 
@@ -39,8 +39,8 @@ _logger = structlog.get_logger(__name__)
 from typing import TYPE_CHECKING  # noqa: E402
 
 if TYPE_CHECKING:
-    from axon.backend_client import BackendClient
-    from axon.router.rule_router import RuleRouter
+    from traject.backend_client import BackendClient
+    from traject.router.rule_router import RuleRouter
 
 _backend_client: BackendClient | None = None
 
@@ -490,7 +490,7 @@ def configure(
     configure_exporter(otlp_endpoint=otlp_endpoint, export_to_stdout=export_to_stdout)
 
     if backend_url is not None:
-        from axon.backend_client import BackendClient
+        from traject.backend_client import BackendClient
 
         _backend_client = BackendClient(
             base_url=backend_url,

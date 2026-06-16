@@ -8,14 +8,14 @@ Anthropic Message Batches).
 
 Typical usage::
 
-    from axon.batch import BatchRouter, BatchJobRecord, BatchJobStatus
+    from traject.batch import BatchRouter, BatchJobRecord, BatchJobStatus
 
     router = BatchRouter(openai_client=my_openai_client)
     record = await router.submit_batch(spans, provider="openai")
 """
 from __future__ import annotations
 
-from axon.batch.batch_router import BatchJobRecord, BatchJobStatus, BatchRouter
+from traject.batch.batch_router import BatchJobRecord, BatchJobStatus, BatchRouter
 
 __all__ = [
     "BatchJobRecord",

@@ -11,7 +11,7 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass, field
 
-from axon.exceptions import AxonConfigError
+from traject.exceptions import AxonConfigError
 
 
 @dataclass

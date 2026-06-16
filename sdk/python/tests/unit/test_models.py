@@ -8,8 +8,8 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from axon.classifier.artifact_type import ArtifactType
-from axon.models import CompressionResult, InferenceSpan, Segment
+from traject.classifier.artifact_type import ArtifactType
+from traject.models import CompressionResult, InferenceSpan, Segment
 
 
 def _valid_span(**overrides: object) -> InferenceSpan:

@@ -11,8 +11,8 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from axon.core.cost_calculator import calculate_cost, get_pricing
-from axon.core.pricing import PROVIDER_PRICING
+from traject.core.cost_calculator import calculate_cost, get_pricing
+from traject.core.pricing import PROVIDER_PRICING
 
 # ---------------------------------------------------------------------------
 # Helpers

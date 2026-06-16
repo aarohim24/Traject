@@ -17,9 +17,9 @@ import httpx
 import pytest
 import respx
 
-from axon.backend_client import BackendClient, BudgetStatus
-from axon.classifier.artifact_type import ArtifactType
-from axon.models import InferenceSpan
+from traject.backend_client import BackendClient, BudgetStatus
+from traject.classifier.artifact_type import ArtifactType
+from traject.models import InferenceSpan
 
 # ---------------------------------------------------------------------------
 # Helpers

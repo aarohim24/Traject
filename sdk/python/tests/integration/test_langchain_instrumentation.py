@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from axon.exceptions import AxonDependencyError
+from traject.exceptions import AxonDependencyError
 
 
 class TestLangChainAdapterImport:
@@ -42,14 +42,14 @@ class TestLangChainAdapterIntegration:
     def test_accepts_base_messages(self) -> None:
         from langchain_core.messages import HumanMessage, SystemMessage
 
-        from axon.compression.adapters.langchain import LangChainAdapter
+        from traject.compression.adapters.langchain import LangChainAdapter
 
         assert LangChainAdapter.accepts([SystemMessage(content="hi"), HumanMessage(content="hello")]) is True
 
     def test_normalize_produces_canonical_dicts(self) -> None:
         from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-        from axon.compression.adapters.langchain import LangChainAdapter
+        from traject.compression.adapters.langchain import LangChainAdapter
 
         normalized = LangChainAdapter().normalize([
             SystemMessage(content="sys"),
@@ -63,9 +63,9 @@ class TestLangChainAdapterIntegration:
     def test_compression_engine_processes_langchain_messages(self) -> None:
         from langchain_core.messages import HumanMessage, SystemMessage
 
-        from axon.compression.adapters.langchain import LangChainAdapter
-        from axon.compression.engine import compress
-        from axon.compression.strategies import CompressionStrategy, get_config
+        from traject.compression.adapters.langchain import LangChainAdapter
+        from traject.compression.engine import compress
+        from traject.compression.strategies import CompressionStrategy, get_config
 
         messages = [SystemMessage(content="System."), HumanMessage(content="Question.")]
         result = compress(messages, get_config(CompressionStrategy.CONSERVATIVE), adapter=LangChainAdapter())

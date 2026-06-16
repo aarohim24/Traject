@@ -14,9 +14,9 @@ from typing import Any
 
 import tiktoken
 
-from axon.classifier.artifact_type import ArtifactType
-from axon.exceptions import AxonCompressionError
-from axon.models import Segment
+from traject.classifier.artifact_type import ArtifactType
+from traject.exceptions import AxonCompressionError
+from traject.models import Segment
 
 
 def parse(

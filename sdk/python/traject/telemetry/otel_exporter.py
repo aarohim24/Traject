@@ -25,7 +25,7 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
 )
 
-from axon.models import InferenceSpan
+from traject.models import InferenceSpan
 
 # ---------------------------------------------------------------------------
 # Module-level state

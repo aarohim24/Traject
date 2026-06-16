@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from axon.exceptions import (
+from traject.exceptions import (
     AxonCompressionError,
     AxonConfigError,
     AxonDependencyError,

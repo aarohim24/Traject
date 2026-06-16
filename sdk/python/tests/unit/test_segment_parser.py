@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import pytest
 
-from axon.classifier.artifact_type import ArtifactType
-from axon.compression.adapters.raw_openai import RawOpenAIAdapter
-from axon.compression.segment_parser import parse
-from axon.exceptions import AxonCompressionError
+from traject.classifier.artifact_type import ArtifactType
+from traject.compression.adapters.raw_openai import RawOpenAIAdapter
+from traject.compression.segment_parser import parse
+from traject.exceptions import AxonCompressionError
 
 
 class TestRawOpenAIAdapter:

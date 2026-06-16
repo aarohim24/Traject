@@ -12,8 +12,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from axon.exceptions import AxonDependencyError
-from axon.providers import ProviderResponse
+from traject.exceptions import AxonDependencyError
+from traject.providers import ProviderResponse
 
 _logger_name = __name__
 

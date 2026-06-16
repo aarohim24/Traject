@@ -10,14 +10,14 @@ from unittest.mock import patch
 
 import pytest
 
-from axon.classifier.artifact_type import ArtifactType
-from axon.compression.engine import _apply_strategy, _detect_adapter, compress
-from axon.compression.strategies import (
+from traject.classifier.artifact_type import ArtifactType
+from traject.compression.engine import _apply_strategy, _detect_adapter, compress
+from traject.compression.strategies import (
     CompressionConfig,
     CompressionStrategy,
 )
-from axon.exceptions import AxonCompressionError, AxonDependencyError
-from axon.models import Segment
+from traject.exceptions import AxonCompressionError, AxonDependencyError
+from traject.models import Segment
 
 
 def _msgs(*roles_contents: tuple[str, str]) -> list[dict[str, Any]]:
@@ -729,7 +729,7 @@ class TestValidationErrorPaths:
 
     def test_compress_raises_on_invalid_config(self) -> None:
         """Invalid config raises AxonConfigError before any processing."""
-        from axon.exceptions import AxonConfigError
+        from traject.exceptions import AxonConfigError
 
         msgs = _msgs(("user", "hi"))
         bad_config = CompressionConfig(
@@ -750,7 +750,7 @@ class TestValidationErrorPaths:
 
     def test_validate_compression_result_empty_list_raises(self) -> None:
         """_validate_compression_result raises when compressed list is empty."""
-        from axon.compression.engine import _validate_compression_result
+        from traject.compression.engine import _validate_compression_result
 
         original = [{"role": "user", "content": "hi"}]
         artifact_types = [ArtifactType.USER_MESSAGE]
@@ -761,7 +761,7 @@ class TestValidationErrorPaths:
 
     def test_validate_compression_result_system_prompt_removed_raises(self) -> None:
         """_validate_compression_result raises when a system prompt is missing."""
-        from axon.compression.engine import _validate_compression_result
+        from traject.compression.engine import _validate_compression_result
 
         original = [
             {"role": "system", "content": "Be helpful."},

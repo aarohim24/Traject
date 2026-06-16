@@ -15,14 +15,14 @@ from typing import Any
 
 import pytest
 
-from axon.classifier.artifact_type import ArtifactType
-from axon.plugins.base import (
+from traject.classifier.artifact_type import ArtifactType
+from traject.plugins.base import (
     ArtifactClassifierPlugin,
     CompressionPlugin,
     RoutingPlugin,
 )
-from axon.plugins.registry import PluginRegistry
-from axon.router.routing_table import RoutingDecision
+from traject.plugins.registry import PluginRegistry
+from traject.router.routing_table import RoutingDecision
 
 # ---------------------------------------------------------------------------
 # Minimal concrete implementations of each ABC

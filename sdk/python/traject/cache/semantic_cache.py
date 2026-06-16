@@ -18,7 +18,7 @@ from typing import Any
 
 import structlog
 
-from axon.backend_client import BackendClient
+from traject.backend_client import BackendClient
 
 _log = structlog.get_logger(__name__)
 
@@ -77,7 +77,7 @@ def _get_embedding_model() -> Any:  # noqa: ANN401 — SentenceTransformer avoid
     Returns:
         The ``SentenceTransformer`` singleton.
     """
-    from axon.compression.relevance_scorer import _model
+    from traject.compression.relevance_scorer import _model
 
     return _model
 

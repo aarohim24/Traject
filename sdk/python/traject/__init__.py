@@ -7,9 +7,9 @@ analysis (shadow mode by default).
 """
 from __future__ import annotations
 
-from axon.compression.strategies import CompressionStrategy
-from axon.core.instrumentor import configure, instrument, patch
-from axon.exceptions import (
+from traject.compression.strategies import CompressionStrategy
+from traject.core.instrumentor import configure, instrument, patch
+from traject.exceptions import (
     AxonCompressionError,
     AxonConfigError,
     AxonDependencyError,

@@ -11,8 +11,8 @@ from unittest.mock import patch
 
 import pytest
 
-import axon
-from axon.telemetry import otel_exporter
+import traject
+from traject.telemetry import otel_exporter
 
 
 @pytest.fixture(autouse=True)
@@ -51,7 +51,7 @@ class TestOpenAIInstrumentation:
     def test_returns_original_response(self) -> None:
         resp = _mock_response()
 
-        @axon.instrument(feature_tag="test", shadow_mode=True)
+        @traject.instrument(feature_tag="test", shadow_mode=True)
         def call(messages: list) -> Any:
             return resp
 
@@ -62,7 +62,7 @@ class TestOpenAIInstrumentation:
     def test_emits_exactly_one_span(self) -> None:
         spans: list[Any] = []
 
-        @axon.instrument(feature_tag="test", shadow_mode=True)
+        @traject.instrument(feature_tag="test", shadow_mode=True)
         def call(messages: list) -> Any:
             return _mock_response()
 
@@ -76,7 +76,7 @@ class TestOpenAIInstrumentation:
     def test_span_has_correct_feature_tag(self) -> None:
         spans: list[Any] = []
 
-        @axon.instrument(feature_tag="my-feature", shadow_mode=True)
+        @traject.instrument(feature_tag="my-feature", shadow_mode=True)
         def call(messages: list) -> Any:
             return _mock_response()
 
@@ -88,7 +88,7 @@ class TestOpenAIInstrumentation:
         assert spans[0].feature_tag == "my-feature"
 
     def test_caller_exception_propagates(self) -> None:
-        @axon.instrument(feature_tag="error", shadow_mode=True)
+        @traject.instrument(feature_tag="error", shadow_mode=True)
         def call(messages: list) -> Any:
             raise ValueError("boom")
 
@@ -101,7 +101,7 @@ class TestOpenAIInstrumentation:
     def test_shadow_mode_recorded_in_span(self) -> None:
         spans: list[Any] = []
 
-        @axon.instrument(feature_tag="sm", shadow_mode=True)
+        @traject.instrument(feature_tag="sm", shadow_mode=True)
         def call(messages: list) -> Any:
             return _mock_response()
 
@@ -120,7 +120,7 @@ class TestOpenAIInstrumentation:
                 completions=SimpleNamespace(create=lambda **kw: resp)
             )
         )
-        axon.patch(mock_client, feature_tag="patch-test", shadow_mode=True)
+        traject.patch(mock_client, feature_tag="patch-test", shadow_mode=True)
 
         with patch(
             "axon.core.instrumentor.emit_span",

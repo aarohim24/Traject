@@ -18,7 +18,7 @@ import httpx
 import structlog
 
 if TYPE_CHECKING:
-    from axon.models import InferenceSpan
+    from traject.models import InferenceSpan
 
 _log = structlog.get_logger(__name__)
 

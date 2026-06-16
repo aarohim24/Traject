@@ -1,9 +1,9 @@
 """Unit tests for axon.compression.relevance_scorer."""
 from __future__ import annotations
 
-from axon.classifier.artifact_type import ArtifactType
-from axon.compression.relevance_scorer import score_segments
-from axon.models import Segment
+from traject.classifier.artifact_type import ArtifactType
+from traject.compression.relevance_scorer import score_segments
+from traject.models import Segment
 
 
 def _seg(

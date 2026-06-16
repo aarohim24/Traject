@@ -24,7 +24,7 @@ from typing import Any, Protocol
 import numpy as np
 import structlog
 
-from axon.router.routing_table import ModelTier, RoutingDecision
+from traject.router.routing_table import ModelTier, RoutingDecision
 
 _log = structlog.get_logger(__name__)
 

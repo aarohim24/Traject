@@ -15,7 +15,7 @@ from typing import Any  # noqa: F401  # retained for re-export consistency
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from axon.models import Segment
+from traject.models import Segment
 
 # ---------------------------------------------------------------------------
 # Module-level model singleton — loaded ONCE at import time (ADR-003).

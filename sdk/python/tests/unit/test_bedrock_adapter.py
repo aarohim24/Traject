@@ -19,8 +19,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from axon.exceptions import AxonDependencyError
-from axon.providers import ProviderResponse
+from traject.exceptions import AxonDependencyError
+from traject.providers import ProviderResponse
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -88,7 +88,7 @@ class TestBedrockAdapterDependencyGuard:
             if "axon.providers.bedrock" in sys.modules:
                 del sys.modules["axon.providers.bedrock"]
 
-            from axon.providers.bedrock import BedrockAdapter
+            from traject.providers.bedrock import BedrockAdapter
 
             with pytest.raises(AxonDependencyError, match="boto3"):
                 BedrockAdapter()
@@ -107,7 +107,7 @@ class TestBedrockAdapterDependencyGuard:
             if "axon.providers.bedrock" in sys.modules:
                 del sys.modules["axon.providers.bedrock"]
 
-            from axon.providers.bedrock import BedrockAdapter
+            from traject.providers.bedrock import BedrockAdapter
 
             with pytest.raises(AxonDependencyError, match="pip install"):
                 BedrockAdapter()
@@ -150,7 +150,7 @@ class TestBedrockAdapterTitanResponse:
         with patch.dict(sys.modules, {"boto3": boto3_mock}):
             if "axon.providers.bedrock" in sys.modules:
                 del sys.modules["axon.providers.bedrock"]
-            from axon.providers.bedrock import (
+            from traject.providers.bedrock import (
                 BedrockAdapter as BA,
             )
             adapter = BA()
@@ -232,7 +232,7 @@ class TestBedrockAdapterClaudeResponse:
         with patch.dict(sys.modules, {"boto3": boto3_mock}):
             if "axon.providers.bedrock" in sys.modules:
                 del sys.modules["axon.providers.bedrock"]
-            from axon.providers.bedrock import (
+            from traject.providers.bedrock import (
                 BedrockAdapter as BA,
             )
             adapter = BA()
@@ -313,7 +313,7 @@ class TestBedrockAdapterLlamaResponse:
         with patch.dict(sys.modules, {"boto3": boto3_mock}):
             if "axon.providers.bedrock" in sys.modules:
                 del sys.modules["axon.providers.bedrock"]
-            from axon.providers.bedrock import (
+            from traject.providers.bedrock import (
                 BedrockAdapter as BA,
             )
             adapter = BA()
@@ -386,7 +386,7 @@ class TestBedrockAdapterUnsupportedModel:
         with patch.dict(sys.modules, {"boto3": boto3_mock}):
             if "axon.providers.bedrock" in sys.modules:
                 del sys.modules["axon.providers.bedrock"]
-            from axon.providers.bedrock import (
+            from traject.providers.bedrock import (
                 BedrockAdapter as BA,
             )
             adapter = BA()

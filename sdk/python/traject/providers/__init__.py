@@ -40,8 +40,8 @@ class ProviderResponse:
 def __getattr__(name: str) -> Any:  # Any: dynamic module attribute
     """Lazily import provider adapter classes to avoid hard optional dependencies.
 
-    Supports ``from axon.providers import BedrockAdapter`` and
-    ``from axon.providers import VertexAdapter`` without requiring ``boto3``
+    Supports ``from traject.providers import BedrockAdapter`` and
+    ``from traject.providers import VertexAdapter`` without requiring ``boto3``
     or ``google-cloud-aiplatform`` to be installed unless the adapter is
     actually used.
 
@@ -55,11 +55,11 @@ def __getattr__(name: str) -> Any:  # Any: dynamic module attribute
         AttributeError: If ``name`` is not a known lazy-importable attribute.
     """
     if name == "BedrockAdapter":
-        from axon.providers.bedrock import BedrockAdapter
+        from traject.providers.bedrock import BedrockAdapter
 
         return BedrockAdapter
     if name == "VertexAdapter":
-        from axon.providers.vertex import VertexAdapter
+        from traject.providers.vertex import VertexAdapter
 
         return VertexAdapter
     raise AttributeError(f"module 'axon.providers' has no attribute {name!r}")

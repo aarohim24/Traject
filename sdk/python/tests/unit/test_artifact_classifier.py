@@ -8,7 +8,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from axon.classifier.artifact_type import ArtifactType, classify, classify_sequence
+from traject.classifier.artifact_type import ArtifactType, classify, classify_sequence
 
 
 class TestArtifactTypeEnum:

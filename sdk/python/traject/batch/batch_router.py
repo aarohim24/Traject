@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from axon.models import InferenceSpan
+from traject.models import InferenceSpan
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

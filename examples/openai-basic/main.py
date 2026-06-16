@@ -10,7 +10,7 @@ Prerequisites:
 """
 from __future__ import annotations
 
-import axon
+import traject
 import openai
 
 

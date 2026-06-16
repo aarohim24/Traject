@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from axon.compression.adapters.base import FrameworkAdapter
+from traject.compression.adapters.base import FrameworkAdapter
 
 
 class RawOpenAIAdapter(FrameworkAdapter):

@@ -14,7 +14,7 @@ from typing import Any
 
 import tiktoken
 
-from axon.models import InferenceSpan
+from traject.models import InferenceSpan
 
 __all__ = [
     "CACHE_THRESHOLDS",

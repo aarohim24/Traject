@@ -15,8 +15,8 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from axon.tracer.cascade_tracer import CascadeCostSummary, CascadeTracer
-from axon.tracer.context_propagator import (
+from traject.tracer.cascade_tracer import CascadeCostSummary, CascadeTracer
+from traject.tracer.context_propagator import (
     TRACEPARENT_HEADER,
     extract_trace_context,
     inject_trace_context,

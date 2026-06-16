@@ -13,8 +13,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from axon.batch.batch_router import BatchJobStatus
-from axon.batch.job_tracker import BatchJobORM, JobTracker
+from traject.batch.batch_router import BatchJobStatus
+from traject.batch.job_tracker import BatchJobORM, JobTracker
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -7,7 +7,7 @@ plugin ABCs defined in :mod:`axon.plugins.base`.
 
 Typical usage::
 
-    from axon.plugins import PluginLoader, PluginRegistry
+    from traject.plugins import PluginLoader, PluginRegistry
 
     registry = PluginRegistry.get_instance()
     loader = PluginLoader()
@@ -20,7 +20,7 @@ import importlib.metadata
 
 import structlog
 
-from axon.plugins.registry import PluginRegistry
+from traject.plugins.registry import PluginRegistry
 
 _log = structlog.get_logger(__name__)
 

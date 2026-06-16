@@ -3,14 +3,14 @@ from __future__ import annotations
 
 import pytest
 
-from axon.compression.strategies import (
+from traject.compression.strategies import (
     STRATEGY_DEFAULTS,
     CompressionConfig,
     CompressionStrategy,
     get_config,
     validate_config,
 )
-from axon.exceptions import AxonConfigError
+from traject.exceptions import AxonConfigError
 
 
 class TestCompressionStrategy:

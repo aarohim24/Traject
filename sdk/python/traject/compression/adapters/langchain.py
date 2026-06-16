@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from axon.exceptions import AxonDependencyError
+from traject.exceptions import AxonDependencyError
 
 try:
     from langchain_core.messages import (
@@ -24,7 +24,7 @@ except ImportError as exc:
         "Install it with: pip install axon-sdk[langchain]"
     ) from exc
 
-from axon.compression.adapters.base import FrameworkAdapter
+from traject.compression.adapters.base import FrameworkAdapter
 
 
 def _langchain_role(msg: BaseMessage) -> str:

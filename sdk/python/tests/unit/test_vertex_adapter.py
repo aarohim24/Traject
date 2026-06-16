@@ -17,8 +17,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from axon.exceptions import AxonDependencyError
-from axon.providers import ProviderResponse
+from traject.exceptions import AxonDependencyError
+from traject.providers import ProviderResponse
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -86,7 +86,7 @@ def _make_vertex_adapter(response: MagicMock) -> Any:
     ):
         if "axon.providers.vertex" in sys.modules:
             del sys.modules["axon.providers.vertex"]
-        from axon.providers.vertex import VertexAdapter
+        from traject.providers.vertex import VertexAdapter
 
         adapter = VertexAdapter(project="test-project", location="us-central1")
 
@@ -126,7 +126,7 @@ class TestVertexAdapterDependencyGuard:
             if "axon.providers.vertex" in sys.modules:
                 del sys.modules["axon.providers.vertex"]
 
-            from axon.providers.vertex import VertexAdapter
+            from traject.providers.vertex import VertexAdapter
 
             with pytest.raises(AxonDependencyError, match="google-cloud-aiplatform"):
                 VertexAdapter()
@@ -150,7 +150,7 @@ class TestVertexAdapterDependencyGuard:
             if "axon.providers.vertex" in sys.modules:
                 del sys.modules["axon.providers.vertex"]
 
-            from axon.providers.vertex import VertexAdapter
+            from traject.providers.vertex import VertexAdapter
 
             with pytest.raises(AxonDependencyError, match="pip install"):
                 VertexAdapter()

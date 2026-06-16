@@ -17,8 +17,8 @@ import sys
 import time
 from typing import Any
 
-from axon.compression.engine import compress
-from axon.compression.strategies import CompressionStrategy, get_config
+from traject.compression.engine import compress
+from traject.compression.strategies import CompressionStrategy, get_config
 
 
 def _make_messages(n: int) -> list[dict[str, Any]]:

@@ -14,12 +14,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from axon.plugins.base import (
+from traject.plugins.base import (
     ArtifactClassifierPlugin,
     CompressionPlugin,
     RoutingPlugin,
 )
-from axon.plugins.registry import PluginRegistry
+from traject.plugins.registry import PluginRegistry
 
 __all__ = [
     "ArtifactClassifierPlugin",
@@ -33,7 +33,7 @@ __all__ = [
 def __getattr__(name: str) -> Any:  # Any: dynamic module attribute
     """Lazily import :class:`PluginLoader` to avoid a hard dependency on loader.py.
 
-    Supports ``from axon.plugins import PluginLoader`` without requiring
+    Supports ``from traject.plugins import PluginLoader`` without requiring
     ``loader.py`` to exist at import time (it is created in task 16).
 
     Args:
@@ -46,7 +46,7 @@ def __getattr__(name: str) -> Any:  # Any: dynamic module attribute
         AttributeError: If ``name`` is not a known lazy-importable attribute.
     """
     if name == "PluginLoader":
-        from axon.plugins.loader import PluginLoader
+        from traject.plugins.loader import PluginLoader
 
         return PluginLoader
     raise AttributeError(f"module 'axon.plugins' has no attribute {name!r}")

@@ -18,7 +18,7 @@ import threading
 
 import structlog
 
-from axon.plugins.base import (
+from traject.plugins.base import (
     ArtifactClassifierPlugin,
     CompressionPlugin,
     RoutingPlugin,

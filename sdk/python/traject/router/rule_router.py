@@ -16,9 +16,9 @@ from uuid import uuid4
 
 import structlog
 
-from axon.core.pricing import PROVIDER_PRICING
-from axon.router.ab_test import ABTestConfig
-from axon.router.routing_table import (
+from traject.core.pricing import PROVIDER_PRICING
+from traject.router.ab_test import ABTestConfig
+from traject.router.routing_table import (
     DEFAULT_MODEL_MAP,
     DEFAULT_ROUTING_TABLE,
     ComplexityTier,
@@ -26,7 +26,7 @@ from axon.router.routing_table import (
     RoutingDecision,
     complexity_score_to_tier,
 )
-from axon.router.task_classifier import TaskType, classify_task, estimate_complexity
+from traject.router.task_classifier import TaskType, classify_task, estimate_complexity
 
 _log = structlog.get_logger(__name__)
 

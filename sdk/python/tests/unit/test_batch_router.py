@@ -18,9 +18,9 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from axon.batch.batch_router import BatchJobRecord, BatchJobStatus, BatchRouter
-from axon.classifier.artifact_type import ArtifactType
-from axon.models import InferenceSpan
+from traject.batch.batch_router import BatchJobRecord, BatchJobStatus, BatchRouter
+from traject.classifier.artifact_type import ArtifactType
+from traject.models import InferenceSpan
 
 # ---------------------------------------------------------------------------
 # Helpers

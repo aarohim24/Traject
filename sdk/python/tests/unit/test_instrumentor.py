@@ -11,9 +11,9 @@ from unittest.mock import patch
 
 import pytest
 
-import axon
-from axon.core.instrumentor import _hash_prompt
-from axon.telemetry import otel_exporter
+import traject
+from traject.core.instrumentor import _hash_prompt
+from traject.telemetry import otel_exporter
 
 
 @pytest.fixture(autouse=True)
@@ -68,12 +68,12 @@ class TestHashPrompt:
 
 
 class TestInstrumentDecorator:
-    """Tests for the @axon.instrument() decorator."""
+    """Tests for the @traject.instrument() decorator."""
 
     def test_sync_decorator_returns_original_response(self) -> None:
         resp = _mock_response()
 
-        @axon.instrument(feature_tag="test", shadow_mode=True)
+        @traject.instrument(feature_tag="test", shadow_mode=True)
         def call(messages: list) -> Any:
             return resp
 
@@ -85,7 +85,7 @@ class TestInstrumentDecorator:
     async def test_async_decorator_returns_original_response(self) -> None:
         resp = _mock_response()
 
-        @axon.instrument(feature_tag="async-test", shadow_mode=True)
+        @traject.instrument(feature_tag="async-test", shadow_mode=True)
         async def call_async(messages: list) -> Any:
             return resp
 
@@ -94,7 +94,7 @@ class TestInstrumentDecorator:
         assert result is resp
 
     def test_caller_exception_not_suppressed(self) -> None:
-        @axon.instrument(feature_tag="error-test", shadow_mode=True)
+        @traject.instrument(feature_tag="error-test", shadow_mode=True)
         def call(messages: list) -> Any:
             raise ValueError("provider blew up")
 
@@ -106,11 +106,11 @@ class TestInstrumentDecorator:
 
     def test_axon_error_does_not_suppress_response(self) -> None:
         """AxonError during pipeline still returns original response."""
-        from axon.exceptions import AxonCompressionError
+        from traject.exceptions import AxonCompressionError
 
         resp = _mock_response()
 
-        @axon.instrument(feature_tag="axon-error-test", shadow_mode=True)
+        @traject.instrument(feature_tag="axon-error-test", shadow_mode=True)
         def call(messages: list) -> Any:
             return resp
 
@@ -128,7 +128,7 @@ class TestInstrumentDecorator:
         spans: list[Any] = []
         resp = _mock_response()
 
-        @axon.instrument(feature_tag="span-test", shadow_mode=True)
+        @traject.instrument(feature_tag="span-test", shadow_mode=True)
         def call(messages: list) -> Any:
             return resp
 
@@ -143,7 +143,7 @@ class TestInstrumentDecorator:
         spans: list[Any] = []
         resp = _mock_response()
 
-        @axon.instrument(feature_tag="my-tag", shadow_mode=True)
+        @traject.instrument(feature_tag="my-tag", shadow_mode=True)
         def call(messages: list) -> Any:
             return resp
 
@@ -158,7 +158,7 @@ class TestInstrumentDecorator:
         spans: list[Any] = []
         resp = _mock_response()
 
-        @axon.instrument(feature_tag="sm", shadow_mode=True)
+        @traject.instrument(feature_tag="sm", shadow_mode=True)
         def call(messages: list) -> Any:
             return resp
 
@@ -171,7 +171,7 @@ class TestInstrumentDecorator:
 
 
 class TestPatch:
-    """Tests for axon.patch()."""
+    """Tests for traject.patch()."""
 
     def test_patch_wraps_openai_chat_completions_create(self) -> None:
         spans: list[Any] = []
@@ -181,7 +181,7 @@ class TestPatch:
                 completions=SimpleNamespace(create=lambda **kw: resp)
             )
         )
-        axon.patch(mock_client, feature_tag="patch-test", shadow_mode=True)
+        traject.patch(mock_client, feature_tag="patch-test", shadow_mode=True)
 
         with patch(
             "axon.core.instrumentor.emit_span",
@@ -205,7 +205,7 @@ class TestPatch:
         mock_client = SimpleNamespace(
             messages=SimpleNamespace(create=lambda **kw: resp)
         )
-        axon.patch(mock_client, feature_tag="anthropic-patch", shadow_mode=True)
+        traject.patch(mock_client, feature_tag="anthropic-patch", shadow_mode=True)
 
         with patch(
             "axon.core.instrumentor.emit_span",

@@ -20,8 +20,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator, model_validator
 
-from axon.classifier.artifact_type import ArtifactType
-from axon.core.pricing import ModelPricing
+from traject.classifier.artifact_type import ArtifactType
+from traject.core.pricing import ModelPricing
 
 __all__ = [
     "CompressionResult",

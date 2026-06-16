@@ -12,7 +12,7 @@ from decimal import Decimal
 
 import structlog
 
-from axon.core.pricing import PROVIDER_PRICING, ModelPricing
+from traject.core.pricing import PROVIDER_PRICING, ModelPricing
 
 _log = structlog.get_logger(__name__)
 

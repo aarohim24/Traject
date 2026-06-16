@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-from axon.exceptions import AxonConfigError
+from traject.exceptions import AxonConfigError
 
 
 class CompressionStrategy(StrEnum):

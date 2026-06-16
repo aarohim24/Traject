@@ -17,15 +17,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from axon.classifier.artifact_type import ArtifactType
-from axon.plugins.base import (
+from traject.classifier.artifact_type import ArtifactType
+from traject.plugins.base import (
     ArtifactClassifierPlugin,
     CompressionPlugin,
     RoutingPlugin,
 )
-from axon.plugins.loader import PluginLoader
-from axon.plugins.registry import PluginRegistry
-from axon.router.routing_table import RoutingDecision
+from traject.plugins.loader import PluginLoader
+from traject.plugins.registry import PluginRegistry
+from traject.router.routing_table import RoutingDecision
 
 # ---------------------------------------------------------------------------
 # Minimal concrete plugin implementations (mirrored from test_plugin_registry)

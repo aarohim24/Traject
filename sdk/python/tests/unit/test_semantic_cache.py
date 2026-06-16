@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from axon.cache.semantic_cache import CacheLookupResult, SemanticCacheClient
+from traject.cache.semantic_cache import CacheLookupResult, SemanticCacheClient
 
 # ---------------------------------------------------------------------------
 # Fixtures

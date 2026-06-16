@@ -20,7 +20,7 @@ import structlog
 from sqlalchemy import Index, String, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from axon.batch.batch_router import BatchJobRecord, BatchJobStatus
+from traject.batch.batch_router import BatchJobRecord, BatchJobStatus
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

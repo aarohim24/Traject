@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from axon.exceptions import AxonDependencyError
+from traject.exceptions import AxonDependencyError
 
 
 class TestLangChainAdapterImport:
@@ -69,20 +69,20 @@ class TestLangChainAdapterIntegration:
     def test_accepts_base_message_list(self) -> None:
         from langchain_core.messages import HumanMessage, SystemMessage
 
-        from axon.compression.adapters.langchain import LangChainAdapter
+        from traject.compression.adapters.langchain import LangChainAdapter
 
         msgs = [SystemMessage(content="sys"), HumanMessage(content="user")]
         assert LangChainAdapter.accepts(msgs) is True
 
     def test_rejects_non_base_message_list(self) -> None:
-        from axon.compression.adapters.langchain import LangChainAdapter
+        from traject.compression.adapters.langchain import LangChainAdapter
 
         assert LangChainAdapter.accepts([{"role": "user", "content": "hi"}]) is False
 
     def test_normalize_produces_canonical_dicts(self) -> None:
         from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-        from axon.compression.adapters.langchain import LangChainAdapter
+        from traject.compression.adapters.langchain import LangChainAdapter
 
         normalized = LangChainAdapter().normalize([
             SystemMessage(content="sys"),
@@ -96,7 +96,7 @@ class TestLangChainAdapterIntegration:
     def test_denormalize_reconstructs_message_types(self) -> None:
         from langchain_core.messages import HumanMessage, SystemMessage
 
-        from axon.compression.adapters.langchain import LangChainAdapter
+        from traject.compression.adapters.langchain import LangChainAdapter
 
         original = [SystemMessage(content="sys"), HumanMessage(content="hi")]
         normalized = [
@@ -116,26 +116,26 @@ class TestAutoGenAdapterIntegration:
         pytest.importorskip("autogen", reason="pyautogen not installed")
 
     def test_accepts_autogen_style_dicts(self) -> None:
-        from axon.compression.adapters.autogen import AutoGenAdapter
+        from traject.compression.adapters.autogen import AutoGenAdapter
 
         msgs = [{"role": "user", "content": "hi", "name": "alice"}]
         assert AutoGenAdapter.accepts(msgs) is True
 
     def test_rejects_dicts_without_name(self) -> None:
-        from axon.compression.adapters.autogen import AutoGenAdapter
+        from traject.compression.adapters.autogen import AutoGenAdapter
 
         msgs = [{"role": "user", "content": "hi"}]
         assert AutoGenAdapter.accepts(msgs) is False
 
     def test_normalize_strips_name_field(self) -> None:
-        from axon.compression.adapters.autogen import AutoGenAdapter
+        from traject.compression.adapters.autogen import AutoGenAdapter
 
         msgs = [{"role": "user", "content": "hi", "name": "alice"}]
         normalized = AutoGenAdapter().normalize(msgs)
         assert normalized == [{"role": "user", "content": "hi"}]
 
     def test_denormalize_restores_name_field(self) -> None:
-        from axon.compression.adapters.autogen import AutoGenAdapter
+        from traject.compression.adapters.autogen import AutoGenAdapter
 
         original = [{"role": "user", "content": "hi", "name": "alice"}]
         normalized = [{"role": "user", "content": "hi"}]

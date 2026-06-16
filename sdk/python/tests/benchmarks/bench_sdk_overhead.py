@@ -1,6 +1,6 @@
 """Benchmark: SDK instrumentation overhead.
 
-Measures the wall-clock overhead added by @axon.instrument() vs a bare
+Measures the wall-clock overhead added by @traject.instrument() vs a bare
 function call. Uses a mock OpenAI client that returns a canned response
 in < 1ms (no network I/O).
 
@@ -20,9 +20,9 @@ from typing import Any
 from unittest.mock import patch
 
 # Suppress OTEL console output during benchmark
-import axon
-from axon.compression.strategies import CompressionStrategy
-from axon.telemetry import otel_exporter
+import traject
+from traject.compression.strategies import CompressionStrategy
+from traject.telemetry import otel_exporter
 
 
 def _make_mock_response() -> Any:
@@ -77,7 +77,7 @@ def main() -> None:
             baseline_times.append((time.perf_counter() - t0) * 1000)
 
         # Instrument and time
-        decorated = axon.instrument(
+        decorated = traject.instrument(
             feature_tag="bench",
             shadow_mode=True,
             strategy=CompressionStrategy.CONSERVATIVE,

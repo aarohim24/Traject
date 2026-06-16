@@ -18,13 +18,13 @@ from decimal import Decimal
 
 # ── Dependency check ────────────────────────────────────────────────────────
 try:
-    import axon
-    from axon.compression.engine import compress
-    from axon.compression.strategies import (
+    import traject
+    from traject.compression.engine import compress
+    from traject.compression.strategies import (
         CompressionConfig,
         CompressionStrategy,
     )
-    from axon.core.cost_calculator import calculate_cost
+    from traject.core.cost_calculator import calculate_cost
 except ImportError:
     sys.exit(
         "axon-sdk not found.\n"
@@ -214,7 +214,7 @@ def main() -> None:
     print_span_header()
 
     print("\n  Configuring Axon (shadow_mode=True, CONSERVATIVE strategy)...")
-    axon.configure(export_to_stdout=False)
+    traject.configure(export_to_stdout=False)
 
     config = CompressionConfig(
         strategy=CompressionStrategy.CONSERVATIVE,
@@ -279,10 +279,10 @@ def main() -> None:
     print()
     print("  Next steps:")
     print("  1. Instrument your own agent:")
-    print("     axon.patch(client, feature_tag='my_agent', shadow_mode=True)")
+    print("     traject.patch(client, feature_tag='my_agent', shadow_mode=True)")
     print("  2. Validate savings with: axon analyze --input spans.jsonl")
     print("  3. Enable live compression when satisfied:")
-    print("     axon.patch(client, shadow_mode=False)")
+    print("     traject.patch(client, shadow_mode=False)")
     print()
 
 

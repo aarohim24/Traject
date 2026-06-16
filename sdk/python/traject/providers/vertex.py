@@ -14,8 +14,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from axon.exceptions import AxonDependencyError
-from axon.providers import ProviderResponse
+from traject.exceptions import AxonDependencyError
+from traject.providers import ProviderResponse
 
 
 class VertexAdapter:

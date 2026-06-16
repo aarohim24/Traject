@@ -26,16 +26,16 @@ from typing import Any
 import numpy as np
 import structlog
 
-from axon.exceptions import AxonDependencyError
-from axon.router.routing_table import (
+from traject.exceptions import AxonDependencyError
+from traject.router.routing_table import (
     DEFAULT_MODEL_MAP,
     ComplexityTier,
     ModelTier,
     RoutingDecision,
     complexity_score_to_tier,
 )
-from axon.router.rule_router import RuleRouter, _compute_cost_delta_pct
-from axon.router.task_classifier import TaskType, classify_task, estimate_complexity
+from traject.router.rule_router import RuleRouter, _compute_cost_delta_pct
+from traject.router.task_classifier import TaskType, classify_task, estimate_complexity
 
 _log = structlog.get_logger(__name__)
 

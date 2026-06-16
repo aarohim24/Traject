@@ -14,8 +14,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from axon.classifier.artifact_type import ArtifactType
-from axon.router.routing_table import RoutingDecision
+from traject.classifier.artifact_type import ArtifactType
+from traject.router.routing_table import RoutingDecision
 
 
 class CompressionPlugin(ABC):

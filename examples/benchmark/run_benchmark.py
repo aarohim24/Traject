@@ -27,9 +27,9 @@ from decimal import Decimal
 import tiktoken
 
 try:
-    import axon
-    from axon.compression.engine import compress
-    from axon.compression.strategies import CompressionConfig, CompressionStrategy
+    import traject
+    from traject.compression.engine import compress
+    from traject.compression.strategies import CompressionConfig, CompressionStrategy
 except ImportError:
     raise SystemExit(
         "Axon SDK not found. Run from sdk/python with .venv activated."

@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from axon.core.telemetry_reporter import TelemetryPayload, TelemetryReporter
+from traject.core.telemetry_reporter import TelemetryPayload, TelemetryReporter
 
 # ---------------------------------------------------------------------------
 # Helper: build a valid TelemetryPayload for testing

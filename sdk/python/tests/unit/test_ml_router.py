@@ -17,8 +17,8 @@ from typing import Any
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from axon.router.ml_router import FEATURE_NAMES, MLRouter
-from axon.router.routing_table import RoutingDecision
+from traject.router.ml_router import FEATURE_NAMES, MLRouter
+from traject.router.routing_table import RoutingDecision
 
 # ---------------------------------------------------------------------------
 # Helpers

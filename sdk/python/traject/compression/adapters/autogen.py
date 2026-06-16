@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from axon.exceptions import AxonDependencyError
+from traject.exceptions import AxonDependencyError
 
 try:
     import autogen  # noqa: F401  # optional dep — stubs handled via mypy override
@@ -19,7 +19,7 @@ except ImportError as exc:
         "Install it with: pip install axon-sdk[autogen]"
     ) from exc
 
-from axon.compression.adapters.base import FrameworkAdapter
+from traject.compression.adapters.base import FrameworkAdapter
 
 
 class AutoGenAdapter(FrameworkAdapter):

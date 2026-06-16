@@ -6,12 +6,12 @@ from typing import Any
 
 import pytest
 
-from axon.core.provider_adapter import (
+from traject.core.provider_adapter import (
     AnthropicAdapter,
     OpenAIAdapter,
     get_adapter,
 )
-from axon.exceptions import AxonProviderError
+from traject.exceptions import AxonProviderError
 
 
 def _openai_response(

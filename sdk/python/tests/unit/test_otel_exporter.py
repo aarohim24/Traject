@@ -14,8 +14,8 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-from axon.classifier.artifact_type import ArtifactType
-from axon.models import InferenceSpan
+from traject.classifier.artifact_type import ArtifactType
+from traject.models import InferenceSpan
 
 
 def _make_span(

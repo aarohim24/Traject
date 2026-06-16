@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from axon.router.task_classifier import TaskType
+from traject.router.task_classifier import TaskType
 
 if TYPE_CHECKING:
     pass

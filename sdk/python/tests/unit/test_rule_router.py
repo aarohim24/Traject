@@ -12,15 +12,15 @@ from unittest.mock import patch
 
 import pytest
 
-from axon.exceptions import AxonConfigError
-from axon.router.ab_test import ABTestConfig
-from axon.router.routing_table import (
+from traject.exceptions import AxonConfigError
+from traject.router.ab_test import ABTestConfig
+from traject.router.routing_table import (
     ComplexityTier,
     ModelTier,
     RoutingDecision,
 )
-from axon.router.rule_router import RuleRouter
-from axon.router.task_classifier import TaskType
+from traject.router.rule_router import RuleRouter
+from traject.router.task_classifier import TaskType
 
 # ---------------------------------------------------------------------------
 # Helpers
