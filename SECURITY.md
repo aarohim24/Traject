@@ -4,8 +4,8 @@
 
 This policy covers security vulnerabilities in:
 
-- **Axon Python SDK** (`sdk/python/`) — instrumentation, compression engine, artifact classifier, CLI
-- **Axon Backend** (`backend/`) — FastAPI service, span ingestion, cost attribution, semantic cache, budget controls
+- **Traject Python SDK** (`sdk/python/`) — instrumentation, compression engine, artifact classifier, CLI
+- **Traject Backend** (`backend/`) — FastAPI service, span ingestion, cost attribution, semantic cache, budget controls
 
 Out of scope: third-party dependencies (report those directly to the upstream project), deployment infrastructure owned by the user, or issues in example scripts that do not affect library code.
 
@@ -13,7 +13,7 @@ Out of scope: third-party dependencies (report those directly to the upstream pr
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
-Email **security@axon-oss.dev** with the subject line: `[SECURITY] <brief description>`.
+Email **security@traject.dev** with the subject line: `[SECURITY] <brief description>`.
 
 Your report will be handled privately until a fix is released and coordinated disclosure is complete.
 

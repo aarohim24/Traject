@@ -1,4 +1,4 @@
-# Contributing to Axon
+# Contributing to Traject
 
 Thank you for taking the time to contribute. This document covers everything you need to get a working development environment, understand the code standards, and submit a pull request.
 
@@ -103,7 +103,7 @@ These are enforced in CI and are non-negotiable.
 
 ## Commit Convention
 
-Axon uses [Conventional Commits](https://www.conventionalcommits.org/).
+Traject uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ```
 type(scope): short imperative description
@@ -168,7 +168,7 @@ cli  →  telemetry  →  core  →  compression  →  classifier
 | `compression` | Trajectory compression engine (3 strategies), framework adapters | `classifier` |
 | `core` | Instrumentation decorators, pricing, cost calculation, exceptions | `classifier`, `compression` |
 | `telemetry` | OpenTelemetry span emission and exporters | `core` |
-| `cli` | `axon analyze`, `axon version`, `axon doctor` commands | `core`, `telemetry` |
+| `cli` | `traject analyze`, `traject version`, `traject doctor` commands | `core`, `telemetry` |
 
 **Key constraints:**
 

@@ -1,4 +1,4 @@
-# Axon
+# Traject
 
 > AI inference optimization middleware for production agent systems.
 
@@ -16,7 +16,7 @@ In multi-step AI agents, each LLM call re-pays for all prior tool results and re
 
 **Workload:** 10-step code review agent · **Strategy:** CONSERVATIVE · **10 iterations**
 
-| Metric               | Without Axon | With Axon | Reduction |
+| Metric               | Without Traject | With Traject | Reduction |
 |----------------------|-------------|-----------|-----------|
 | Input tokens / run   | 11,845      | 10,183    | 14.0%     |
 | Projected cost / run | $0.001777   | $0.001527 | 14.0%     |
@@ -28,7 +28,7 @@ Reproduce: `python examples/benchmark/run_benchmark.py` — no API key required.
 
 ---
 
-## What Axon Is Not
+## What Traject Is Not
 
 - Not a prompt coaching tool or developer behavior scorer
 - Not a VS Code extension
@@ -40,15 +40,15 @@ Reproduce: `python examples/benchmark/run_benchmark.py` — no API key required.
 ## Quickstart
 
 ```bash
-pip install axon-sdk
+pip install traject-sdk
 ```
 
 ```python
 import openai, axon
 
-axon.configure(export_to_stdout=True)
+traject.configure(export_to_stdout=True)
 client = openai.OpenAI()
-axon.patch(client, feature_tag="my_agent", shadow_mode=True)
+traject.patch(client, feature_tag="my_agent", shadow_mode=True)
 
 # Your existing agent code unchanged.
 # Shadow mode logs compression savings without modifying context.
@@ -90,14 +90,14 @@ Adds: cost attribution dashboard (Grafana), semantic caching (Redis + pgvector),
 Your application
       │
       ▼
-Axon SDK  ────────────────────────────────────────────────────────
+Traject SDK  ────────────────────────────────────────────────────────
 │  Instrumentation wrapper  │  Semantic cache client             │
 │  Trajectory compressor    │  Budget controller                 │
 │  Artifact classifier      │  OTel span emitter                 │
 ───────────────────────────────────────────────────────────────────
       │                                │
       ▼                                ▼
-LLM Provider                  Axon Backend (optional)
+LLM Provider                  Traject Backend (optional)
 (OpenAI, Anthropic)           FastAPI · PostgreSQL · Redis · Grafana
 ```
 
@@ -105,7 +105,7 @@ LLM Provider                  Axon Backend (optional)
 
 ## Research Basis
 
-Trajectory compression is grounded in recent work on agentic context management (AgentDiet, FSE 2026 and related literature). Axon is the first production-ready, framework-agnostic middleware implementation of trajectory compression as a drop-in Python library.
+Trajectory compression is grounded in recent work on agentic context management (AgentDiet, FSE 2026 and related literature). Traject is the first production-ready, framework-agnostic middleware implementation of trajectory compression as a drop-in Python library.
 
 Novel contributions: typed artifact model enabling per-type optimization, integrated compression + caching + routing in one middleware layer, and shadow mode for safe production validation.
 

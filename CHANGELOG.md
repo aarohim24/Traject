@@ -26,12 +26,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- Python SDK (`axon-sdk`) installable via pip with optional extras for OpenAI, Anthropic, and LangChain
+- Python SDK (`traject-sdk`) installable via pip with optional extras for OpenAI, Anthropic, and LangChain
 - OpenAI and Anthropic instrumentation via a single `@axon.instrument` decorator
 - Trajectory compression engine with three strategies: `CONSERVATIVE`, `MODERATE`, and `AGGRESSIVE`; runs in shadow mode by default
 - Artifact type classifier supporting 9 types with zero false negatives on `SYSTEM_PROMPT`
 - OpenTelemetry span emission with stdout (default) and OTLP/gRPC exporters
-- CLI commands: `axon analyze`, `axon version`, `axon doctor`
+- CLI commands: `traject analyze`, `traject version`, `traject doctor`
 - 336 tests passing, 94% overall coverage, 100% coverage on the compression engine
 - `mypy --strict` clean across all 25 source files
 - SDK instrumentation overhead: 0.166 ms p50 (threshold 5 ms)
