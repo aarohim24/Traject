@@ -18,8 +18,8 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.models.attribution import CostAttributionRecord
-from axon_backend.models.span import InferenceSpanRecord
+from traject_backend.models.attribution import CostAttributionRecord
+from traject_backend.models.span import InferenceSpanRecord
 
 _log = structlog.get_logger(__name__)
 
@@ -171,7 +171,7 @@ async def materialize_hourly(db: AsyncSession, hour: datetime) -> int:
     await db.commit()
 
     _log.info(
-        "axon.attribution.materialized",
+        ""traject.attribution.materialized",
         hour=str(hour_start),
         rows=len(upsert_rows),
     )

@@ -27,7 +27,7 @@ if config.config_file_name is not None:
 # Import the project's metadata so Alembic can detect schema changes.
 # ---------------------------------------------------------------------------
 try:
-    from axon_backend.models.base import Base  # noqa: PLC0415
+    from traject_backend.models.base import Base  # noqa: PLC0415
 
     target_metadata = Base.metadata
 except ImportError:
@@ -40,7 +40,7 @@ def run_migrations_offline() -> None:
     Configures the context with just a URL and without an Engine, then
     emits DDL to a SQL script rather than executing against a live DB.
     """
-    from axon_backend.core.config import Settings  # noqa: PLC0415
+    from traject_backend.core.config import Settings  # noqa: PLC0415
 
     settings = Settings()
     context.configure(
@@ -73,7 +73,7 @@ async def run_async_migrations() -> None:
     than relying on alembic.ini, so the correct URL is always used in
     Docker and CI without any manual alembic.ini edits.
     """
-    from axon_backend.core.config import Settings  # noqa: PLC0415
+    from traject_backend.core.config import Settings  # noqa: PLC0415
 
     settings = Settings()
 

@@ -16,10 +16,10 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.core.config import settings
-from axon_backend.models.budget import BudgetControlRecord
-from axon_backend.models.span import InferenceSpanRecord
-from axon_backend.services.span_ingestion import BudgetStatus
+from traject_backend.core.config import settings
+from traject_backend.models.budget import BudgetControlRecord
+from traject_backend.models.span import InferenceSpanRecord
+from traject_backend.services.span_ingestion import BudgetStatus
 
 _log = structlog.get_logger(__name__)
 
@@ -117,7 +117,7 @@ async def check_budget(
         return BudgetStatus.OK
 
     except Exception as exc:  # noqa: BLE001
-        _log.warning("axon.budget.check.error", feature_tag=feature_tag, error=str(exc))
+        _log.warning(""traject.budget.check.error", feature_tag=feature_tag, error=str(exc))
         return BudgetStatus.OK
 
 
@@ -167,7 +167,7 @@ async def fire_webhook(
     """POST a budget-alert notification to an external webhook endpoint.
 
     Never raises — all exceptions are caught and logged.  The timeout is
-    taken from :attr:`~axon_backend.core.config.Settings.budget_alert_webhook_timeout_seconds`.
+    taken from :attr:`~traject_backend.core.config.Settings.budget_alert_webhook_timeout_seconds`.
 
     Args:
         webhook_url: The HTTP(S) URL to POST to.
@@ -183,19 +183,19 @@ async def fire_webhook(
             )
             if response.is_success:
                 _log.info(
-                    "axon.budget.webhook.sent",
+                    ""traject.budget.webhook.sent",
                     feature_tag=payload.feature_tag,
                     status_code=response.status_code,
                 )
             else:
                 _log.warning(
-                    "axon.budget.webhook.error_response",
+                    ""traject.budget.webhook.error_response",
                     feature_tag=payload.feature_tag,
                     status_code=response.status_code,
                 )
     except Exception as exc:  # noqa: BLE001
         _log.warning(
-            "axon.budget.webhook.failed",
+            ""traject.budget.webhook.failed",
             feature_tag=payload.feature_tag,
             error=str(exc),
         )

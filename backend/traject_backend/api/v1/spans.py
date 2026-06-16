@@ -1,7 +1,7 @@
 """Span ingestion and query API endpoints.
 
 Provides ``POST /v1/spans`` for SDK batch ingestion and ``GET /v1/spans``
-for querying persisted spans.  All routes require ``X-Axon-API-Key``
+for querying persisted spans.  All routes require ``X-Traject-API-Key``
 authentication.
 """
 
@@ -15,11 +15,11 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.core.config import settings
-from axon_backend.core.database import get_db
-from axon_backend.core.redis_client import get_redis
-from axon_backend.models.span import InferenceSpanRecord
-from axon_backend.services.span_ingestion import (
+from traject_backend.core.config import settings
+from traject_backend.core.database import get_db
+from traject_backend.core.redis_client import get_redis
+from traject_backend.models.span import InferenceSpanRecord
+from traject_backend.services.span_ingestion import (
     InferenceSpanPayload,
     SpanIngestRequest,
     SpanIngestResponse,
@@ -32,12 +32,12 @@ router = APIRouter(tags=["spans"])
 
 
 async def verify_api_key(
-    x_axon_api_key: Annotated[str | None, Header(alias="X-Axon-API-Key")] = None,
+    x_axon_api_key: Annotated[str | None, Header(alias="X-Traject-API-Key")] = None,
 ) -> None:
     """FastAPI dependency that enforces API key authentication.
 
     Args:
-        x_axon_api_key: Value of the ``X-Axon-API-Key`` request header.
+        x_axon_api_key: Value of the ``X-Traject-API-Key`` request header.
 
     Raises:
         HTTPException: 401 when the header is missing or the key is invalid.

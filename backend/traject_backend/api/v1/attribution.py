@@ -14,10 +14,10 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.api.v1.spans import verify_api_key
-from axon_backend.core.database import get_db
-from axon_backend.models.attribution import CostAttributionRecord
-from axon_backend.services.cost_attribution import (
+from traject_backend.api.v1.spans import verify_api_key
+from traject_backend.core.database import get_db
+from traject_backend.models.attribution import CostAttributionRecord
+from traject_backend.services.cost_attribution import (
     AttributionResponse,
     get_attribution,
 )

@@ -1,4 +1,4 @@
-"""Unit and property-based tests for axon_backend.services.anomaly_detector.
+"""Unit and property-based tests for traject_backend.services.anomaly_detector.
 
 Covers:
 - No alerts when cost values are constant (no spike).
@@ -20,7 +20,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from axon_backend.services.anomaly_detector import (
+from traject_backend.services.anomaly_detector import (
     AnomalyDetector,
     AnomalyAlert,
     _percentile,

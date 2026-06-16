@@ -1,4 +1,4 @@
-"""Unit and property-based tests for axon_backend.services.cost_predictor.
+"""Unit and property-based tests for traject_backend.services.cost_predictor.
 
 Covers:
 - Sparse fallback (< 10 rows): lower = 0.50 * point, upper = 1.50 * point.
@@ -18,12 +18,12 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from axon_backend.services.cost_predictor import CostPredictor
+from traject_backend.services.cost_predictor import CostPredictor
 
 
 def _pricing_keys() -> list[str]:
     """Return PROVIDER_PRICING keys lazily to avoid circular import at module load."""
-    from axon.core.pricing import PROVIDER_PRICING  # noqa: PLC0415
+    from traject.core.pricing import PROVIDER_PRICING  # noqa: PLC0415
     return list(PROVIDER_PRICING.keys())
 
 

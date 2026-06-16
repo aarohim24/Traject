@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000"]
 
     # Security
-    api_key_header: str = "X-Axon-API-Key"
+    api_key_header: str = "X-Traject-API-Key"
     api_key: str = "dev-key-change-in-production"
 
     # Semantic cache

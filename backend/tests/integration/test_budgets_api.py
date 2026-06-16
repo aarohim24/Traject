@@ -7,10 +7,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from httpx import AsyncClient
 
-from axon_backend.core.config import settings
+from traject_backend.core.config import settings
 
 API_KEY = settings.api_key
-AUTH_HEADERS = {"X-Axon-API-Key": API_KEY}
+AUTH_HEADERS = {"X-Traject-API-Key": API_KEY}
 
 
 @pytest.mark.asyncio
@@ -73,7 +73,7 @@ async def test_put_budget_with_auth_returns_200(async_client: AsyncClient) -> No
     mock_db.commit = AsyncMock()
 
     with patch(
-        "axon_backend.core.database.AsyncSessionLocal",
+        "traject_backend.core.database.AsyncSessionLocal",
         return_value=MagicMock(
             __aenter__=AsyncMock(return_value=mock_db),
             __aexit__=AsyncMock(return_value=False),
@@ -96,7 +96,7 @@ async def test_get_nonexistent_budget_returns_404(async_client: AsyncClient) -> 
     mock_db.execute = AsyncMock(return_value=mock_result)
 
     with patch(
-        "axon_backend.core.database.AsyncSessionLocal",
+        "traject_backend.core.database.AsyncSessionLocal",
         return_value=MagicMock(
             __aenter__=AsyncMock(return_value=mock_db),
             __aexit__=AsyncMock(return_value=False),
@@ -125,7 +125,7 @@ async def test_delete_nonexistent_budget_returns_404(async_client: AsyncClient) 
     mock_db.execute = AsyncMock(return_value=mock_result)
 
     with patch(
-        "axon_backend.core.database.AsyncSessionLocal",
+        "traject_backend.core.database.AsyncSessionLocal",
         return_value=MagicMock(
             __aenter__=AsyncMock(return_value=mock_db),
             __aexit__=AsyncMock(return_value=False),

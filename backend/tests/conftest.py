@@ -18,9 +18,9 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from axon_backend.main import app
-from axon_backend.models.base import Base
-from axon_backend.services.span_ingestion import InferenceSpanPayload
+from traject_backend.main import app
+from traject_backend.models.base import Base
+from traject_backend.services.span_ingestion import InferenceSpanPayload
 
 # ---------------------------------------------------------------------------
 # In-memory SQLite test engine
@@ -42,9 +42,9 @@ async def _create_tables() -> AsyncGenerator[None, None]:
     The CacheEntryRecord model uses Vector(384) which SQLite does not
     support.  We create tables for the three non-vector models only.
     """
-    from axon_backend.models.attribution import CostAttributionRecord  # noqa: F401
-    from axon_backend.models.budget import BudgetControlRecord  # noqa: F401
-    from axon_backend.models.span import InferenceSpanRecord  # noqa: F401
+    from traject_backend.models.attribution import CostAttributionRecord  # noqa: F401
+    from traject_backend.models.budget import BudgetControlRecord  # noqa: F401
+    from traject_backend.models.span import InferenceSpanRecord  # noqa: F401
 
     async with _test_engine.begin() as conn:
         # Only create tables that don't use pgvector

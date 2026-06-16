@@ -20,14 +20,14 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.models.span import InferenceSpanRecord
+from traject_backend.models.span import InferenceSpanRecord
 
 if TYPE_CHECKING:
-    from axon.router.ml_router import MLModelArtifact
+    from traject.router.ml_router import MLModelArtifact
 
 _log = structlog.get_logger(__name__)
 
-_DEFAULT_ARTIFACT_PATH = os.environ.get("AXON_ML_MODEL_PATH", "/tmp/axon_ml_model.json")
+_DEFAULT_ARTIFACT_PATH = os.environ.get("TRAJECT_ML_MODEL_PATH", "/tmp/axon_ml_model.json")
 
 
 class MLTrainingService:
@@ -66,9 +66,9 @@ class MLTrainingService:
             InsufficientDataError: If zero training rows with a non-null
                 ``routing_decision`` are found in the database.
         """
-        from axon.exceptions import InsufficientDataError  # noqa: PLC0415
-        from axon.router.ml_router import FEATURE_NAMES, MLModelArtifact, _extract_features  # noqa: PLC0415
-        from axon.router.routing_table import ModelTier  # noqa: PLC0415
+        from traject.exceptions import InsufficientDataError  # noqa: PLC0415
+        from traject.router.ml_router import FEATURE_NAMES, MLModelArtifact, _extract_features  # noqa: PLC0415
+        from traject.router.routing_table import ModelTier  # noqa: PLC0415
 
         try:
             from sklearn.linear_model import (  # type: ignore[import-untyped]  # noqa: PLC0415
@@ -145,7 +145,7 @@ class MLTrainingService:
         )
 
         _log.info(
-            "axon.ml_training.complete",
+            ""traject.ml_training.complete",
             sample_count=len(X),
             classes=list(lr.classes_),
         )
@@ -168,7 +168,7 @@ class MLTrainingService:
         with open(self._artifact_path, "w") as fh:
             json.dump(payload, fh)
 
-        _log.info("axon.ml_training.artifact_saved", path=self._artifact_path)
+        _log.info(""traject.ml_training.artifact_saved", path=self._artifact_path)
 
     async def run_weekly_training_job(self, db: AsyncSession) -> None:
         """Run training, persist artifact, log result. Never re-raises.
@@ -184,13 +184,13 @@ class MLTrainingService:
             artifact = await self.train(db)
             self._save_artifact(artifact)
             _log.info(
-                "axon.ml_training.weekly_job.success",
+                ""traject.ml_training.weekly_job.success",
                 sample_count=artifact.training_sample_count,
                 trained_at=artifact.trained_at.isoformat(),
             )
         except Exception as exc:  # noqa: BLE001 — scheduled job must never re-raise
             _log.error(
-                "axon.ml_training.weekly_job.failed",
+                ""traject.ml_training.weekly_job.failed",
                 error=str(exc),
                 exc_info=True,
             )

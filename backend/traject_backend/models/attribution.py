@@ -1,7 +1,7 @@
 """SQLAlchemy ORM model for hourly cost attribution records.
 
 Maps the ``cost_attribution`` table, which is populated by
-:func:`~axon_backend.services.cost_attribution.materialize_hourly` by
+:func:`~traject_backend.services.cost_attribution.materialize_hourly` by
 aggregating ``inference_spans`` rows into hour-bucket summaries.
 """
 
@@ -14,7 +14,7 @@ from decimal import Decimal
 from sqlalchemy import Index, Numeric, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from axon_backend.models.base import Base
+from traject_backend.models.base import Base
 
 
 class CostAttributionRecord(Base):

@@ -17,11 +17,11 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.api.v1.spans import verify_api_key
-from axon_backend.core.database import get_db
-from axon_backend.core.redis_client import get_redis
-from axon_backend.models.budget import BudgetControlRecord
-from axon_backend.services.budget_enforcer import check_budget
+from traject_backend.api.v1.spans import verify_api_key
+from traject_backend.core.database import get_db
+from traject_backend.core.redis_client import get_redis
+from traject_backend.models.budget import BudgetControlRecord
+from traject_backend.services.budget_enforcer import check_budget
 
 _log = structlog.get_logger(__name__)
 

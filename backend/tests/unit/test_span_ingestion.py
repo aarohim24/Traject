@@ -1,4 +1,4 @@
-"""Unit tests for axon_backend.services.span_ingestion."""
+"""Unit tests for traject_backend.services.span_ingestion."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from axon_backend.services.span_ingestion import BudgetStatus, ingest_spans
+from traject_backend.services.span_ingestion import BudgetStatus, ingest_spans
 from tests.conftest import sample_span_payload, sample_spans_batch
 
 
@@ -70,7 +70,7 @@ class TestIngestSpans:
         # Force the lazy import to resolve, then patch on the module
         import sys  # noqa: PLC0415
 
-        be_mod = sys.modules["axon_backend.services.budget_enforcer"]
+        be_mod = sys.modules["traject_backend.services.budget_enforcer"]
         with patch.object(be_mod, "check_budget", new=AsyncMock(side_effect=RuntimeError("boom"))):
             result = await ingest_spans(spans, db, redis_mock)
         assert result.accepted == 3

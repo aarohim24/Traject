@@ -17,11 +17,11 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from axon_backend.api.v1.router import router as v1_router
-from axon_backend.core.config import settings
-from axon_backend.core.database import engine, init_db
-from axon_backend.core.redis_client import get_redis, ping_redis
-from axon_backend.workers.scheduler import register_jobs, scheduler
+from traject_backend.api.v1.router import router as v1_router
+from traject_backend.core.config import settings
+from traject_backend.core.database import engine, init_db
+from traject_backend.core.redis_client import get_redis, ping_redis
+from traject_backend.workers.scheduler import register_jobs, scheduler
 
 _log = structlog.get_logger(__name__)
 
@@ -45,24 +45,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     3. ``get_redis().aclose()`` — close Redis connections.
     """
     # Startup
-    _log.info("axon.backend.startup")
+    _log.info(""traject.backend.startup")
     await init_db()
     await ping_redis()
     register_jobs()
     scheduler.start()
-    _log.info("axon.backend.ready")
+    _log.info(""traject.backend.ready")
 
     yield
 
     # Shutdown
-    _log.info("axon.backend.shutdown")
+    _log.info(""traject.backend.shutdown")
     scheduler.shutdown(wait=False)
     await engine.dispose()
     try:
         await get_redis().aclose()
     except Exception as exc:  # noqa: BLE001
-        _log.warning("axon.backend.redis.close_error", error=str(exc))
-    _log.info("axon.backend.stopped")
+        _log.warning(""traject.backend.redis.close_error", error=str(exc))
+    _log.info(""traject.backend.stopped")
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         duration_ms = int((time.perf_counter() - start) * 1000)
         _log.info(
-            "axon.http.request",
+            ""traject.http.request",
             method=request.method,
             path=request.url.path,
             status_code=response.status_code,
@@ -160,7 +160,7 @@ async def health_db() -> dict[str, str]:
             await conn.execute(__import__("sqlalchemy").text("SELECT 1"))
         return {"status": "ok"}
     except Exception as exc:  # noqa: BLE001
-        _log.error("axon.health.db.error", error=str(exc))
+        _log.error(""traject.health.db.error", error=str(exc))
         raise HTTPException(status_code=503, detail="Database unavailable") from exc
 
 
@@ -180,5 +180,5 @@ async def health_redis() -> dict[str, str]:
         await get_redis().ping()
         return {"status": "ok"}
     except Exception as exc:  # noqa: BLE001
-        _log.error("axon.health.redis.error", error=str(exc))
+        _log.error(""traject.health.redis.error", error=str(exc))
         raise HTTPException(status_code=503, detail="Redis unavailable") from exc

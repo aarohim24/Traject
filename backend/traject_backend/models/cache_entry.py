@@ -17,7 +17,7 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import Index, Numeric, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from axon_backend.models.base import Base
+from traject_backend.models.base import Base
 
 
 class CacheEntryRecord(Base):

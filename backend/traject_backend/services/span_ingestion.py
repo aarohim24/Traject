@@ -17,7 +17,7 @@ import structlog
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.models.span import InferenceSpanRecord
+from traject_backend.models.span import InferenceSpanRecord
 
 _log = structlog.get_logger(__name__)
 
@@ -131,7 +131,7 @@ async def ingest_spans(
             ts = ts.replace(tzinfo=timezone.utc)
         if ts > cutoff:
             rejected_count += 1
-            _log.debug("axon.ingest.rejected_future_timestamp", timestamp=str(ts))
+            _log.debug(""traject.ingest.rejected_future_timestamp", timestamp=str(ts))
         else:
             valid.append(span)
 
@@ -177,11 +177,11 @@ async def ingest_spans(
         for tag in unique_tags:
             try:
                 # Lazy import to avoid circular dependency with budget_enforcer
-                from axon_backend.services.budget_enforcer import check_budget  # noqa: PLC0415
+                from traject_backend.services.budget_enforcer import check_budget  # noqa: PLC0415
 
                 status = await check_budget(tag, db, redis)
-                _log.debug("axon.budget.check", feature_tag=tag, status=status)
+                _log.debug(""traject.budget.check", feature_tag=tag, status=status)
             except Exception as exc:  # noqa: BLE001
-                _log.warning("axon.budget.check.failed", feature_tag=tag, error=str(exc))
+                _log.warning(""traject.budget.check.failed", feature_tag=tag, error=str(exc))
 
     return SpanIngestResponse(accepted=len(valid), rejected=rejected_count)

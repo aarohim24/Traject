@@ -7,7 +7,7 @@ by ``submitted_at`` descending.
 
 No API key is required for either endpoint — the benchmark registry is a
 public resource.  Submissions are validated against the ``BenchmarkSubmitRequest``
-schema and persisted as :class:`~axon_backend.models.benchmark.BenchmarkSubmissionRecord`
+schema and persisted as :class:`~traject_backend.models.benchmark.BenchmarkSubmissionRecord`
 rows.
 """
 
@@ -22,8 +22,8 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.core.database import get_db
-from axon_backend.models.benchmark import BenchmarkSubmissionRecord
+from traject_backend.core.database import get_db
+from traject_backend.models.benchmark import BenchmarkSubmissionRecord
 
 _log = structlog.get_logger(__name__)
 
@@ -34,7 +34,7 @@ class BenchmarkSubmitRequest(BaseModel):
     """Request body for ``POST /v1/benchmarks/submit``.
 
     Contains only aggregate, non-personally-identifiable metrics collected
-    from an opted-in :class:`~axon.core.telemetry_reporter.TelemetryReporter`
+    from an opted-in :class:`~"traject.core.telemetry_reporter.TelemetryReporter`
     instance.  No prompt content, user IDs, API keys, or host identifiers
     are accepted or stored.
 
@@ -105,7 +105,7 @@ async def submit_benchmark(
     """Persist a community benchmark submission.
 
     This endpoint requires no authentication.  The submitted payload is
-    validated and stored as a :class:`~axon_backend.models.benchmark.BenchmarkSubmissionRecord`.
+    validated and stored as a :class:`~traject_backend.models.benchmark.BenchmarkSubmissionRecord`.
     The server assigns the ``id`` (UUID) and ``submitted_at`` (UTC timestamp).
 
     Args:
@@ -130,7 +130,7 @@ async def submit_benchmark(
     await db.refresh(record)
 
     _log.info(
-        "axon.benchmarks.submitted",
+        ""traject.benchmarks.submitted",
         id=str(record.id),
         sdk_version=record.sdk_version,
         sample_count=record.sample_count,

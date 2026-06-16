@@ -16,8 +16,8 @@ from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.core.config import settings
-from axon_backend.models.cache_entry import CacheEntryRecord
+from traject_backend.core.config import settings
+from traject_backend.models.cache_entry import CacheEntryRecord
 
 _log = structlog.get_logger(__name__)
 
@@ -140,7 +140,7 @@ async def lookup(
         return CacheLookupResponse(hit=False, similarity=similarity)
 
     except Exception as exc:  # noqa: BLE001
-        _log.warning("axon.cache.lookup.error", error=str(exc))
+        _log.warning(""traject.cache.lookup.error", error=str(exc))
         return CacheLookupResponse(hit=False)
 
 
@@ -189,7 +189,7 @@ async def store(
         )
         await db.execute(stmt)
         await db.commit()
-        _log.debug("axon.cache.stored", prompt_hash=request.prompt_hash)
+        _log.debug(""traject.cache.stored", prompt_hash=request.prompt_hash)
 
     except Exception as exc:  # noqa: BLE001
-        _log.warning("axon.cache.store.error", error=str(exc))
+        _log.warning(""traject.cache.store.error", error=str(exc))

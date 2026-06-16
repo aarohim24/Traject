@@ -15,11 +15,11 @@ from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.api.v1.spans import verify_api_key
-from axon_backend.core.config import settings
-from axon_backend.core.database import get_db
-from axon_backend.models.cache_entry import CacheEntryRecord
-from axon_backend.services.semantic_cache import (
+from traject_backend.api.v1.spans import verify_api_key
+from traject_backend.core.config import settings
+from traject_backend.core.database import get_db
+from traject_backend.models.cache_entry import CacheEntryRecord
+from traject_backend.services.semantic_cache import (
     CacheLookupResponse,
     CacheStoreRequest,
     lookup,

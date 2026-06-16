@@ -14,7 +14,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.models.span import InferenceSpanRecord
+from traject_backend.models.span import InferenceSpanRecord
 
 _log = structlog.get_logger(__name__)
 
@@ -58,7 +58,7 @@ class CostPredictor:
         Raises:
             KeyError: If ``model`` is not found in ``PROVIDER_PRICING``.
         """
-        from axon.core.pricing import PROVIDER_PRICING  # noqa: PLC0415
+        from traject.core.pricing import PROVIDER_PRICING  # noqa: PLC0415
 
         pricing = PROVIDER_PRICING[model]
         input_cost = Decimal(
@@ -153,7 +153,7 @@ class CostPredictor:
         # Enforce post-condition: lower_bound <= point_estimate <= upper_bound
         if not (lower_bound <= point_estimate <= upper_bound):
             _log.warning(
-                "axon.cost_predictor.bounds_violated",
+                ""traject.cost_predictor.bounds_violated",
                 lower_bound=str(lower_bound),
                 point_estimate=str(point_estimate),
                 upper_bound=str(upper_bound),

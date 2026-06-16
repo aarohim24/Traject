@@ -2,7 +2,7 @@
 
 Maps the ``benchmark_submissions`` PostgreSQL table created in migration 0003.
 Stores aggregate, anonymised performance metrics submitted by consenting users
-via :class:`~axon.core.telemetry_reporter.TelemetryReporter` and persisted by
+via :class:`~"traject.core.telemetry_reporter.TelemetryReporter` and persisted by
 the public ``POST /v1/benchmarks/submit`` endpoint.
 """
 
@@ -14,7 +14,7 @@ from datetime import datetime
 from sqlalchemy import Float, Index, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from axon_backend.models.base import Base
+from traject_backend.models.base import Base
 
 
 class BenchmarkSubmissionRecord(Base):

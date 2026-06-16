@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "axon-backend"
+name = "traject-backend"
 version = "0.5.0"
 description = "Axon self-hosted backend service — span ingestion, cost attribution, semantic cache, budget controls."
 requires-python = ">=3.11"
@@ -33,7 +33,7 @@ dev = [
     "anyio>=4.0",
     "fakeredis>=2.0",
     "aiosqlite>=0.19",
-    "axon-sdk[ml]>=0.1.0",
+    "traject-sdk[ml]>=0.1.0",
 ]
 prod = [
     "uvicorn[standard]>=0.29",
@@ -41,12 +41,12 @@ prod = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["axon_backend*"]
+include = ["traject_backend*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = "--cov=axon_backend --cov-report=term-missing --cov-fail-under=75"
+addopts = "--cov=traject_backend --cov-report=term-missing --cov-fail-under=75"
 
 [tool.mypy]
 strict = true

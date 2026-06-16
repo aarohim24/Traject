@@ -8,11 +8,11 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from httpx import AsyncClient
 
-from axon_backend.core.config import settings
-from axon_backend.services.cost_attribution import AttributionResponse
+from traject_backend.core.config import settings
+from traject_backend.services.cost_attribution import AttributionResponse
 
 API_KEY = settings.api_key
-AUTH_HEADERS = {"X-Axon-API-Key": API_KEY}
+AUTH_HEADERS = {"X-Traject-API-Key": API_KEY}
 
 _EMPTY_RESPONSE = AttributionResponse(
     total_cost_usd=Decimal("0"),
@@ -56,7 +56,7 @@ async def test_get_attribution_invalid_group_by_returns_422(
 async def test_get_attribution_valid_returns_200(async_client: AsyncClient) -> None:
     """GET /v1/attribution with valid params returns 200."""
     with patch(
-        "axon_backend.api.v1.attribution.get_attribution",
+        "traject_backend.api.v1.attribution.get_attribution",
         new=AsyncMock(return_value=_EMPTY_RESPONSE),
     ):
         response = await async_client.get(
@@ -98,10 +98,10 @@ async def test_get_attribution_summary_valid_returns_200(
     mock_result.fetchall.return_value = []
 
     with patch(
-        "axon_backend.api.v1.attribution.AsyncSession",
+        "traject_backend.api.v1.attribution.AsyncSession",
         autospec=True,
     ), patch(
-        "axon_backend.core.database.AsyncSessionLocal",
+        "traject_backend.core.database.AsyncSessionLocal",
         return_value=MagicMock(
             __aenter__=AsyncMock(
                 return_value=AsyncMock(execute=AsyncMock(return_value=mock_result))

@@ -16,7 +16,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from axon_backend.models.attribution import CostAttributionRecord
+from traject_backend.models.attribution import CostAttributionRecord
 
 _log = structlog.get_logger(__name__)
 
@@ -92,7 +92,7 @@ class AnomalyDetector:
         try:
             return await self._do_scan(db)
         except Exception as exc:  # noqa: BLE001
-            _log.error("axon.anomaly_detector.scan_error", error=str(exc))
+            _log.error(""traject.anomaly_detector.scan_error", error=str(exc))
             return []
 
     async def _do_scan(self, db: AsyncSession) -> list[AnomalyAlert]:

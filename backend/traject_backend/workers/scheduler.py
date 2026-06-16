@@ -7,7 +7,7 @@ Defines four recurring jobs:
 - ``ml_weekly_training``: runs every Sunday at 01:00 to retrain the ML router.
 
 The module-level ``scheduler`` instance is started and stopped by the
-FastAPI lifespan context manager in :mod:`axon_backend.main`.
+FastAPI lifespan context manager in :mod:`traject_backend.main`.
 """
 
 from __future__ import annotations
@@ -17,8 +17,8 @@ from datetime import datetime, timedelta
 import structlog
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from axon_backend.core.database import AsyncSessionLocal
-from axon_backend.core.redis_client import get_redis
+from traject_backend.core.database import AsyncSessionLocal
+from traject_backend.core.redis_client import get_redis
 
 _log = structlog.get_logger(__name__)
 
@@ -29,11 +29,11 @@ async def _run_materialize_attribution() -> None:
     """Aggregate inference spans for the most recently completed hour.
 
     Computes the start of the previous complete hour bucket and calls
-    :func:`~axon_backend.services.cost_attribution.materialize_hourly`.
+    :func:`~traject_backend.services.cost_attribution.materialize_hourly`.
     Errors are caught and logged; the scheduler is never crashed.
     """
     try:
-        from axon_backend.services.cost_attribution import materialize_hourly  # noqa: PLC0415
+        from traject_backend.services.cost_attribution import materialize_hourly  # noqa: PLC0415
 
         now = datetime.utcnow()
         previous_hour = (now - timedelta(hours=1)).replace(
@@ -42,12 +42,12 @@ async def _run_materialize_attribution() -> None:
         async with AsyncSessionLocal() as db:
             rows = await materialize_hourly(db, previous_hour)
         _log.info(
-            "axon.worker.materialize_attribution.done",
+            ""traject.worker.materialize_attribution.done",
             hour=str(previous_hour),
             rows=rows,
         )
     except Exception as exc:  # noqa: BLE001
-        _log.error("axon.worker.materialize_attribution.error", error=str(exc))
+        _log.error(""traject.worker.materialize_attribution.error", error=str(exc))
 
 
 async def _run_expire_cache_entries() -> None:
@@ -66,9 +66,9 @@ async def _run_expire_cache_entries() -> None:
                 )
             )
             await db.commit()
-        _log.info("axon.worker.expire_cache.done")
+        _log.info(""traject.worker.expire_cache.done")
     except Exception as exc:  # noqa: BLE001
-        _log.error("axon.worker.expire_cache.error", error=str(exc))
+        _log.error(""traject.worker.expire_cache.error", error=str(exc))
 
 
 async def _run_recompute_budget_counters() -> None:
@@ -83,10 +83,10 @@ async def _run_recompute_budget_counters() -> None:
     try:
         from sqlalchemy import func, select  # noqa: PLC0415
 
-        from axon_backend.core.config import settings  # noqa: PLC0415
-        from axon_backend.models.budget import BudgetControlRecord  # noqa: PLC0415
-        from axon_backend.models.span import InferenceSpanRecord  # noqa: PLC0415
-        from axon_backend.services.budget_enforcer import (  # noqa: PLC0415
+        from traject_backend.core.config import settings  # noqa: PLC0415
+        from traject_backend.models.budget import BudgetControlRecord  # noqa: PLC0415
+        from traject_backend.models.span import InferenceSpanRecord  # noqa: PLC0415
+        from traject_backend.services.budget_enforcer import (  # noqa: PLC0415
             _period_start,
         )
 
@@ -116,25 +116,25 @@ async def _run_recompute_budget_counters() -> None:
                 )
 
         _log.info(
-            "axon.worker.recompute_budget_counters.done",
+            ""traject.worker.recompute_budget_counters.done",
             count=len(budgets),
         )
     except Exception as exc:  # noqa: BLE001
-        _log.error("axon.worker.recompute_budget_counters.error", error=str(exc))
+        _log.error(""traject.worker.recompute_budget_counters.error", error=str(exc))
 
 
 async def _run_anomaly_scan() -> None:
     """Scan all feature tags for IQR-based cost anomalies and emit alerts.
 
-    Creates a fresh :class:`~axon_backend.services.anomaly_detector.AnomalyDetector`
+    Creates a fresh :class:`~traject_backend.services.anomaly_detector.AnomalyDetector`
     instance, opens a database session, and calls ``run_scan(db)``.  Each
-    returned :class:`~axon_backend.services.anomaly_detector.AnomalyAlert` is
+    returned :class:`~traject_backend.services.anomaly_detector.AnomalyAlert` is
     emitted as a structlog WARNING with full context fields.
 
     Errors are caught and logged; the scheduler is never crashed.
     """
     try:
-        from axon_backend.services.anomaly_detector import (  # noqa: PLC0415
+        from traject_backend.services.anomaly_detector import (  # noqa: PLC0415
             AnomalyDetector,
         )
 
@@ -143,7 +143,7 @@ async def _run_anomaly_scan() -> None:
             alerts = await detector.run_scan(db)
         for alert in alerts:
             _log.warning(
-                "axon.anomaly_detector.alert",
+                ""traject.anomaly_detector.alert",
                 feature_tag=alert.feature_tag,
                 metric=alert.metric,
                 direction=alert.direction,
@@ -151,30 +151,30 @@ async def _run_anomaly_scan() -> None:
                 upper_fence=alert.upper_fence,
                 lower_fence=alert.lower_fence,
             )
-        _log.info("axon.worker.anomaly_scan.done", alert_count=len(alerts))
+        _log.info(""traject.worker.anomaly_scan.done", alert_count=len(alerts))
     except Exception as exc:  # noqa: BLE001
-        _log.error("axon.worker.anomaly_scan.error", error=str(exc))
+        _log.error(""traject.worker.anomaly_scan.error", error=str(exc))
 
 
 async def _run_ml_weekly_training() -> None:
     """Retrain the ML routing model on the latest labeled inference spans.
 
-    Creates a fresh :class:`~axon_backend.services.ml_training.MLTrainingService`
+    Creates a fresh :class:`~traject_backend.services.ml_training.MLTrainingService`
     instance, opens a database session, and delegates all training and
     persistence logic to
-    :meth:`~axon_backend.services.ml_training.MLTrainingService.run_weekly_training_job`.
+    :meth:`~traject_backend.services.ml_training.MLTrainingService.run_weekly_training_job`.
 
     Errors are caught and logged; the scheduler is never crashed.
     """
     try:
-        from axon_backend.services.ml_training import MLTrainingService  # noqa: PLC0415
+        from traject_backend.services.ml_training import MLTrainingService  # noqa: PLC0415
 
         svc = MLTrainingService()
         async with AsyncSessionLocal() as db:
             await svc.run_weekly_training_job(db)
-        _log.info("axon.worker.ml_weekly_training.done")
+        _log.info(""traject.worker.ml_weekly_training.done")
     except Exception as exc:  # noqa: BLE001
-        _log.error("axon.worker.ml_weekly_training.error", error=str(exc))
+        _log.error(""traject.worker.ml_weekly_training.error", error=str(exc))
 
 
 def register_jobs() -> None:

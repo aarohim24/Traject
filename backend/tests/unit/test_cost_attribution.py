@@ -1,4 +1,4 @@
-"""Unit tests for axon_backend.services.cost_attribution."""
+"""Unit tests for traject_backend.services.cost_attribution."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from axon_backend.services.cost_attribution import get_attribution, materialize_hourly
+from traject_backend.services.cost_attribution import get_attribution, materialize_hourly
 
 
 def _mock_db_no_rows() -> MagicMock:

@@ -14,15 +14,15 @@ from decimal import Decimal
 from sqlalchemy import Index, Numeric, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from axon_backend.models.base import Base
+from traject_backend.models.base import Base
 
 
 class InferenceSpanRecord(Base):
     """Persisted record of a single instrumented LLM API call.
 
-    Populated by :func:`~axon_backend.services.span_ingestion.ingest_spans`
+    Populated by :func:`~traject_backend.services.span_ingestion.ingest_spans`
     from ``InferenceSpanPayload`` objects sent by the SDK's
-    :class:`~axon.backend_client.BackendClient`.
+    :class:`~"traject.backend_client.BackendClient`.
 
     Attributes:
         id: UUID primary key, generated server-side by ``gen_random_uuid()``.

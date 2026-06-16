@@ -1,4 +1,4 @@
-"""Unit tests for axon_backend.services.ml_training.MLTrainingService.
+"""Unit tests for traject_backend.services.ml_training.MLTrainingService.
 
 Validates that:
 - ``train()`` raises ``InsufficientDataError`` on an empty database.
@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from axon_backend.services.ml_training import MLTrainingService
+from traject_backend.services.ml_training import MLTrainingService
 
 
 # ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ class TestMLTrainingServiceTrain:
 
         **Validates: Requirements 5.5**
         """
-        from axon.exceptions import InsufficientDataError  # noqa: PLC0415
+        from traject.exceptions import InsufficientDataError  # noqa: PLC0415
 
         db = _make_mock_db_empty()
         service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")
@@ -65,7 +65,7 @@ class TestMLTrainingServiceTrain:
 
         **Validates: Requirements 5.5**
         """
-        from axon.exceptions import InsufficientDataError  # noqa: PLC0415
+        from traject.exceptions import InsufficientDataError  # noqa: PLC0415
 
         db = _make_mock_db_empty()
         service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")
@@ -84,7 +84,7 @@ class TestMLTrainingServiceTrain:
 
         **Validates: Requirements 5.5**
         """
-        from axon.exceptions import InsufficientDataError  # noqa: PLC0415
+        from traject.exceptions import InsufficientDataError  # noqa: PLC0415
 
         db = _make_mock_db_empty()
         service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")
@@ -169,7 +169,7 @@ class TestMLTrainingServiceWeeklyJob:
 
         **Validates: Requirements 5.6**
         """
-        from axon.exceptions import InsufficientDataError  # noqa: PLC0415
+        from traject.exceptions import InsufficientDataError  # noqa: PLC0415
 
         db = _make_mock_db_empty()
         service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")

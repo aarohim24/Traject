@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from axon_backend.api.v1 import attribution, budgets, cache, spans
-from axon_backend.api.v1.benchmarks import benchmarks_router
-from axon_backend.api.v1.predictions import predictions_router
+from traject_backend.api.v1 import attribution, budgets, cache, spans
+from traject_backend.api.v1.benchmarks import benchmarks_router
+from traject_backend.api.v1.predictions import predictions_router
 
 router = APIRouter()
 

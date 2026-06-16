@@ -1,4 +1,4 @@
-"""Unit tests for axon_backend.services.semantic_cache."""
+"""Unit tests for traject_backend.services.semantic_cache."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from axon_backend.services.semantic_cache import (
+from traject_backend.services.semantic_cache import (
     CacheLookupResponse,
     CacheStoreRequest,
     lookup,

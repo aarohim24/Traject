@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from axon_backend.core.config import settings
+from traject_backend.core.config import settings
 
 engine = create_async_engine(
     settings.database_url,
@@ -58,7 +58,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def init_db() -> None:
     """Create all database tables if they do not already exist.
 
-    Imports ``Base`` lazily from ``axon_backend.models.base`` to avoid
+    Imports ``Base`` lazily from ``traject_backend.models.base`` to avoid
     circular imports during application startup (models are not available
     until after the core infrastructure is imported).  If the models package
     is not yet present, the import error is silently swallowed and the
@@ -74,7 +74,7 @@ async def init_db() -> None:
         Nothing — ``ImportError`` from missing models is caught and ignored.
     """
     try:
-        from axon_backend.models.base import Base  # noqa: PLC0415
+        from traject_backend.models.base import Base  # noqa: PLC0415
     except ImportError:
         return
 

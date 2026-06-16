@@ -1,4 +1,4 @@
-"""Unit tests for axon_backend.services.budget_enforcer."""
+"""Unit tests for traject_backend.services.budget_enforcer."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from axon_backend.services.budget_enforcer import BudgetAlertPayload, check_budget, fire_webhook
-from axon_backend.services.span_ingestion import BudgetStatus
+from traject_backend.services.budget_enforcer import BudgetAlertPayload, check_budget, fire_webhook
+from traject_backend.services.span_ingestion import BudgetStatus
 
 
 class TestCheckBudget:
@@ -27,7 +27,7 @@ class TestCheckBudget:
     async def test_returns_ok_on_db_error(self, db_session, redis_mock) -> None:
         """Returns OK (fail open) when the database raises an exception."""
         with patch(
-            "axon_backend.services.budget_enforcer._load_budget",
+            "traject_backend.services.budget_enforcer._load_budget",
             new=AsyncMock(side_effect=RuntimeError("DB down")),
         ):
             status = await check_budget("any-tag", db_session, redis_mock)
@@ -40,7 +40,7 @@ class TestCheckBudget:
         import uuid  # noqa: PLC0415
         from datetime import datetime  # noqa: PLC0415
 
-        from axon_backend.models.budget import BudgetControlRecord  # noqa: PLC0415
+        from traject_backend.models.budget import BudgetControlRecord  # noqa: PLC0415
 
         record = BudgetControlRecord(
             id=uuid.uuid4(),
@@ -67,7 +67,7 @@ class TestCheckBudget:
         import uuid  # noqa: PLC0415
         from datetime import datetime  # noqa: PLC0415
 
-        from axon_backend.models.budget import BudgetControlRecord  # noqa: PLC0415
+        from traject_backend.models.budget import BudgetControlRecord  # noqa: PLC0415
 
         record = BudgetControlRecord(
             id=uuid.uuid4(),
@@ -96,7 +96,7 @@ class TestCheckBudget:
         import uuid  # noqa: PLC0415
         from datetime import datetime  # noqa: PLC0415
 
-        from axon_backend.models.budget import BudgetControlRecord  # noqa: PLC0415
+        from traject_backend.models.budget import BudgetControlRecord  # noqa: PLC0415
 
         record = BudgetControlRecord(
             id=uuid.uuid4(),
@@ -132,7 +132,7 @@ class TestFireWebhook:
             status="exhausted",
             timestamp="2025-01-01T00:00:00Z",
         )
-        with patch("axon_backend.services.budget_enforcer.httpx.AsyncClient") as mock_cls:
+        with patch("traject_backend.services.budget_enforcer.httpx.AsyncClient") as mock_cls:
             mock_instance = AsyncMock()
             mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
             mock_instance.__aexit__ = AsyncMock(return_value=False)
@@ -157,7 +157,7 @@ class TestFireWebhook:
         mock_response.status_code = 503
         mock_response.is_success = False
 
-        with patch("axon_backend.services.budget_enforcer.httpx.AsyncClient") as mock_cls:
+        with patch("traject_backend.services.budget_enforcer.httpx.AsyncClient") as mock_cls:
             mock_instance = AsyncMock()
             mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
             mock_instance.__aexit__ = AsyncMock(return_value=False)

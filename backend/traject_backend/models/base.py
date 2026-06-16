@@ -1,6 +1,6 @@
 """SQLAlchemy declarative base for all Axon backend ORM models.
 
-All model classes in ``axon_backend.models`` inherit from :class:`Base`.
+All model classes in ``traject_backend.models`` inherit from :class:`Base`.
 The shared metadata object is used by Alembic for schema migrations and by
 ``init_db()`` for table creation.
 """
