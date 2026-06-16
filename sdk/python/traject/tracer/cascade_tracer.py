@@ -27,7 +27,10 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
 
-from traject.tracer.context_propagator import extract_trace_context, inject_trace_context
+from traject.tracer.context_propagator import (
+    extract_trace_context,
+    inject_trace_context,
+)
 
 
 @dataclass

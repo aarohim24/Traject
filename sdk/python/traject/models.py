@@ -247,6 +247,12 @@ class CompressionResult(BaseModel):
         messages: The final message list returned to the caller.
         warnings: Human-readable diagnostic messages generated during
             the pipeline run.
+        cache_hits: Number of segment scores served from the
+            :class:`~traject.compression.relevance_scorer.CompressionCache`
+            during the scoring step. Zero when caching is disabled or when
+            no task hint is provided.
+        cache_hit_rate: Fraction of scoring lookups satisfied by the cache,
+            in ``[0.0, 1.0]``. Zero when no lookups were made.
     """
 
     original_tokens: int
@@ -261,6 +267,8 @@ class CompressionResult(BaseModel):
     strategy_applied: str  # CompressionStrategy string value — str for forward compat
     messages: list[Any]  # Any: message dicts may contain heterogeneous values
     warnings: list[str]
+    cache_hits: int = 0
+    cache_hit_rate: float = 0.0
 
     @field_validator("compression_ratio", mode="after")
     @classmethod

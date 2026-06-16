@@ -19,7 +19,7 @@ import tiktoken
 from traject.classifier.artifact_type import ArtifactType, classify_sequence
 from traject.compression.adapters.base import FrameworkAdapter
 from traject.compression.adapters.raw_openai import RawOpenAIAdapter
-from traject.compression.relevance_scorer import score_segments
+from traject.compression.relevance_scorer import CompressionCache, score_segments
 from traject.compression.segment_parser import parse
 from traject.compression.strategies import (
     CompressionConfig,
@@ -237,7 +237,8 @@ def compress(
     # ------------------------------------------------------------------ #
     # Step 5: SCORE                                                        #
     # ------------------------------------------------------------------ #
-    scores: list[float] = score_segments(segments, task_hint)
+    cache = CompressionCache()
+    scores: list[float] = score_segments(segments, task_hint, cache=cache)
 
     # ------------------------------------------------------------------ #
     # Step 6: COMPRESS — apply per-segment strategy decisions             #
@@ -262,7 +263,7 @@ def compress(
             compressed_messages.append(normalized[seg.index])
         elif decision == "SUMMARIZE":
             summarized.append(seg)
-            summary = seg.content[:100] + " [summarized by Axon]"
+            summary = seg.content[:100] + " [summarized by Traject]"
             compressed_messages.append({"role": seg.role, "content": summary})
         else:  # DROP
             dropped.append(seg)
@@ -304,6 +305,8 @@ def compress(
                 f"Compression validation failed: {exc}. "
                 "Original messages returned."
             ],
+            cache_hits=cache.hits,
+            cache_hit_rate=cache.hit_rate,
         )
 
     # ------------------------------------------------------------------ #
@@ -322,6 +325,18 @@ def compress(
             1.0 - (final_tokens / original_tokens) if original_tokens > 0 else 0.0
         )
 
+    logger.info(
+        "traject.compression.complete",
+        original_tokens=original_tokens,
+        compressed_tokens=final_tokens,
+        tokens_saved=final_saved,
+        compression_ratio=round(ratio, 4),
+        strategy=config.strategy.value,
+        shadow_mode=config.shadow_mode,
+        cache_hits=cache.hits,
+        cache_hit_rate=round(cache.hit_rate, 4),
+    )
+
     return CompressionResult(
         original_tokens=original_tokens,
         compressed_tokens=final_tokens,
@@ -335,4 +350,6 @@ def compress(
         strategy_applied=config.strategy.value,
         messages=final_messages,
         warnings=[],
+        cache_hits=cache.hits,
+        cache_hit_rate=cache.hit_rate,
     )

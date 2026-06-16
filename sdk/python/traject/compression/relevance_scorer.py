@@ -5,10 +5,15 @@ that combines recency decay, semantic similarity against an optional task
 hint, and a reference-count heuristic. The underlying embedding model
 (``all-MiniLM-L6-v2``) is loaded once at module import time and reused for
 the process lifetime — no external API calls are ever made (ADR-003).
+
+This module also provides :class:`CompressionCache`, a call-scoped cache that
+avoids re-computing embedding similarity for segments whose content has not
+changed between scoring calls within the same agent turn.
 """
 
 from __future__ import annotations
 
+import hashlib
 import math
 from typing import Any  # noqa: F401  # retained for re-export consistency
 
@@ -30,6 +35,151 @@ _DECAY_RATE: float = 0.3
 _RECENCY_WEIGHT: float = 0.4
 _SEMANTIC_WEIGHT: float = 0.4
 _REFERENCE_WEIGHT: float = 0.2
+
+# Number of buckets used to discretise task-hint similarity when computing
+# cache keys. A higher value gives finer-grained cache separation at the cost
+# of lower hit rates. 10 buckets maps 0.0–1.0 cosine similarity to integers
+# 0–9, yielding cache reuse whenever the task hint is semantically close but
+# not identical to a prior hint within the same call scope.
+_TASK_BUCKET_COUNT: int = 10
+
+
+# ---------------------------------------------------------------------------
+# CompressionCache
+# ---------------------------------------------------------------------------
+
+
+class CompressionCache:
+    """Call-scoped cache for segment relevance score *semantic components*.
+
+    Avoids re-computing embedding similarity for segments whose content is
+    unchanged across successive scoring calls within a single ``compress()``
+    invocation. The cache stores only the **semantic similarity** component of
+    the composite score — not the full composite — because recency and
+    reference-count components depend on segment position, which can differ
+    between two segments with the same content.
+
+    The cache is keyed on ``(content_hash, task_bucket)`` where
+    ``content_hash`` is the SHA-256 digest of the segment's content and
+    ``task_bucket`` is the cosine similarity between the task-hint embedding
+    and a fixed reference vector, discretised into ``_TASK_BUCKET_COUNT``
+    integer buckets.
+
+    The cache is intentionally **not** shared across ``compress()`` calls —
+    each call constructs a fresh instance. This prevents stale scores from
+    one agent turn affecting a later turn where task context has shifted.
+
+    Attributes:
+        hits: Number of cache hits accumulated since construction.
+        misses: Number of cache misses accumulated since construction.
+    """
+
+    def __init__(self) -> None:
+        self._store: dict[tuple[str, int], float] = {}
+        self.hits: int = 0
+        self.misses: int = 0
+
+    @staticmethod
+    def _content_hash(content: str) -> str:
+        """Return the SHA-256 hex digest of *content*.
+
+        Args:
+            content: The segment's text content.
+
+        Returns:
+            A 64-character lowercase hex string.
+        """
+        return hashlib.sha256(content.encode("utf-8", errors="replace")).hexdigest()
+
+    @staticmethod
+    def _task_bucket(
+        segment_embedding: list[float],
+        task_embedding: list[float],
+    ) -> int:
+        """Discretise cosine similarity into an integer bucket.
+
+        Args:
+            segment_embedding: Unit-norm embedding vector for the segment.
+            task_embedding: Unit-norm embedding vector for the task hint.
+
+        Returns:
+            Integer in ``[0, _TASK_BUCKET_COUNT - 1]``.
+        """
+        similarity: float = float(np.dot(segment_embedding, task_embedding))
+        # Clamp to [0.0, 1.0] before bucketing — cosine similarity can
+        # technically be slightly outside this range due to float rounding.
+        clamped: float = max(0.0, min(1.0, similarity))
+        bucket: int = int(clamped * _TASK_BUCKET_COUNT)
+        return min(bucket, _TASK_BUCKET_COUNT - 1)
+
+    def get_semantic(
+        self,
+        content: str,
+        segment_embedding: list[float] | None,
+        task_embedding: list[float] | None,
+    ) -> float | None:
+        """Return a cached semantic similarity score, or ``None`` on a cache miss.
+
+        A cache miss occurs when either embedding is absent (no task hint was
+        provided) or when the ``(content_hash, task_bucket)`` key is not yet
+        stored.
+
+        Args:
+            content: The segment's text content.
+            segment_embedding: Unit-norm embedding for the segment, or ``None``
+                when semantic scoring is disabled (no task hint).
+            task_embedding: Unit-norm embedding for the task hint, or ``None``
+                when no task hint is provided.
+
+        Returns:
+            The cached semantic similarity value in ``[0.0, 1.0]``, or
+            ``None`` on a miss.
+        """
+        if segment_embedding is None or task_embedding is None:
+            # Semantic component is disabled — no cache benefit.
+            self.misses += 1
+            return None
+
+        key = (
+            self._content_hash(content),
+            self._task_bucket(segment_embedding, task_embedding),
+        )
+        result = self._store.get(key)
+        if result is None:
+            self.misses += 1
+        else:
+            self.hits += 1
+        return result
+
+    def put_semantic(
+        self,
+        content: str,
+        segment_embedding: list[float],
+        task_embedding: list[float],
+        semantic_score: float,
+    ) -> None:
+        """Store a semantic similarity score under the ``(content_hash, task_bucket)`` key.
+
+        Args:
+            content: The segment's text content.
+            segment_embedding: Unit-norm embedding for the segment.
+            task_embedding: Unit-norm embedding for the task hint.
+            semantic_score: The semantic similarity in ``[0.0, 1.0]`` to cache.
+        """
+        key = (
+            self._content_hash(content),
+            self._task_bucket(segment_embedding, task_embedding),
+        )
+        self._store[key] = semantic_score
+
+    @property
+    def hit_rate(self) -> float:
+        """Return the cache hit rate as a float in ``[0.0, 1.0]``.
+
+        Returns ``0.0`` when no lookups have been made.
+        """
+        total = self.hits + self.misses
+        return self.hits / total if total > 0 else 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -59,8 +209,13 @@ def _compute_reference_counts(segments: list[Segment]) -> list[int]:
 def score_segments(
     segments: list[Segment],
     task_hint: str | None = None,
+    cache: CompressionCache | None = None,
 ) -> list[float]:
     """Score each segment's relevance using recency, semantic, and reference scoring.
+
+    When *cache* is provided, scores for segments whose content and task-hint
+    similarity bucket have been seen before in this call scope are served from
+    the cache, bypassing embedding computation for those segments.
 
     Args:
         segments: Ordered list of ``Segment`` objects produced by the segment
@@ -69,6 +224,10 @@ def score_segments(
             When provided, the semantic similarity between each segment and
             the task hint is incorporated into the composite score. When
             ``None``, the semantic component defaults to ``1.0``.
+        cache: Optional :class:`CompressionCache` instance. When provided,
+            computed scores are stored in the cache and future calls for the
+            same ``(content_hash, task_bucket)`` pair return the cached value.
+            Pass ``None`` to disable caching (default, backward-compatible).
 
     Returns:
         A list of floats of the same length as ``segments``, where each value
@@ -124,20 +283,30 @@ def score_segments(
             scores.append(1.0)
             continue
 
-        # Recency: exponential decay from the most recent turn.
+        seg_emb: list[float] | None = segment_embeddings.get(i)
+
+        # --- Recency (always position-dependent, not cached) ---
         turns_since: int = max_turn - seg.turn_index
         recency: float = math.exp(-_DECAY_RATE * turns_since)
 
-        # Semantic: cosine similarity via dot product of unit-norm embeddings.
-        if task_embedding is not None and i in segment_embeddings:
-            raw_semantic: float = float(
-                np.dot(segment_embeddings[i], task_embedding)
+        # --- Semantic: check cache first (content + task → same similarity) ---
+        if task_embedding is not None and seg_emb is not None:
+            cached_semantic = (
+                cache.get_semantic(seg.content, seg_emb, task_embedding)
+                if cache is not None
+                else None
             )
-            semantic: float = max(0.0, min(1.0, raw_semantic))
+            if cached_semantic is not None:
+                semantic: float = cached_semantic
+            else:
+                raw_semantic: float = float(np.dot(seg_emb, task_embedding))
+                semantic = max(0.0, min(1.0, raw_semantic))
+                if cache is not None:
+                    cache.put_semantic(seg.content, seg_emb, task_embedding, semantic)
         else:
             semantic = 1.0
 
-        # Reference: normalized count of later segments that reference this one.
+        # --- Reference: normalized count of later segments that reference this ---
         reference: float = min(1.0, reference_counts[i] / 3.0)
 
         composite: float = (
@@ -145,6 +314,7 @@ def score_segments(
             + _SEMANTIC_WEIGHT * semantic
             + _REFERENCE_WEIGHT * reference
         )
-        scores.append(max(0.0, min(1.0, composite)))
+        score: float = max(0.0, min(1.0, composite))
+        scores.append(score)
 
     return scores

@@ -272,7 +272,7 @@ class TestLiveCompression:
         config = _live_config(CompressionStrategy.CONSERVATIVE, min_turns=0)
 
         # Force a low relevance score for the REASONING_BLOCK so it gets dropped
-        def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
+        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
         with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
@@ -296,7 +296,7 @@ class TestLiveCompression:
         ]
         config = _live_config(CompressionStrategy.AGGRESSIVE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
+        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
         with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
@@ -319,7 +319,7 @@ class TestLiveCompression:
         ]
         config = _live_config(CompressionStrategy.AGGRESSIVE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
+        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
             return [0.01 if not s.protected else 1.0 for s in segments]
 
         with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
@@ -328,8 +328,8 @@ class TestLiveCompression:
         contents = [m.get("content") for m in result.messages]
         assert sys_content in contents
 
-    def test_live_mode_summarize_produces_axon_marker(self) -> None:
-        """SUMMARIZE decision appends '[summarized by Axon]' to truncated content."""
+    def test_live_mode_summarize_produces_traject_marker(self) -> None:
+        """SUMMARIZE decision appends '[summarized by Traject]' to truncated content."""
         # TOOL_RESULT with turns_ago > 3 and score < 0.30 → SUMMARIZE (CONSERVATIVE)
         tool_content = "Tool output data: " + "x" * 200  # content > 100 chars
         msgs = [
@@ -349,7 +349,7 @@ class TestLiveCompression:
         config = _live_config(CompressionStrategy.CONSERVATIVE, min_turns=0)
 
         # Force score low on the tool message, high on everything else
-        def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
+        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
             scores = []
             for s in segments:
                 if s.artifact_type == ArtifactType.TOOL_RESULT:
@@ -363,12 +363,12 @@ class TestLiveCompression:
 
         summarized_contents = [
             m.get("content", "") for m in result.messages
-            if "[summarized by Axon]" in str(m.get("content", ""))
+            if "[summarized by Traject]" in str(m.get("content", ""))
         ]
         assert len(summarized_contents) >= 1
         # Summarized content is truncated at 100 chars + marker
-        assert summarized_contents[0].endswith("[summarized by Axon]")
-        assert len(summarized_contents[0]) <= 122  # content[:100] + " [summarized by Axon]"
+        assert summarized_contents[0].endswith("[summarized by Traject]")
+        assert len(summarized_contents[0]) <= 125  # content[:100] + " [summarized by Traject]"
 
 
 # ── _apply_strategy Branch Coverage ──────────────────────────────────────
@@ -511,7 +511,7 @@ class TestDecisionBranchesViaCompress:
         ]
         config = _live_config(CompressionStrategy.CONSERVATIVE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
+        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
         with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
@@ -536,7 +536,7 @@ class TestDecisionBranchesViaCompress:
         ]
         config = _live_config(CompressionStrategy.MODERATE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
+        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
         with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
@@ -553,7 +553,7 @@ class TestDecisionBranchesViaCompress:
         ]
         config = _live_config(CompressionStrategy.AGGRESSIVE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
+        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
         with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
@@ -584,7 +584,7 @@ class TestDecisionBranchesViaCompress:
 
         config = _live_config(CompressionStrategy.CONSERVATIVE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None) -> list[float]:
+        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
             return [
                 0.10 if s.artifact_type == ArtifactType.TOOL_RESULT else 1.0
                 for s in segments
@@ -597,7 +597,7 @@ class TestDecisionBranchesViaCompress:
         # Summarized message contains the Traject marker
         summarized = [
             m for m in result.messages
-            if "[summarized by Axon]" in str(m.get("content", ""))
+            if "[summarized by Traject]" in str(m.get("content", ""))
         ]
         assert len(summarized) >= 1
 
