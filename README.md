@@ -1,8 +1,6 @@
 # Traject
 AI inference optimization middleware for production agent systems.
 
-![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green) [![PyPI](https://img.shields.io/pypi/v/traject-sdk?label=traject-sdk)](https://pypi.org/project/traject-sdk) ![Tests](https://github.com/aarohim24/Traject/actions/workflows/ci.yml/badge.svg) ![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen)
-
 In multi-step agents, each LLM call re-transmits the full accumulated context — tool results, reasoning traces, prior messages — compounding cost at every step. Traject intercepts calls to existing OpenAI and Anthropic clients, compresses redundant context before it reaches the provider, routes requests to the cheapest qualifying model, and emits structured OpenTelemetry spans for cost attribution. Three lines of code. Existing call sites unchanged.
 
 ```python
