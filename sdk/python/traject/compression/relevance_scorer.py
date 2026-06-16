@@ -201,6 +201,66 @@ def _compute_reference_counts(segments: list[Segment]) -> list[int]:
     return counts
 
 
+def compute_semantic_reference_scores(
+    segments: list[Segment],
+    window: int = 5,
+) -> list[float]:
+    """Compute a semantic reference score for each segment.
+
+    For segment *i*, the reference score is the maximum cosine similarity
+    between that segment and any of the ``window`` segments that immediately
+    follow it. A high score means later messages are semantically close to
+    this segment — i.e. the agent is still actively reasoning about its
+    content, even if the wording has changed.
+
+    Only non-protected segments are scored; protected segments receive 0.0
+    (they are already preserved unconditionally and do not need soft
+    protection).
+
+    Uses the module-level ``all-MiniLM-L6-v2`` embedding singleton — no
+    external API calls (ADR-003).
+
+    Args:
+        segments: Ordered list of ``Segment`` objects. Must not be empty.
+        window: Maximum number of later segments to compare against.
+            Defaults to 5.
+
+    Returns:
+        A list of floats of the same length as ``segments``. Values are in
+        ``[0.0, 1.0]``. Returns an empty list when ``segments`` is empty.
+    """
+    if not segments:
+        return []
+
+    n = len(segments)
+
+    # Batch-encode all segments in one pass (cheap — 384-dim model).
+    all_embeddings: list[list[float]] = _model.encode(
+        [s.content for s in segments],
+        normalize_embeddings=True,
+    ).tolist()
+
+    scores: list[float] = []
+    for i, seg in enumerate(segments):
+        if seg.protected:
+            scores.append(0.0)
+            continue
+
+        # Look at up to `window` segments after position i.
+        end = min(i + 1 + window, n)
+        max_sim: float = 0.0
+        for j in range(i + 1, end):
+            sim: float = float(np.dot(all_embeddings[i], all_embeddings[j]))
+            # Unit-norm embeddings → dot product == cosine similarity.
+            sim = max(0.0, min(1.0, sim))
+            if sim > max_sim:
+                max_sim = sim
+
+        scores.append(max_sim)
+
+    return scores
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------

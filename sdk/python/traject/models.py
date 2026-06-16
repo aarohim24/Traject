@@ -174,6 +174,13 @@ class Segment(BaseModel):
             dialogue transitions from assistant to user (>= 0).
         protected: ``True`` when the compression engine must not drop or
             summarize this segment.
+        soft_protected: ``True`` when this segment has a high semantic
+            reference score from later messages, indicating the agent is
+            actively reasoning about its content. Soft-protected segments
+            are not immutable but require a significantly lower composite
+            score to be compressed (score < 0.15 instead of < 0.30 for
+            CONSERVATIVE). Set by the semantic reference dependency pass
+            in the compression engine.
         embedding: 384-dimensional unit-norm float embedding produced by
             ``all-MiniLM-L6-v2``, or ``None`` before the scorer runs.
     """
@@ -185,6 +192,7 @@ class Segment(BaseModel):
     token_count: int
     turn_index: int
     protected: bool
+    soft_protected: bool = False
     embedding: list[float] | None = None
 
     @field_validator("token_count", mode="after")
@@ -253,6 +261,10 @@ class CompressionResult(BaseModel):
             no task hint is provided.
         cache_hit_rate: Fraction of scoring lookups satisfied by the cache,
             in ``[0.0, 1.0]``. Zero when no lookups were made.
+        segments_soft_protected: Number of segments elevated to the
+            soft-protect tier by the semantic reference dependency pass.
+            These segments require a lower composite score (< 0.15) to be
+            compressed versus the default threshold.
     """
 
     original_tokens: int
@@ -269,6 +281,7 @@ class CompressionResult(BaseModel):
     warnings: list[str]
     cache_hits: int = 0
     cache_hit_rate: float = 0.0
+    segments_soft_protected: int = 0
 
     @field_validator("compression_ratio", mode="after")
     @classmethod

@@ -19,7 +19,11 @@ import tiktoken
 from traject.classifier.artifact_type import ArtifactType, classify_sequence
 from traject.compression.adapters.base import FrameworkAdapter
 from traject.compression.adapters.raw_openai import RawOpenAIAdapter
-from traject.compression.relevance_scorer import CompressionCache, score_segments
+from traject.compression.relevance_scorer import (
+    CompressionCache,
+    compute_semantic_reference_scores,
+    score_segments,
+)
 from traject.compression.segment_parser import parse
 from traject.compression.strategies import (
     CompressionConfig,
@@ -78,8 +82,13 @@ def _apply_strategy(
     Applies the decision table for the given strategy. Protected segments must
     not be passed to this function — they are always retained by the caller.
 
+    Soft-protected segments (``segment.soft_protected == True``) are treated
+    more conservatively: the SUMMARIZE and DROP thresholds are reduced to
+    ``< 0.15`` regardless of strategy, because a high semantic reference score
+    indicates the agent is actively reasoning about this segment's content.
+
     Args:
-        segment: The segment to evaluate. Must not be protected.
+        segment: The segment to evaluate. Must not be hard-protected.
         score: Relevance score in ``[0.0, 1.0]`` from the relevance scorer.
         strategy: The active :class:`~traject.compression.strategies.CompressionStrategy`.
         max_turn: The highest ``turn_index`` across all segments in the batch,
@@ -92,6 +101,15 @@ def _apply_strategy(
     """
     art = segment.artifact_type
     turns_ago = max_turn - segment.turn_index
+
+    # Soft-protected segments require a much lower score to be touched.
+    # This tier sits between immutable (protected=True) and normal compression.
+    if segment.soft_protected:
+        if art == ArtifactType.TOOL_RESULT and turns_ago > 3 and score < 0.15:
+            return "SUMMARIZE"
+        if art == ArtifactType.REASONING_BLOCK and score < 0.15:
+            return "DROP"
+        return "RETAIN"
 
     if strategy == CompressionStrategy.CONSERVATIVE:
         if art == ArtifactType.TOOL_RESULT and turns_ago > 3 and score < 0.30:
@@ -235,6 +253,26 @@ def compress(
     ]
 
     # ------------------------------------------------------------------ #
+    # Step 4b: SOFT-PROTECT — semantic reference dependency pass          #
+    # Elevates segments that later messages are semantically close to     #
+    # (cosine >= 0.6) to soft_protected=True. These segments require a   #
+    # lower score threshold (< 0.15) to be compressed instead of the     #
+    # normal threshold, preserving constraint-establishing content that   #
+    # the agent is still reasoning about regardless of its position.     #
+    # ------------------------------------------------------------------ #
+    ref_scores: list[float] = compute_semantic_reference_scores(segments, window=5)
+    _SOFT_PROTECT_THRESHOLD: float = 0.6
+    segments = [
+        s.model_copy(update={"soft_protected": True})
+        if (not s.protected and ref_score >= _SOFT_PROTECT_THRESHOLD)
+        else s
+        for s, ref_score in zip(segments, ref_scores, strict=False)
+    ]
+    segments_soft_protected_count: int = sum(
+        1 for s in segments if s.soft_protected
+    )
+
+    # ------------------------------------------------------------------ #
     # Step 5: SCORE                                                        #
     # ------------------------------------------------------------------ #
     cache = CompressionCache()
@@ -307,6 +345,7 @@ def compress(
             ],
             cache_hits=cache.hits,
             cache_hit_rate=cache.hit_rate,
+            segments_soft_protected=segments_soft_protected_count,
         )
 
     # ------------------------------------------------------------------ #
@@ -335,6 +374,7 @@ def compress(
         shadow_mode=config.shadow_mode,
         cache_hits=cache.hits,
         cache_hit_rate=round(cache.hit_rate, 4),
+        segments_soft_protected=segments_soft_protected_count,
     )
 
     return CompressionResult(
@@ -352,4 +392,5 @@ def compress(
         warnings=[],
         cache_hits=cache.hits,
         cache_hit_rate=cache.hit_rate,
+        segments_soft_protected=segments_soft_protected_count,
     )
