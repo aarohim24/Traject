@@ -33,7 +33,6 @@ dev = [
     "anyio>=4.0",
     "fakeredis>=2.0",
     "aiosqlite>=0.19",
-    "traject-sdk[ml]>=0.1.0",
 ]
 prod = [
     "uvicorn[standard]>=0.29",

@@ -117,6 +117,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install SDK from source (required by backend)
+        run: pip install -e "sdk/python[dev,ml]" -q
       - name: Install backend dev dependencies
         run: pip install -e "backend[dev]"
       - name: Run Alembic migrations
