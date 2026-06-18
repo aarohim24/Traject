@@ -216,13 +216,19 @@ Workload: 42 real SWE-bench agent trajectories (OpenHands-SFT, SWE-Gym). Strateg
 
 | Metric | Result |
 |---|---|
-| Aggregate token reduction | 29.1% |
-| Median (p50) reduction | 24.3% |
-| p95 reduction | 57.5% |
-| Total tokens saved | 196,000 |
-| Instances evaluated | 42 |
+| Aggregate token reduction | 14.1% |
+| Median (p50) reduction | 13.0% |
+| Information retention rate | 91.2% |
+| p10 retention (worst 10%) | 85.2% |
+| Instances evaluated | 49 |
 
-Reproduce: `python examples/benchmark/swebench_eval.py --input trajectories.jsonl`
+Token reduction and information retention are measured independently. 14.1% of tokens are removed; 91.2% of compressed content remains semantically recoverable in the compressed context.
+
+Reproduce:
+```bash
+python examples/benchmark/swebench_eval.py --input trajectories.jsonl     # token reduction
+python examples/benchmark/quality_eval.py --input trajectories.jsonl      # retention rate
+```
 
 ---
 
