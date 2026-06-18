@@ -27,3 +27,5 @@ dashboard/dist/
 *.bak
 *.tmp
 /tmp/axon_ml_model.json
+swebench_trajectories.jsonl
+swebench_results.json
