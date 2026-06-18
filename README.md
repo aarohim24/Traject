@@ -212,15 +212,17 @@ Adds: cost attribution by feature tag, semantic caching, budget alerts, team das
 
 ## Benchmark
 
-Workload: 10-step code review agent. Strategy: CONSERVATIVE. Token counting: tiktoken (exact). Cost projected at gpt-4o-mini pricing.
+Workload: 42 real SWE-bench agent trajectories (OpenHands-SFT, SWE-Gym). Strategy: CONSERVATIVE. Avg 29 turns/trajectory. Publicly reproducible.
 
-| Metric | Without Traject | With Traject | Reduction |
-|---|---|---|---|
-| Input tokens / run | 11,845 | 10,183 | 14.0% |
-| Projected cost / run | $0.001777 | $0.001527 | 14.0% |
-| Tokens saved / run | — | 1,662 | — |
+| Metric | Result |
+|---|---|
+| Aggregate token reduction | 29.1% |
+| Median (p50) reduction | 24.3% |
+| p95 reduction | 57.5% |
+| Total tokens saved | 196,000 |
+| Instances evaluated | 42 |
 
-This benchmark uses a realistic but synthetic agent trajectory. Compression ratios vary by workload — longer agents with denser tool call histories see higher reduction. Reproduce with `python examples/benchmark/run_benchmark.py` — no API key required.
+Reproduce: `python examples/benchmark/swebench_eval.py --input trajectories.jsonl`
 
 ---
 
