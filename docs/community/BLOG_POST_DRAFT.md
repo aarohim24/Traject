@@ -151,5 +151,4 @@ on that evidence.)_
 
 - GitHub: https://github.com/aarohimathur/traject
 - PyPI: `pip install traject-sdk`
-- Research paper: [docs/research-paper.md](../../docs/research-paper.md)
 - Docs: https://github.com/aarohimathur/traject/tree/main/docs

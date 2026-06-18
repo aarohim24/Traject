@@ -204,8 +204,12 @@ def _normalise_messages(
     """Normalise messages to plain ``{"role": str, "content": str}`` format.
 
     Handles content lists (Anthropic style) and tool_call role variants.
-    Traject's compression engine expects string content — concatenate
-    content block text when content is a list.
+
+    SWE-bench datasets often encode tool observations as ``role="user"``
+    messages. These are detected by content patterns (OBSERVATION:, stdout,
+    stderr, exit code, bash output markers) and remapped to ``role="tool"``
+    so Traject's classifier can identify them as TOOL_RESULT artifacts and
+    apply compression decisions correctly.
 
     Args:
         messages: Raw message list from the trajectory file.
@@ -213,8 +217,25 @@ def _normalise_messages(
     Returns:
         Normalised list of ``{"role": str, "content": str}`` dicts.
     """
+    # Markers that indicate a "user" message is actually a tool observation
+    _TOOL_OBS_MARKERS = (
+        "OBSERVATION:",
+        "observation:",
+        "EXECUTION RESULT",
+        "execution result",
+        "stdout:",
+        "stderr:",
+        "exit code:",
+        "$ ",
+        "bash-",
+        "[Command output]",
+        "Command output:",
+        "Tool response:",
+        "Function output:",
+    )
+
     normalised: list[dict[str, Any]] = []
-    for msg in messages:
+    for i, msg in enumerate(messages):
         if not isinstance(msg, dict):
             continue
         role: str = str(msg.get("role", "user"))
@@ -238,6 +259,16 @@ def _normalise_messages(
         # Map tool/function roles to "tool" for Traject's classifier
         if role in ("function", "ipython", "observation"):
             role = "tool"
+
+        # SWE-bench specific: user messages that are actually tool observations.
+        # Detected by: appears after an assistant message AND content starts
+        # with an observation marker.
+        if role == "user" and i > 0:
+            prev_role = str(messages[i - 1].get("role", ""))
+            if prev_role == "assistant":
+                content_start = content.lstrip()[:80].lower()
+                if any(m.lower() in content_start for m in _TOOL_OBS_MARKERS):
+                    role = "tool"
 
         normalised.append({"role": role, "content": content})
     return normalised
