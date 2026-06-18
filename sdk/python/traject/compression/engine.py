@@ -11,6 +11,7 @@ and intended for use only within this module.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Literal
 
 import structlog
@@ -34,6 +35,46 @@ from traject.exceptions import TrajectCompressionError, TrajectDependencyError
 from traject.models import CompressionResult, Segment
 
 logger = structlog.get_logger(__name__)
+
+# ---------------------------------------------------------------------------
+# High-information content detector
+# ---------------------------------------------------------------------------
+
+# Patterns that indicate a segment contains unique, load-bearing information
+# that cannot be reconstructed from surrounding context if dropped.
+# These segments are elevated to soft_protected=True regardless of score.
+_HIGH_INFO_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r'File "[^"]+\.py", line \d+'),         # Python stack trace
+    re.compile(r'\.py:\d+'),                            # file.py:123 references
+    re.compile(r'(?:Error|Exception|Traceback)[:\s]'),  # error messages
+    re.compile(r'exit code[:\s]+\d+', re.I),            # exit codes
+    re.compile(r'FAILED|PASSED|ERROR', re.M),           # test results
+    re.compile(r'assert\w*.*(?:Error|Fail)', re.I),     # assertion failures
+    re.compile(r'\b(?:raise|raised)\s+\w+Error'),       # raised exceptions
+    re.compile(r'https?://\S+'),                        # URLs (unique references)
+    re.compile(r'\b[0-9a-f]{7,40}\b'),                  # git hashes
+    re.compile(r'(?:commit|sha|hash)[\s:]+[0-9a-f]{7}', re.I),  # commit refs
+]
+
+
+def _has_high_information_content(content: str) -> bool:
+    """Return True if *content* contains unique load-bearing information.
+
+    Detects stack traces, error messages, file:line references, test results,
+    git hashes, and URLs — content that cannot be reconstructed from context
+    if dropped. Segments matching these patterns are elevated to soft_protected
+    to require a much lower score threshold before compression.
+
+    Args:
+        content: The segment's text content.
+
+    Returns:
+        ``True`` when the content matches any high-information pattern.
+    """
+    for pattern in _HIGH_INFO_PATTERNS:
+        if pattern.search(content):
+            return True
+    return False
 
 
 def _detect_adapter(messages: Any) -> FrameworkAdapter:  # noqa: ANN401
@@ -253,18 +294,24 @@ def compress(
     ]
 
     # ------------------------------------------------------------------ #
-    # Step 4b: SOFT-PROTECT — semantic reference dependency pass          #
-    # Elevates segments that later messages are semantically close to     #
-    # (cosine >= 0.6) to soft_protected=True. These segments require a   #
-    # lower score threshold (< 0.15) to be compressed instead of the     #
-    # normal threshold, preserving constraint-establishing content that   #
-    # the agent is still reasoning about regardless of its position.     #
+    # Step 4b: SOFT-PROTECT — semantic reference + content-aware pass    #
+    # Two mechanisms elevate segments to soft_protected=True:            #
+    # 1. Semantic: cosine similarity >= 0.75 to a later assistant msg    #
+    # 2. Content: high-information tokens (stack traces, error codes,    #
+    #    file:line refs, git hashes) that are unique and cannot be       #
+    #    reconstructed if dropped.                                        #
     # ------------------------------------------------------------------ #
     ref_scores: list[float] = compute_semantic_reference_scores(segments, window=5)
     _SOFT_PROTECT_THRESHOLD: float = 0.75
     segments = [
         s.model_copy(update={"soft_protected": True})
-        if (not s.protected and ref_score >= _SOFT_PROTECT_THRESHOLD)
+        if (
+            not s.protected
+            and (
+                ref_score >= _SOFT_PROTECT_THRESHOLD
+                or _has_high_information_content(s.content)
+            )
+        )
         else s
         for s, ref_score in zip(segments, ref_scores, strict=False)
     ]
