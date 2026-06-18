@@ -324,6 +324,96 @@ def _count_turns(messages: list[dict[str, Any]]) -> int:
     return sum(1 for m in messages if m.get("role") in ("user", "assistant"))
 
 
+def _assign_agentic_turn_indices(
+    messages: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Assign synthetic turn indices for agentic tool-calling trajectories.
+
+    In SWE-bench trajectories, the agent follows a tight loop:
+    assistant → tool → assistant → tool → ...
+    The standard parser only increments turn_index on user→assistant
+    transitions, leaving all segments at turn_index=0 in single-user-turn
+    trajectories. This means CONSERVATIVE's ``turns_ago > 3`` threshold
+    never fires.
+
+    This function inserts a ``_traject_turn`` field into each message dict
+    so the evaluator can pass a pre-processed message list where older
+    assistant/tool cycles have higher apparent age. It treats each
+    assistant→tool pair as one "step" and counts steps from the end.
+
+    Note: This modifies a copy of the messages list, not the original.
+
+    Args:
+        messages: Normalised chat message list.
+
+    Returns:
+        A new list of message dicts with ``_traject_turn`` fields added.
+        The compression engine does not read this field directly; it is
+        used only for diagnostic purposes here. The actual fix is handled
+        by the segment parser counting assistant→tool transitions.
+    """
+    # Count assistant→tool transitions as steps
+    step = 0
+    steps: list[int] = []
+    for msg in messages:
+        role = msg.get("role", "")
+        if role == "assistant":
+            step += 1
+        steps.append(step)
+
+    total_steps = max(steps) if steps else 0
+    result = []
+    for msg, s in zip(messages, steps, strict=False):
+        m = dict(msg)
+        # Assign turn index = distance from end (older = higher turns_ago)
+        m["_traject_turn_from_end"] = total_steps - s
+        result.append(m)
+    return result
+
+
+def _extract_task_hint(messages: list[dict[str, Any]]) -> str | None:
+    """Extract the issue/task description from the first user message.
+
+    SWE-bench trajectories start with a system prompt followed by a user
+    message containing the GitHub issue. Using this as the task hint lets
+    the semantic scorer distinguish segments relevant to the active task
+    from stale tool results and completed reasoning blocks.
+
+    Args:
+        messages: Normalised chat message list.
+
+    Returns:
+        The content of the first non-system user message, truncated to
+        500 characters for embedding efficiency, or ``None`` when not found.
+    """
+    for msg in messages:
+        if msg.get("role") == "user":
+            content = str(msg.get("content", ""))
+            if content:
+                return content[:500]
+    return None
+    """Extract the issue/task description from the first user message.
+
+    SWE-bench trajectories start with a system prompt followed by a user
+    message containing the GitHub issue. Using this as the task hint lets
+    the semantic scorer distinguish segments relevant to the active task
+    from stale tool results and completed reasoning blocks.
+
+    Args:
+        messages: Normalised chat message list.
+
+    Returns:
+        The content of the first non-system user message, truncated to
+        500 characters for embedding efficiency, or ``None`` when not found.
+    """
+    for msg in messages:
+        if msg.get("role") == "user":
+            content = str(msg.get("content", ""))
+            if content:
+                return content[:500]
+    return None
+
+
 def evaluate_instance(
     instance_id: str,
     messages: list[dict[str, Any]],
@@ -342,7 +432,8 @@ def evaluate_instance(
     """
     t0 = time.perf_counter()
     try:
-        result = compress(messages, config)
+        task_hint = _extract_task_hint(messages)
+        result = compress(messages, config, task_hint=task_hint)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
         reduction_pct = (
@@ -401,9 +492,19 @@ def run_evaluation(
             CompressionStrategy.MODERATE: 0.35,
             CompressionStrategy.AGGRESSIVE: 0.55,
         }[strategy],
-        min_turns_protected=3,
+        # SWE-bench trajectories are tool-calling agent loops where turn_index
+        # rarely exceeds 1 (few user→assistant transitions). Using
+        # min_turns_protected=3 (the chat-style default) would protect every
+        # segment. Set to 0 — protection is provided by protect_system_prompt=True
+        # and the soft-protect tier (segments semantically referenced by later
+        # messages). Older tool results and reasoning blocks become compressible.
+        min_turns_protected=0,
         protect_system_prompt=True,
-        shadow_mode=True,  # analysis only — never modifies live context
+        # Run with shadow_mode=False to measure actual token reduction.
+        # This is safe for offline analysis — no provider calls are made
+        # by the eval script; compression operates only on the local messages.
+        # shadow_mode=True would always report 0% reduction by design.
+        shadow_mode=False,
     )
 
     results: list[InstanceResult] = []

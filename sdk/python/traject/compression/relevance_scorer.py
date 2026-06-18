@@ -246,10 +246,15 @@ def compute_semantic_reference_scores(
             scores.append(0.0)
             continue
 
-        # Look at up to `window` segments after position i.
+        # Look at up to `window` segments after position i — but only
+        # compare against ASSISTANT messages. Tool-to-tool similarity is
+        # dominated by shared code structure and is not a reliable signal
+        # for active reasoning dependency.
         end = min(i + 1 + window, n)
         max_sim: float = 0.0
         for j in range(i + 1, end):
+            if segments[j].role not in ("assistant", "user"):
+                continue
             sim: float = float(np.dot(all_embeddings[i], all_embeddings[j]))
             # Unit-norm embeddings → dot product == cosine similarity.
             sim = max(0.0, min(1.0, sim))

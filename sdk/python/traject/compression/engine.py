@@ -112,7 +112,7 @@ def _apply_strategy(
         return "RETAIN"
 
     if strategy == CompressionStrategy.CONSERVATIVE:
-        if art == ArtifactType.TOOL_RESULT and turns_ago > 3 and score < 0.30:
+        if art == ArtifactType.TOOL_RESULT and turns_ago > 3 and score < 0.40:
             return "SUMMARIZE"
         if art == ArtifactType.REASONING_BLOCK and score < 0.40:
             return "DROP"
@@ -261,7 +261,7 @@ def compress(
     # the agent is still reasoning about regardless of its position.     #
     # ------------------------------------------------------------------ #
     ref_scores: list[float] = compute_semantic_reference_scores(segments, window=5)
-    _SOFT_PROTECT_THRESHOLD: float = 0.6
+    _SOFT_PROTECT_THRESHOLD: float = 0.75
     segments = [
         s.model_copy(update={"soft_protected": True})
         if (not s.protected and ref_score >= _SOFT_PROTECT_THRESHOLD)

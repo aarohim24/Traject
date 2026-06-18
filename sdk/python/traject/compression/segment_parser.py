@@ -66,8 +66,13 @@ def parse(
         role: str = msg.get("role") or ""
         content = msg.get("content", "")
 
-        # Increment turn when transitioning from assistant to user
-        if last_role == "assistant" and role == "user":
+        # Increment turn on:
+        # 1. Classic chat: assistant → user transition
+        # 2. Agentic loop: assistant → tool transition (each tool call = one step)
+        # This ensures that in tool-calling agent trajectories (SWE-bench,
+        # LangGraph), older tool results accumulate turns_ago correctly and
+        # become eligible for compression under the strategy thresholds.
+        if last_role == "assistant" and role in ("user", "tool"):
             turn_index += 1
         last_role = role
 
@@ -83,10 +88,10 @@ def parse(
         else:
             token_count = 0
 
-        # System prompts are always protected; also honor axon_preserve metadata
+        # System prompts are always protected; also honor traject_preserve metadata
         protected = (
             art_type == ArtifactType.SYSTEM_PROMPT
-            or msg.get("axon_preserve") is True
+            or msg.get("traject_preserve") is True
         )
 
         content_str = content if isinstance(content, str) else str(content)

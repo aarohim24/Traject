@@ -72,8 +72,8 @@ class TestSegmentParser:
         assert segments[2].turn_index == 1
         assert segments[3].turn_index == 1
 
-    def test_axon_preserve_sets_protected(self) -> None:
-        messages = [{"role": "user", "content": "hi", "axon_preserve": True}]
+    def test_traject_preserve_sets_protected(self) -> None:
+        messages = [{"role": "user", "content": "hi", "traject_preserve": True}]
         art_types = [ArtifactType.USER_MESSAGE]
         segments = parse(messages, art_types)
         assert segments[0].protected is True
