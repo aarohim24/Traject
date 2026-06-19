@@ -276,16 +276,6 @@ Traject SDK
                                └── Grafana / React Dashboard
 ```
 
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and the PR process.
-
-Issues labeled [`good-first-issue`](https://github.com/aarohim24/Traject/issues?q=is%3Aopen+is%3Aissue+label%3Agood-first-issue) are the recommended starting point.
-
----
-
 ## License
 
 MIT — see [LICENSE](LICENSE).
