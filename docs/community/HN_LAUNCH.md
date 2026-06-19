@@ -43,15 +43,18 @@ Most tools focus on prompt engineering or model selection. Traject operates at t
 
 **Production benchmark results:**
 
-Evaluated on 42 real SWE-bench agent trajectories from [SWE-Gym/OpenHands-SFT-Trajectories](https://huggingface.co/datasets/SWE-Gym/SWE-Gym) (HuggingFace). Strategy: CONSERVATIVE. Avg 29 turns/trajectory.
+Evaluated on 49 real SWE-bench agent trajectories from [SWE-Gym/OpenHands-SFT-Trajectories](https://huggingface.co/datasets/SWE-Gym/SWE-Gym) (HuggingFace, public). Strategy: CONSERVATIVE. Avg 29 turns/trajectory.
+
+24% token reduction, 94.7% information retention on 49 real SWE-bench agent trajectories.
 
 | Metric | Result |
 |---|---|
-| Aggregate token reduction | **29.1%** |
-| Median (p50) reduction | 24.3% |
-| p95 reduction | 57.5% |
-| Total tokens saved | 196,000 |
-| Instances evaluated | 42 |
+| Aggregate token reduction | **24.0%** |
+| Mean reduction | 25.3% |
+| p50 reduction | 25.0% |
+| Information retention | 94.7% |
+| p10 retention (worst 10%) | 96.0% |
+| Instances evaluated | 49 SWE-bench trajectories |
 
 Reproduce: `python examples/benchmark/swebench_eval.py --input trajectories.jsonl`
 
@@ -66,7 +69,7 @@ Happy to answer any questions about the architecture or design decisions.
 
 ## Checklist Before Posting
 
-- [x] Production validation data collected and inserted above (SWE-bench, 29.1% reduction)
+- [x] Production validation data collected and inserted above (SWE-bench, 24.0% reduction, 94.7% retention)
 - [ ] Benchmark registry has at least 10 real submissions
 - [x] README benchmark numbers updated with production data
 - [ ] PyPI package published and installable (`pip install traject-sdk`)

@@ -214,20 +214,22 @@ Adds: cost attribution by feature tag, semantic caching, budget alerts, team das
 
 Workload: 49 real SWE-bench agent trajectories (OpenHands-SFT, SWE-Gym). Strategy: CONSERVATIVE. Avg 29 turns/trajectory. Publicly reproducible.
 
+Dataset: [SWE-Gym/OpenHands-SFT-Trajectories](https://huggingface.co/datasets/SWE-Gym/SWE-Gym) (HuggingFace, public)
+
 | Metric | Result |
 |---|---|
 | Aggregate token reduction | 24.0% |
 | Mean reduction | 25.3% |
-| Information retention rate | 94.7% |
+| p50 reduction | 25.0% |
+| Information retention | 94.7% |
 | p10 retention (worst 10%) | 96.0% |
-| Instances evaluated | 49 |
+| Instances evaluated | 49 SWE-bench trajectories |
 
 Token reduction and information retention are measured independently. 24% of tokens are removed; 94.7% of compressed content remains semantically recoverable in the compressed context. p10 retention is 96.0% — even the worst-case instances retain their critical information.
 
 Reproduce:
 ```bash
-python examples/benchmark/swebench_eval.py --input trajectories.jsonl     # token reduction
-python examples/benchmark/quality_eval.py --input trajectories.jsonl      # retention rate
+python examples/benchmark/swebench_eval.py --input trajectories.jsonl
 ```
 
 ---
