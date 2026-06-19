@@ -33,6 +33,13 @@ traject.patch(client, feature_tag="my_agent", shadow_mode=True)
 pip install traject-sdk
 ```
 
+> **Note:** PyPI publication is in progress. Until then, install from source:
+> ```bash
+> git clone https://github.com/aarohim24/Traject
+> cd Traject/sdk/python
+> pip install -e ".[dev]"
+> ```
+
 Optional framework integrations:
 
 ```bash
