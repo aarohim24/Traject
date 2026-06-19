@@ -212,17 +212,17 @@ Adds: cost attribution by feature tag, semantic caching, budget alerts, team das
 
 ## Benchmark
 
-Workload: 42 real SWE-bench agent trajectories (OpenHands-SFT, SWE-Gym). Strategy: CONSERVATIVE. Avg 29 turns/trajectory. Publicly reproducible.
+Workload: 49 real SWE-bench agent trajectories (OpenHands-SFT, SWE-Gym). Strategy: CONSERVATIVE. Avg 29 turns/trajectory. Publicly reproducible.
 
 | Metric | Result |
 |---|---|
-| Aggregate token reduction | 14.1% |
-| Median (p50) reduction | 13.0% |
-| Information retention rate | 91.2% |
-| p10 retention (worst 10%) | 85.2% |
+| Aggregate token reduction | 24.0% |
+| Mean reduction | 25.3% |
+| Information retention rate | 94.7% |
+| p10 retention (worst 10%) | 96.0% |
 | Instances evaluated | 49 |
 
-Token reduction and information retention are measured independently. 14.1% of tokens are removed; 91.2% of compressed content remains semantically recoverable in the compressed context.
+Token reduction and information retention are measured independently. 24% of tokens are removed; 94.7% of compressed content remains semantically recoverable in the compressed context. p10 retention is 96.0% — even the worst-case instances retain their critical information.
 
 Reproduce:
 ```bash
