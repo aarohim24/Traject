@@ -30,21 +30,16 @@ traject.patch(client, feature_tag="my_agent", shadow_mode=True)
 ## Installation
 
 ```bash
-pip install traject-sdk
+git clone https://github.com/aarohim24/Traject
+cd Traject/sdk/python
+pip install -e "."
 ```
-
-> **Note:** PyPI publication is in progress. Until then, install from source:
-> ```bash
-> git clone https://github.com/aarohim24/Traject
-> cd Traject/sdk/python
-> pip install -e ".[dev]"
-> ```
 
 Optional framework integrations:
 
 ```bash
-pip install "traject-sdk[langchain]"   # LangChain support
-pip install "traject-sdk[autogen]"     # AutoGen support
+pip install -e ".[langchain]"   # LangChain support
+pip install -e ".[autogen]"     # AutoGen support
 ```
 
 Requires Python 3.11+.
