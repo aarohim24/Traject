@@ -61,6 +61,10 @@ class CompressionConfig:
             output is discarded — the original messages are returned to the
             caller.  Use this to observe what would be compressed without
             altering live traffic.
+        score_ceiling: Hard upper bound on scores eligible for compression.
+            Segments whose composite relevance score exceeds this value are
+            never compressed regardless of the active strategy or target
+            reduction percentage.  Defaults to ``0.65``.
     """
 
     strategy: CompressionStrategy
@@ -68,6 +72,7 @@ class CompressionConfig:
     min_turns_protected: int
     protect_system_prompt: bool
     shadow_mode: bool
+    score_ceiling: float = 0.65
 
 
 STRATEGY_DEFAULTS: dict[CompressionStrategy, CompressionConfig] = {
