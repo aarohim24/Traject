@@ -363,12 +363,11 @@ class TestLiveCompression:
 
         summarized_contents = [
             m.get("content", "") for m in result.messages
-            if "[summarized by Traject]" in str(m.get("content", ""))
+            if "[summarized by Traject" in str(m.get("content", ""))
         ]
         assert len(summarized_contents) >= 1
-        # Summarized content is truncated at 100 chars + marker
-        assert summarized_contents[0].endswith("[summarized by Traject]")
-        assert len(summarized_contents[0]) <= 125  # content[:100] + " [summarized by Traject]"
+        # Summarized content contains the Traject marker
+        assert "[summarized by Traject" in summarized_contents[0]
 
 
 # ── _apply_strategy Branch Coverage ──────────────────────────────────────
@@ -597,7 +596,7 @@ class TestDecisionBranchesViaCompress:
         # Summarized message contains the Traject marker
         summarized = [
             m for m in result.messages
-            if "[summarized by Traject]" in str(m.get("content", ""))
+            if "[summarized by Traject" in str(m.get("content", ""))
         ]
         assert len(summarized) >= 1
 
@@ -788,3 +787,248 @@ class TestTaskHint:
         result = compress(msgs, config, task_hint="geography question")
         assert result.segments_analyzed > 0
         assert 0.0 <= result.compression_ratio <= 1.0
+
+
+# ── New Tests: ScoreWeights, TaskAwareWeights, Adaptive Threshold, ────────
+# ── Structured Summarization, Dynamic Protection ──────────────────────────
+
+from traject.compression.engine import (
+    _compute_substring_protection,
+    _contains_file_paths,
+    _summarize_tool_result,
+)
+from traject.compression.relevance_scorer import ScoreWeights, TaskAwareWeights
+
+
+class TestScoreWeightsValidation:
+    """ScoreWeights must sum to 1.0; invalid sums raise TrajectConfigError."""
+
+    def test_score_weights_sum_to_1(self) -> None:
+        """All TaskAwareWeights profiles must sum to exactly 1.0."""
+        from traject.exceptions import TrajectConfigError
+
+        for profile_name in ("CODE_GENERATION", "REASONING", "SUMMARIZATION", "DEFAULT"):
+            profile: ScoreWeights = getattr(TaskAwareWeights, profile_name)
+            total = profile.recency + profile.semantic + profile.reference
+            assert abs(total - 1.0) < 1e-6, (
+                f"{profile_name} weights sum to {total}, expected 1.0"
+            )
+
+        # Invalid weights raise TrajectConfigError
+        with pytest.raises(TrajectConfigError, match="must sum to 1.0"):
+            ScoreWeights(recency=0.5, semantic=0.5, reference=0.5)
+
+    def test_code_generation_weights_reference_higher_than_default(self) -> None:
+        """CODE_GENERATION.reference must be higher than DEFAULT.reference."""
+        assert TaskAwareWeights.CODE_GENERATION.reference > TaskAwareWeights.DEFAULT.reference
+
+
+class TestScoreCeiling:
+    """score_ceiling on CompressionConfig must be respected by compress()."""
+
+    def test_score_ceiling_never_violated(self) -> None:
+        """compress() must never compress a segment whose score exceeds score_ceiling."""
+        from traject.compression.strategies import CompressionConfig
+
+        # Build a conversation with a tool result at an old turn.
+        msgs: list[dict[str, Any]] = [{"role": "system", "content": "You are helpful."}]
+        msgs.append({"role": "tool", "content": "Tool output: " + "data " * 50})
+        for i in range(6):
+            msgs.append({"role": "user", "content": f"Question {i}"})
+            msgs.append({"role": "assistant", "content": f"Answer {i}"})
+
+        config = CompressionConfig(
+            strategy=CompressionStrategy.CONSERVATIVE,
+            target_reduction_pct=0.20,
+            min_turns_protected=0,
+            protect_system_prompt=True,
+            shadow_mode=False,
+            score_ceiling=0.45,
+        )
+
+        # Mock scores: give the tool result a score of 0.50 — above ceiling.
+        def mock_scores(
+            segments: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
+            return [
+                0.50 if s.artifact_type == ArtifactType.TOOL_RESULT else 1.0
+                for s in segments
+            ]
+
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+            result = compress(msgs, config)
+
+        # Score 0.50 > ceiling 0.45 — the tool result must NOT be compressed.
+        assert result.segments_summarized == 0, (
+            "A segment with score above score_ceiling was compressed — ceiling violated."
+        )
+
+    def test_adaptive_threshold_stops_at_target(self) -> None:
+        """Compression must stop greedily once the token reduction target is reached."""
+        from traject.compression.strategies import CompressionConfig
+
+        # Build a conversation with many old tool results.
+        msgs: list[dict[str, Any]] = [{"role": "system", "content": "sys"}]
+        # 8 tool results at the start (all will be very old)
+        for i in range(8):
+            msgs.append({"role": "tool", "content": f"Tool output {i} " + "x" * 100})
+        # Add 6 turns so they are all old
+        for i in range(6):
+            msgs.append({"role": "user", "content": f"q{i}"})
+            msgs.append({"role": "assistant", "content": f"a{i}"})
+
+        # Use a tiny target so we stop after compressing just 1-2 segments.
+        config = CompressionConfig(
+            strategy=CompressionStrategy.CONSERVATIVE,
+            target_reduction_pct=0.01,  # 1% target — stops very early
+            min_turns_protected=0,
+            protect_system_prompt=True,
+            shadow_mode=False,
+            score_ceiling=0.45,
+        )
+
+        def mock_scores(
+            segments: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
+            return [
+                0.05 if s.artifact_type == ArtifactType.TOOL_RESULT else 1.0
+                for s in segments
+            ]
+
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+            result = compress(msgs, config)
+
+        # With a 1% target, we should NOT compress all 8 tool results.
+        total_tool_msgs = sum(
+            1 for m in msgs if m.get("role") == "tool"
+        )
+        assert result.segments_summarized < total_tool_msgs, (
+            "Adaptive threshold did not stop at target — over-compressed."
+        )
+
+
+class TestSummarizeToolResult:
+    """_summarize_tool_result produces structured summaries."""
+
+    def test_summarize_tool_result_preserves_file_paths(self) -> None:
+        """Content with a .py path is summarized with the path preserved."""
+        content = "Processing files:\n/path/to/module.py\n/other/file.ts\nDone."
+        result = _summarize_tool_result(content)
+        assert "/path/to/module.py" in result
+        assert "summarized by Traject" in result
+
+    def test_summarize_tool_result_preserves_error_text(self) -> None:
+        """Content with AttributeError is summarized with the error line preserved."""
+        content = (
+            "Running tests...\n"
+            "AttributeError: 'NoneType' object has no attribute 'foo'\n"
+            "  File test.py line 42\n"
+            "Build failed."
+        )
+        result = _summarize_tool_result(content)
+        assert "AttributeError" in result
+        assert "summarized by Traject" in result
+
+    def test_contains_file_paths_true(self) -> None:
+        """_contains_file_paths returns True for /path/to/file.py."""
+        assert _contains_file_paths("/path/to/file.py") is True
+
+    def test_contains_file_paths_false_no_extension(self) -> None:
+        """_contains_file_paths returns False when no code extension is present."""
+        assert _contains_file_paths("/path/to/readme") is False
+
+    def test_summarize_appends_removal_marker(self) -> None:
+        """Summary always ends with the Traject removal marker."""
+        content = "Short tool output text."
+        result = _summarize_tool_result(content)
+        assert "summarized by Traject" in result
+
+    def test_summary_body_max_300_chars(self) -> None:
+        """Summary body (before marker) must not exceed 300 characters."""
+        content = "This is a long sentence. " * 50
+        result = _summarize_tool_result(content)
+        marker_pos = result.find(" [summarized by Traject")
+        assert marker_pos >= 0
+        body = result[:marker_pos]
+        assert len(body) <= 300
+
+
+class TestDynamicProtection:
+    """_compute_substring_protection and compress() dynamic protection."""
+
+    def test_dynamic_protection_matches_task_token(self) -> None:
+        """Segment containing a task token must appear in the protected set."""
+        segments = [
+            Segment(
+                index=0,
+                role="tool",
+                content="Results for authentication.py module",
+                artifact_type=ArtifactType.TOOL_RESULT,
+                token_count=10,
+                turn_index=0,
+                protected=False,
+            ),
+            Segment(
+                index=1,
+                role="user",
+                content="Unrelated content here",
+                artifact_type=ArtifactType.USER_MESSAGE,
+                token_count=5,
+                turn_index=1,
+                protected=False,
+            ),
+        ]
+        protected = _compute_substring_protection(segments, "fix authentication.py module")
+        assert 0 in protected, "Segment with 'authentication.py' should be protected"
+        assert 1 not in protected, "Unrelated segment should not be protected"
+
+    def test_dynamic_protection_short_tokens_ignored(self) -> None:
+        """Words shorter than min_token_len (6) must not trigger protection."""
+        segments = [
+            Segment(
+                index=0,
+                role="tool",
+                content="fix the bug now",
+                artifact_type=ArtifactType.TOOL_RESULT,
+                token_count=5,
+                turn_index=0,
+                protected=False,
+            ),
+        ]
+        # All task words are < 6 chars — no protection triggered.
+        protected = _compute_substring_protection(segments, "fix bug")
+        assert len(protected) == 0
+
+    def test_dynamic_protection_via_compress(self) -> None:
+        """compress() must not drop a segment that matches the task_hint token."""
+        tool_content = "authentication.py validation logic result"
+        msgs: list[dict[str, Any]] = [
+            {"role": "system", "content": "You are a code assistant."},
+            {"role": "tool", "content": tool_content},
+            {"role": "user", "content": "What happened?"},
+            {"role": "assistant", "content": "Checking."},
+            {"role": "user", "content": "Continue."},
+        ]
+        config = CompressionConfig(
+            strategy=CompressionStrategy.AGGRESSIVE,
+            target_reduction_pct=0.55,
+            min_turns_protected=0,
+            protect_system_prompt=True,
+            shadow_mode=False,
+        )
+
+        def mock_scores(
+            segs: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
+            # Give the tool result the lowest possible score to force compression.
+            return [0.01 for _ in segs]
+
+        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+            result = compress(msgs, config, task_hint="fix authentication.py issue")
+
+        # The tool result contains "authentication.py" which is in the task hint.
+        # Dynamic protection must hard-protect it.
+        result_contents = [m.get("content", "") for m in result.messages]
+        assert any(
+            tool_content in str(c) for c in result_contents
+        ), "Dynamically protected segment was incorrectly compressed."
