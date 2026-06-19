@@ -9,17 +9,24 @@ the process lifetime — no external API calls are ever made (ADR-003).
 This module also provides :class:`CompressionCache`, a call-scoped cache that
 avoids re-computing embedding similarity for segments whose content has not
 changed between scoring calls within the same agent turn.
+
+Task-aware weight profiles (:class:`TaskAwareWeights`) allow the scoring
+formula to be tuned to the active task type (code generation, reasoning,
+summarization), improving compression fidelity across diverse workloads.
 """
 
 from __future__ import annotations
 
 import hashlib
 import math
+from dataclasses import dataclass
 from typing import Any  # noqa: F401  # retained for re-export consistency
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
+from traject.classifier.artifact_type import ArtifactType
+from traject.exceptions import TrajectConfigError
 from traject.models import Segment
 
 # ---------------------------------------------------------------------------
@@ -29,12 +36,119 @@ from traject.models import Segment
 _model: SentenceTransformer = SentenceTransformer("all-MiniLM-L6-v2")
 
 # ---------------------------------------------------------------------------
-# Scoring constants
+# Scoring constants (fallback when no task-aware weights are available)
 # ---------------------------------------------------------------------------
 _DECAY_RATE: float = 0.3
 _RECENCY_WEIGHT: float = 0.4
 _SEMANTIC_WEIGHT: float = 0.4
 _REFERENCE_WEIGHT: float = 0.2
+
+
+# ---------------------------------------------------------------------------
+# Task-aware weight profiles
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class ScoreWeights:
+    """Immutable composite scoring weights that must sum to 1.0.
+
+    Attributes:
+        recency: Weight applied to the exponential recency decay component.
+        semantic: Weight applied to the cosine similarity against the task hint.
+        reference: Weight applied to the normalised reference-count component.
+    """
+
+    recency: float
+    semantic: float
+    reference: float
+
+    def __post_init__(self) -> None:
+        """Validate that all three weights sum to 1.0 within floating-point tolerance."""
+        total = self.recency + self.semantic + self.reference
+        if not abs(total - 1.0) < 1e-6:
+            raise TrajectConfigError(
+                f"ScoreWeights must sum to 1.0, got {total}. "
+                "Adjust recency, semantic, and reference so they total exactly 1.0."
+            )
+
+
+class TaskAwareWeights:
+    """Pre-built :class:`ScoreWeights` profiles for common task types.
+
+    Select a profile by inspecting the system prompt of the conversation.
+    Use :func:`_detect_task_weights` to auto-detect the appropriate profile.
+
+    Class Attributes:
+        CODE_GENERATION: Higher reference weight; code tasks rely heavily on
+            prior tool results and file content referenced downstream.
+        REASONING: Higher recency weight; reasoning chains depend on the
+            most recent context window.
+        SUMMARIZATION: Higher semantic weight; summarization quality depends
+            on topic alignment between segments and the summarization goal.
+        DEFAULT: Balanced weights used when no task type is detected.
+    """
+
+    CODE_GENERATION: ScoreWeights = ScoreWeights(
+        recency=0.25, semantic=0.35, reference=0.40
+    )
+    REASONING: ScoreWeights = ScoreWeights(
+        recency=0.50, semantic=0.35, reference=0.15
+    )
+    SUMMARIZATION: ScoreWeights = ScoreWeights(
+        recency=0.35, semantic=0.50, reference=0.15
+    )
+    DEFAULT: ScoreWeights = ScoreWeights(
+        recency=0.40, semantic=0.40, reference=0.20
+    )
+
+
+# ---------------------------------------------------------------------------
+# Task weight auto-detection
+# ---------------------------------------------------------------------------
+
+_CODE_KEYWORDS: frozenset[str] = frozenset(
+    ["code", "implement", "fix", "patch", "repository", "function", "class", "engineer"]
+)
+_REASONING_KEYWORDS: frozenset[str] = frozenset(
+    ["reason", "analyze", "think", "explain", "compare"]
+)
+_SUMMARIZATION_KEYWORDS: frozenset[str] = frozenset(
+    ["summarize", "summary", "brief", "condense"]
+)
+
+
+def _detect_task_weights(segments: list[Segment]) -> ScoreWeights:
+    """Detect appropriate scoring weights from the conversation's system prompt.
+
+    Scans the system prompt segment (if any) for task-type keywords and
+    returns the matching :class:`ScoreWeights` profile. Falls back to
+    :attr:`TaskAwareWeights.DEFAULT` when no system prompt is present or when
+    no keyword matches.
+
+    Args:
+        segments: Ordered list of ``Segment`` objects from the segment parser.
+
+    Returns:
+        A :class:`ScoreWeights` profile chosen by keyword matching, or
+        :attr:`TaskAwareWeights.DEFAULT` when no task type is detected.
+    """
+    system_content: str = ""
+    for seg in segments:
+        if seg.artifact_type == ArtifactType.SYSTEM_PROMPT:
+            system_content = seg.content.lower()
+            break
+
+    if not system_content:
+        return TaskAwareWeights.DEFAULT
+
+    if any(kw in system_content for kw in _CODE_KEYWORDS):
+        return TaskAwareWeights.CODE_GENERATION
+    if any(kw in system_content for kw in _REASONING_KEYWORDS):
+        return TaskAwareWeights.REASONING
+    if any(kw in system_content for kw in _SUMMARIZATION_KEYWORDS):
+        return TaskAwareWeights.SUMMARIZATION
+    return TaskAwareWeights.DEFAULT
 
 # Number of buckets used to discretise task-hint similarity when computing
 # cache keys. A higher value gives finer-grained cache separation at the cost
@@ -275,12 +389,17 @@ def score_segments(
     segments: list[Segment],
     task_hint: str | None = None,
     cache: CompressionCache | None = None,
+    weights: ScoreWeights | None = None,
 ) -> list[float]:
     """Score each segment's relevance using recency, semantic, and reference scoring.
 
     When *cache* is provided, scores for segments whose content and task-hint
     similarity bucket have been seen before in this call scope are served from
     the cache, bypassing embedding computation for those segments.
+
+    When *weights* is ``None``, the scoring weights are auto-detected from the
+    system prompt of *segments* via :func:`_detect_task_weights`, selecting
+    a task-appropriate profile (:class:`TaskAwareWeights`).
 
     Args:
         segments: Ordered list of ``Segment`` objects produced by the segment
@@ -293,6 +412,9 @@ def score_segments(
             computed scores are stored in the cache and future calls for the
             same ``(content_hash, task_bucket)`` pair return the cached value.
             Pass ``None`` to disable caching (default, backward-compatible).
+        weights: Optional :class:`ScoreWeights` override. When ``None``,
+            weights are auto-detected from the conversation system prompt via
+            :func:`_detect_task_weights`.
 
     Returns:
         A list of floats of the same length as ``segments``, where each value
@@ -300,7 +422,7 @@ def score_segments(
         ``segments`` is empty.
 
     Notes:
-        Composite formula: ``0.4 * recency + 0.4 * semantic + 0.2 * reference``
+        Composite formula: ``w.recency * recency + w.semantic * semantic + w.reference * reference``
 
         - **Recency**: ``exp(-0.3 * (max_turn - segment.turn_index))``
         - **Semantic**: cosine similarity of segment embedding vs. task hint
@@ -315,6 +437,9 @@ def score_segments(
     """
     if not segments:
         return []
+
+    # Resolve scoring weights: use provided weights or auto-detect from system prompt.
+    active_weights: ScoreWeights = weights if weights is not None else _detect_task_weights(segments)
 
     max_turn: int = max(s.turn_index for s in segments)
 
@@ -375,9 +500,9 @@ def score_segments(
         reference: float = min(1.0, reference_counts[i] / 3.0)
 
         composite: float = (
-            _RECENCY_WEIGHT * recency
-            + _SEMANTIC_WEIGHT * semantic
-            + _REFERENCE_WEIGHT * reference
+            active_weights.recency * recency
+            + active_weights.semantic * semantic
+            + active_weights.reference * reference
         )
         score: float = max(0.0, min(1.0, composite))
         scores.append(score)
