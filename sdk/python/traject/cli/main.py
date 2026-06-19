@@ -154,16 +154,30 @@ def cache_advisor(
             help="Provider name (e.g. anthropic, openai).",
         ),
     ] = "anthropic",
+    plan: Annotated[
+        bool,
+        typer.Option(
+            "--plan",
+            help=(
+                "Print a structured optimisation plan instead of the default summary "
+                "table. Shows per-opportunity restructuring steps and estimated "
+                "savings without requiring any code changes."
+            ),
+            is_flag=True,
+        ),
+    ] = False,
 ) -> None:
     """Analyse spans from a JSONL file for prompt cache optimisation opportunities.
 
     Reads a JSONL file produced by the Traject instrumentor, groups spans by their
     prompt hash, and prints a rich table summarising any detected caching
-    opportunities.
+    opportunities.  Pass --plan to see a structured step-by-step optimisation plan.
 
     Args:
         input: Path to the JSONL file containing InferenceSpan records.
         provider: Provider name used to look up the caching threshold.
+        plan: When True, print a structured optimisation plan instead of the
+            default summary table.
     """
     if not input.exists():
         typer.echo(f"Error: file not found: {input}", err=True)
@@ -173,6 +187,10 @@ def cache_advisor(
 
     advisor = PromptCacheAdvisor()
     report = advisor.analyze_directory(str(input))
+
+    if plan:
+        _print_cache_plan(report, provider)
+        return
 
     table = Table(title="Prompt Cache Opportunities")
     table.add_column("Provider")
@@ -189,6 +207,75 @@ def cache_advisor(
         )
 
     console.print(table)
+
+
+def _print_cache_plan(
+    report: Any,
+    provider: str,
+) -> None:
+    """Print a structured optimisation plan derived from an AdvisorReport.
+
+    Renders a numbered list of actionable steps for each detected cache
+    opportunity, followed by a summary of aggregate estimated savings.
+
+    Args:
+        report: An :class:`~traject.advisor.prompt_cache_advisor.AdvisorReport`
+            produced by the advisor.
+        provider: Provider name used as context in the plan header.
+    """
+    console.print(
+        f"\n[bold cyan]Prompt Cache Optimisation Plan[/bold cyan]  "
+        f"[dim](provider: {provider})[/dim]\n"
+    )
+    console.print(
+        f"  Prompts analysed : [bold]{report.analyzed_prompts}[/bold]\n"
+        f"  Cache-eligible   : [bold]{report.cache_eligible_count}[/bold]\n"
+    )
+
+    if not report.opportunities:
+        console.print(
+            "[dim]No cache opportunities detected. "
+            "All prompts are below the provider token threshold "
+            f"or contain no stable prefix.[/dim]\n"
+        )
+        return
+
+    for idx, opp in enumerate(report.opportunities, start=1):
+        savings_pct = f"{opp.estimated_savings_pct:.1%}"
+        console.print(
+            f"[bold]Opportunity {idx}[/bold]  "
+            f"[green]{savings_pct} estimated savings[/green]  "
+            f"({opp.token_count} stable tokens / {provider})"
+        )
+        console.print(f"  [yellow]Step 1[/yellow]  Identify stable prefix boundary.")
+        console.print(
+            f"  [yellow]Step 2[/yellow]  "
+            "Move all static instructions above the first volatile line."
+        )
+        if provider == "anthropic":
+            console.print(
+                f"  [yellow]Step 3[/yellow]  "
+                "Add ``cache_control: {{type: ephemeral}}`` to the stable block."
+            )
+        else:
+            console.print(
+                f"  [yellow]Step 3[/yellow]  "
+                "Structure your request so the stable prefix is sent first and "
+                "unchanged across calls to hit the OpenAI cached-prefix window."
+            )
+        console.print(f"  [dim]{opp.recommendation}[/dim]\n")
+
+    if report.restructuring_suggestions:
+        console.print("[bold]Additional suggestions[/bold]")
+        for suggestion in report.restructuring_suggestions:
+            console.print(f"  • {suggestion}")
+        console.print()
+
+    avg_savings = report.total_estimated_savings_pct
+    console.print(
+        f"[bold]Aggregate estimated savings: "
+        f"[green]{avg_savings:.1%}[/green][/bold] across all eligible prompts.\n"
+    )
 
 
 @app.command()
