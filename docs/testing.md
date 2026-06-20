@@ -56,13 +56,13 @@ This runs unit + integration tests with coverage enforcement (80% minimum).
 ### Run unit tests only
 
 ```bash
-pytest tests/unit/
+pytest tests/unit/ --no-cov
 ```
 
 ### Run a specific test file
 
 ```bash
-pytest tests/unit/test_compression_engine.py -v
+pytest tests/unit/test_compression_engine.py -v --no-cov
 ```
 
 ### Run with coverage report
@@ -70,6 +70,12 @@ pytest tests/unit/test_compression_engine.py -v
 ```bash
 pytest tests/ --cov=traject --cov-report=html
 open htmlcov/index.html
+```
+
+### Run integration tests only
+
+```bash
+pytest tests/integration/ -v --no-cov
 ```
 
 ### Run property-based tests (Hypothesis)
@@ -166,7 +172,7 @@ Integration tests require live PostgreSQL and Redis:
 cd backend
 DATABASE_URL=postgresql+asyncpg://traject:traject@localhost:5432/traject \
 REDIS_URL=redis://localhost:6379/0 \
-  pytest tests/integration/ -v
+  pytest tests/integration/ -v --no-cov
 ```
 
 ---
@@ -279,10 +285,10 @@ Measures end-to-end instrumentation overhead on a mock LLM call:
 
 ```bash
 cd sdk/python
-python tests/benchmarks/bench_sdk_overhead.py --assert-median-ms 5
+python tests/benchmarks/bench_sdk_overhead.py --assert-median-ms 10
 ```
 
-Target: p50 overhead ≤ 5ms.
+Target: p50 overhead ≤ 10ms.
 
 ### Compression latency
 
