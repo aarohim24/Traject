@@ -7,6 +7,14 @@ analysis (shadow mode by default).
 """
 from __future__ import annotations
 
+import os
+
+# Suppress HuggingFace unauthenticated-request warnings and tokenizer
+# parallelism warnings that appear on first import — neither is relevant
+# to Traject's in-process embedding model (ADR-003).
+os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
 from traject.compression.strategies import CompressionStrategy
 from traject.core.instrumentor import configure, instrument, patch
 from traject.exceptions import (

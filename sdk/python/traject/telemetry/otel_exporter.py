@@ -9,11 +9,20 @@ The module-level :func:`configure_exporter` function is idempotent — it is
 safe to call many times; the :class:`TracerProvider` is created exactly once
 per process. :func:`emit_span` calls :func:`configure_exporter` automatically,
 so explicit configuration is optional for stdout-only use cases.
+
+When ``export_format="summary"`` (the default), :func:`emit_span` prints a
+compact human-readable line to stdout instead of raw OTEL JSON:
+
+    [traject] model=gpt-4o-mini  tokens=1847→1432  saved=415 (22.5%)  cost=$0.000215  tag=my_agent
+
+Set ``export_format="json"`` via :func:`traject.configure` to restore the
+full OTEL JSON output.
 """
 
 from __future__ import annotations
 
 import os
+import sys
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -32,6 +41,52 @@ from traject.models import InferenceSpan
 # ---------------------------------------------------------------------------
 
 _tracer_provider: TracerProvider | None = None
+_export_format: str = "summary"  # "summary" | "json"
+
+
+# ---------------------------------------------------------------------------
+# Summary formatter
+# ---------------------------------------------------------------------------
+
+
+def _format_summary(span_data: InferenceSpan) -> str:
+    """Return a compact human-readable summary line for a span.
+
+    Format:
+        [traject] model=<model>  tokens=<in>→<out>  saved=<n> (<pct>%)  cost=$<usd>  tag=<tag>
+
+    Args:
+        span_data: Populated :class:`~traject.models.InferenceSpan` instance.
+
+    Returns:
+        A single-line string suitable for printing to stdout.
+    """
+    tokens_in = span_data.input_tokens
+    tokens_out = span_data.output_tokens
+    saved = span_data.tokens_saved or 0
+
+    if tokens_in > 0 and saved > 0:
+        pct = saved / tokens_in * 100.0
+        saved_str = f"saved={saved} ({pct:.1f}%)"
+    elif saved > 0:
+        saved_str = f"saved={saved}"
+    else:
+        saved_str = "saved=0"
+
+    cost_str = ""
+    if span_data.cost_usd is not None:
+        cost_str = f"  cost=${span_data.cost_usd:.6f}"
+
+    shadow_marker = " [shadow]" if span_data.shadow_mode else ""
+
+    return (
+        f"[traject] model={span_data.model}  "
+        f"tokens={tokens_in}→{tokens_out}  "
+        f"{saved_str}"
+        f"{cost_str}  "
+        f"tag={span_data.feature_tag}"
+        f"{shadow_marker}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -42,6 +97,7 @@ _tracer_provider: TracerProvider | None = None
 def configure_exporter(
     otlp_endpoint: str | None = None,
     export_to_stdout: bool = True,
+    export_format: str = "summary",
 ) -> None:
     """Configure the global OTEL tracer provider for the Traject SDK.
 
@@ -54,18 +110,23 @@ def configure_exporter(
             ``"http://localhost:4317"``). When ``None``, the
             ``TRAJECT_OTLP_ENDPOINT`` environment variable is checked. If
             neither is set, OTLP export is disabled.
-        export_to_stdout: When ``True`` (the default), a
-            :class:`~opentelemetry.sdk.trace.export.ConsoleSpanExporter` is
-            attached so that spans are printed to standard output. Useful for
-            local development without a collector.
+        export_to_stdout: When ``True`` (the default), span data is printed
+            to standard output. The format is controlled by ``export_format``.
+        export_format: Controls stdout output format when ``export_to_stdout``
+            is ``True``. ``"summary"`` (default) prints a compact
+            human-readable line. ``"json"`` attaches a
+            :class:`~opentelemetry.sdk.trace.export.ConsoleSpanExporter` for
+            full OTEL JSON output.
 
     Returns:
         None
     """
-    global _tracer_provider
+    global _tracer_provider, _export_format
 
     if _tracer_provider is not None:
         return
+
+    _export_format = export_format
 
     resource = Resource.create(
         {
@@ -75,7 +136,9 @@ def configure_exporter(
     )
     provider = TracerProvider(resource=resource)
 
-    if export_to_stdout:
+    # Only attach ConsoleSpanExporter for raw JSON mode. Summary mode prints
+    # directly in emit_span() to avoid OTEL's verbose JSON wrapping.
+    if export_to_stdout and export_format == "json":
         provider.add_span_processor(SimpleSpanProcessor(ConsoleSpanExporter()))
 
     endpoint = otlp_endpoint or os.environ.get("TRAJECT_OTLP_ENDPOINT")
@@ -88,37 +151,31 @@ def configure_exporter(
     _tracer_provider = provider
 
 
-def emit_span(span_data: InferenceSpan) -> None:
+def emit_span(span_data: InferenceSpan, export_to_stdout: bool = True) -> None:
     """Export a single :class:`~traject.models.InferenceSpan` as an OTEL span.
 
+    When ``_export_format == "summary"`` and ``export_to_stdout`` is ``True``,
+    prints a compact human-readable line directly to stdout before recording
+    the OTEL span. When ``_export_format == "json"``, the
+    :class:`~opentelemetry.sdk.trace.export.ConsoleSpanExporter` attached
+    during :func:`configure_exporter` handles stdout output.
+
     Calls :func:`configure_exporter` with default arguments before emitting,
-    so a :class:`TracerProvider` is always available. If
-    :func:`configure_exporter` has already been called (e.g. via
-    :func:`traject.core.instrumentor.configure`), that call is a no-op.
-
-    The span is opened synchronously, all attributes are set, and the span
-    is ended before this function returns. The OTEL SDK's
-    :class:`~opentelemetry.sdk.trace.export.BatchSpanProcessor` (when
-    configured) handles async export in a background thread.
-
-    The ``cost_usd`` field is serialised as a string to preserve
-    :class:`~decimal.Decimal` precision; OTEL attribute values do not
-    support arbitrary-precision numerics.
-
-    The tracer is obtained directly from the module-level
-    :data:`_tracer_provider` instance (not from the OTEL global accessor)
-    so that tests can inject an
-    :class:`~opentelemetry.sdk.trace.export.in_memory_span_exporter.InMemorySpanExporter`-backed
-    provider without fighting the OTEL SDK's singleton override guard.
+    so a :class:`TracerProvider` is always available.
 
     Args:
         span_data: Fully populated :class:`~traject.models.InferenceSpan`
             instance produced by the instrumentation layer.
+        export_to_stdout: Whether to print summary output. Mirrors the flag
+            passed to :func:`configure_exporter`. Defaults to ``True``.
 
     Returns:
         None
     """
     configure_exporter()
+
+    if export_to_stdout and _export_format == "summary":
+        print(_format_summary(span_data), flush=True)  # noqa: T201 — intentional user-facing output
 
     # Use the module-level provider directly to allow test injection
     # without triggering the OTEL global-override guard.

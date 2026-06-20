@@ -447,6 +447,7 @@ def patch(
 def configure(
     otlp_endpoint: str | None = None,
     export_to_stdout: bool = True,
+    export_format: str = "summary",
     local_span_log: str | None = None,
     backend_url: str | None = None,
     backend_api_key: str | None = None,
@@ -474,6 +475,9 @@ def configure(
     Args:
         otlp_endpoint: gRPC endpoint for an OTLP collector.
         export_to_stdout: Whether to also export to stdout (console).
+        export_format: Controls stdout output format when ``export_to_stdout``
+            is ``True``.  ``"summary"`` (default) prints a compact
+            human-readable line per span.  ``"json"`` outputs full OTEL JSON.
         local_span_log: Reserved for Phase 2 local SQLite logging.
             Currently unused.
         backend_url: Base URL of the Traject backend service.  When set,
@@ -487,7 +491,11 @@ def configure(
             output.  When ``None``, no routing logic executes.
     """
     global _backend_client, _router
-    configure_exporter(otlp_endpoint=otlp_endpoint, export_to_stdout=export_to_stdout)
+    configure_exporter(
+        otlp_endpoint=otlp_endpoint,
+        export_to_stdout=export_to_stdout,
+        export_format=export_format,
+    )
 
     if backend_url is not None:
         from traject.backend_client import BackendClient
