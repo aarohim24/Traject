@@ -355,7 +355,7 @@ def mcp_server(
             "Install with: pip install 'traject-sdk[mcp]'",
             err=True,
         )
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
     console.print("[cyan]Starting Traject MCP server...[/cyan]")
     console.print(f"  Transport: {transport}")
@@ -409,7 +409,7 @@ def proxy_server(
             "Install with: pip install 'traject-sdk[proxy]'",
             err=True,
         )
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
     from traject.compression.strategies import CompressionStrategy
 

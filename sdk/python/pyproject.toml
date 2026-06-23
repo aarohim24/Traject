@@ -92,6 +92,8 @@ ignore = ["ANN101", "ANN102"]
 "traject/mcp/*.py" = ["ANN401"]
 # Proxy app uses heterogeneous return dicts and Any kwargs — ANN401 unavoidable
 "traject/proxy/*.py" = ["ANN401"]
+# CLI uses Any for advisor report (frozen Phase 1 type), F541 in pre-existing string literals
+"traject/cli/*.py" = ["ANN401", "F541"]
 # instrumentor.py uses fire-and-forget asyncio.create_task for backend send
 "traject/core/instrumentor.py" = ["RUF006", "ANN401", "E501", "RUF100"]
 # provider_adapter.py has framework-agnostic Any annotations
