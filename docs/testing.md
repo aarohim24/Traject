@@ -117,6 +117,8 @@ Each source file has a corresponding test file:
 | `traject/router/rule_router.py` | `tests/unit/test_rule_router.py` |
 | `traject/advisor/prompt_cache_advisor.py` | `tests/unit/test_prompt_cache_advisor.py` |
 | `traject/core/instrumentor.py` | `tests/unit/test_instrumentor.py` |
+| `traject/mcp/server.py` | `tests/unit/test_mcp_server.py` |
+| `traject/proxy/app.py` | `tests/unit/test_proxy_server.py` |
 
 All HTTP calls to OpenAI and Anthropic are mocked at the transport layer using `respx`.
 No live API calls are made during testing.

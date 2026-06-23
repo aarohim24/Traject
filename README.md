@@ -19,6 +19,7 @@ traject.patch(client, feature_tag="my_agent", shadow_mode=True)
 - [Compression strategies](#compression-strategies)
 - [Model routing](#model-routing)
 - [Self-hosted backend](#self-hosted-backend)
+- [Integration paths](#integration-paths)
 - [Benchmark](#benchmark)
 - [Supported providers](#supported-providers)
 - [Requirements](#requirements)
@@ -209,6 +210,82 @@ traject.configure(
 ```
 
 Adds: cost attribution by feature tag, semantic caching, budget alerts, team dashboards. The backend is optional — the SDK operates independently without it.
+
+---
+
+## Integration paths
+
+### Which integration is right for you?
+
+```
+Writing Python/TypeScript code?
+  └─ Yes → SDK patch()  (3 lines, zero call-site changes)
+  └─ No — I want zero code changes
+       ├─ Using Copilot agent mode, Claude Desktop, or Cursor?
+       │    └─ MCP server  →  traject mcp
+       └─ Running any agent with an OpenAI-compatible client?
+            └─ Proxy  →  traject proxy --port 8080 --backend https://api.openai.com
+```
+
+### MCP server
+
+Works with GitHub Copilot agent mode, Claude Desktop, Cursor, M365 Copilot declarative agents — no API keys, no code changes.
+
+```bash
+pip install -e ".[mcp]"
+traject mcp
+```
+
+**VS Code / Copilot** (`.vscode/mcp.json`):
+```json
+{
+  "servers": {
+    "traject": {
+      "command": "traject",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**Claude Desktop** (`claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "traject": {
+      "command": "traject",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+Three tools are exposed:
+- `traject_compress` — compress any text blob (tool output, file, log, RAG chunk), returns compressed text + token delta
+- `traject_stats` — session aggregate reduction metrics
+- `traject_budget` — set a token limit and check ok / warning / exceeded status
+
+Shadow mode is the default — `traject_compress` returns the original text alongside metrics until you pass `shadow_mode=False`.
+
+### OpenAI-compatible transparent proxy
+
+Zero code changes. Point your agent at `localhost:8080` instead of `api.openai.com`. Works with OpenAI, Azure OpenAI, Ollama, LM Studio, or any OpenAI-compatible backend.
+
+```bash
+pip install -e ".[proxy]"
+
+traject proxy --port 8080 --backend https://api.openai.com
+# Azure OpenAI: --backend https://your-resource.openai.azure.com
+# Ollama:       --backend http://localhost:11434
+# Live compression: add --live flag (default is shadow mode)
+```
+
+Then in your agent or environment:
+```bash
+export OPENAI_BASE_URL=http://localhost:8080
+```
+
+Every response carries `X-Traject-Tokens-Saved` and `X-Traject-Shadow-Mode` headers.
 
 ---
 

@@ -76,6 +76,8 @@ ignore = ["ANN101", "ANN102"]
 "traject/compression/engine.py" = ["E501", "SIM110", "SIM114", "N806"]
 # Relevance scorer — Phase 1 frozen code; long lines and RUF003 en-dash in comments
 "traject/compression/relevance_scorer.py" = ["E501", "RUF003"]
+# OTel exporter — docstring contains a long example format line
+"traject/telemetry/otel_exporter.py" = ["E501"]
 # RuleRouter.apply is framework-agnostic; client and response types require Any
 "traject/router/rule_router.py" = ["ANN401"]
 # CascadeTracer.get_cascade_cost accepts Any backend_client — no fixed interface
