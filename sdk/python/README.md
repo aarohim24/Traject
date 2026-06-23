@@ -101,6 +101,66 @@ axon analyze --input spans.jsonl
 
 ---
 
+## Integration paths
+
+### Decision tree — which integration is right for you?
+
+```
+Are you writing new Python code?
+  └─ Yes → Use the Python SDK directly (pip install traject-sdk)
+  └─ No — I want zero code changes
+       ├─ Using an MCP-compatible client (Copilot, Claude Desktop, Cursor)?
+       │    └─ Use the MCP server  →  traject mcp
+       └─ Running an existing agent or service with an OpenAI-compatible client?
+            └─ Use the proxy  →  traject proxy --port 8080 --backend https://api.openai.com
+                                  # Then: OPENAI_BASE_URL=http://localhost:8080
+```
+
+### MCP server
+
+Exposes Traject's compression pipeline as three MCP tools that any MCP-compatible
+client can call without code changes or API keys.
+
+```bash
+pip install "traject-sdk[mcp]"
+
+# Add to your MCP client config (stdio transport, works with Copilot, Claude Desktop, Cursor):
+# command: traject
+# args: ["mcp"]
+
+traject mcp
+```
+
+**Tools registered:**
+- `traject_compress(text, strategy, shadow_mode)` — compress a text blob, returns delta metrics
+- `traject_stats()` — session-level aggregate reduction statistics
+- `traject_budget(limit_tokens)` — check token spend vs a configurable budget threshold
+
+**Shadow mode (default):** compression runs but the original text is returned alongside metrics.
+Set `shadow_mode=False` to apply live compression.
+
+### OpenAI-compatible transparent proxy
+
+Drop-in replacement for any OpenAI-compatible endpoint. Point your agent at the proxy
+instead of the provider — no other changes needed.
+
+```bash
+pip install "traject-sdk[proxy]"
+
+traject proxy --port 8080 --backend https://api.openai.com
+# Strategy options: conservative (default), moderate, aggressive
+# Add --live to enable actual compression (default is shadow mode)
+
+# Then in your agent or environment:
+export OPENAI_BASE_URL=http://localhost:8080
+```
+
+Response headers injected by the proxy:
+- `X-Traject-Tokens-Saved` — tokens eliminated this request (0 in shadow mode)
+- `X-Traject-Shadow-Mode` — `true` or `false`
+
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions.
