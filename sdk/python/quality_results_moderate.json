@@ -1,0 +1,462 @@
+{
+  "metadata": {
+    "strategy": "moderate",
+    "retention_threshold": 0.7
+  },
+  "aggregate": {
+    "n_instances": 49,
+    "n_skipped": 0,
+    "aggregate_reduction_pct": 26.3157,
+    "mean_reduction_pct": 27.0053,
+    "overall_retention_rate": 0.9375,
+    "mean_retention_rate": 0.9609,
+    "p10_retention_rate": 0.8,
+    "p50_retention_rate": 1.0,
+    "p90_retention_rate": 1.0,
+    "total_segments_modified": 128,
+    "total_segments_retained": 120
+  },
+  "instances": [
+    {
+      "instance_id": "line_1",
+      "reduction_pct": 37.968,
+      "segments_modified": 5,
+      "segments_retained": 3,
+      "retention_rate": 0.6,
+      "elapsed_ms": 567.22,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_2",
+      "reduction_pct": 47.6741,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 258.65,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_3",
+      "reduction_pct": 0.0,
+      "segments_modified": 0,
+      "segments_retained": 0,
+      "retention_rate": 1.0,
+      "elapsed_ms": 414.2,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_4",
+      "reduction_pct": 0.4391,
+      "segments_modified": 3,
+      "segments_retained": 3,
+      "retention_rate": 1.0,
+      "elapsed_ms": 419.97,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_5",
+      "reduction_pct": 22.6092,
+      "segments_modified": 2,
+      "segments_retained": 2,
+      "retention_rate": 1.0,
+      "elapsed_ms": 367.6,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_6",
+      "reduction_pct": 3.2242,
+      "segments_modified": 2,
+      "segments_retained": 2,
+      "retention_rate": 1.0,
+      "elapsed_ms": 492.74,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_7",
+      "reduction_pct": 39.6692,
+      "segments_modified": 5,
+      "segments_retained": 4,
+      "retention_rate": 0.8,
+      "elapsed_ms": 807.66,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_8",
+      "reduction_pct": 0.0,
+      "segments_modified": 0,
+      "segments_retained": 0,
+      "retention_rate": 1.0,
+      "elapsed_ms": 510.0,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_9",
+      "reduction_pct": 34.4602,
+      "segments_modified": 4,
+      "segments_retained": 4,
+      "retention_rate": 1.0,
+      "elapsed_ms": 685.47,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_10",
+      "reduction_pct": 36.6141,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 574.11,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_11",
+      "reduction_pct": 53.8828,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 340.3,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_12",
+      "reduction_pct": 34.3824,
+      "segments_modified": 6,
+      "segments_retained": 5,
+      "retention_rate": 0.8333,
+      "elapsed_ms": 627.03,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_13",
+      "reduction_pct": 31.3728,
+      "segments_modified": 2,
+      "segments_retained": 2,
+      "retention_rate": 1.0,
+      "elapsed_ms": 345.75,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_14",
+      "reduction_pct": 35.6636,
+      "segments_modified": 2,
+      "segments_retained": 2,
+      "retention_rate": 1.0,
+      "elapsed_ms": 625.95,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_15",
+      "reduction_pct": 0.0,
+      "segments_modified": 0,
+      "segments_retained": 0,
+      "retention_rate": 1.0,
+      "elapsed_ms": 428.86,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_16",
+      "reduction_pct": 19.6279,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 965.72,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_17",
+      "reduction_pct": 21.2898,
+      "segments_modified": 4,
+      "segments_retained": 3,
+      "retention_rate": 0.75,
+      "elapsed_ms": 633.69,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_18",
+      "reduction_pct": 10.0383,
+      "segments_modified": 2,
+      "segments_retained": 2,
+      "retention_rate": 1.0,
+      "elapsed_ms": 596.86,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_19",
+      "reduction_pct": 35.7903,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 388.48,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_20",
+      "reduction_pct": 18.3852,
+      "segments_modified": 2,
+      "segments_retained": 1,
+      "retention_rate": 0.5,
+      "elapsed_ms": 374.27,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_21",
+      "reduction_pct": 0.0,
+      "segments_modified": 0,
+      "segments_retained": 0,
+      "retention_rate": 1.0,
+      "elapsed_ms": 319.83,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_22",
+      "reduction_pct": 33.45,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 271.38,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_23",
+      "reduction_pct": 27.7757,
+      "segments_modified": 5,
+      "segments_retained": 5,
+      "retention_rate": 1.0,
+      "elapsed_ms": 641.55,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_24",
+      "reduction_pct": 56.1711,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 320.83,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_25",
+      "reduction_pct": 5.4131,
+      "segments_modified": 5,
+      "segments_retained": 4,
+      "retention_rate": 0.8,
+      "elapsed_ms": 510.77,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_26",
+      "reduction_pct": 18.132,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 348.28,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_27",
+      "reduction_pct": 55.1616,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 289.49,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_28",
+      "reduction_pct": 30.7651,
+      "segments_modified": 2,
+      "segments_retained": 2,
+      "retention_rate": 1.0,
+      "elapsed_ms": 333.14,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_29",
+      "reduction_pct": 18.7649,
+      "segments_modified": 5,
+      "segments_retained": 5,
+      "retention_rate": 1.0,
+      "elapsed_ms": 753.87,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_30",
+      "reduction_pct": 30.8593,
+      "segments_modified": 2,
+      "segments_retained": 2,
+      "retention_rate": 1.0,
+      "elapsed_ms": 802.19,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_31",
+      "reduction_pct": 37.1025,
+      "segments_modified": 5,
+      "segments_retained": 4,
+      "retention_rate": 0.8,
+      "elapsed_ms": 439.92,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_32",
+      "reduction_pct": 0.0,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 305.44,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_33",
+      "reduction_pct": 29.6756,
+      "segments_modified": 9,
+      "segments_retained": 9,
+      "retention_rate": 1.0,
+      "elapsed_ms": 735.45,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_34",
+      "reduction_pct": 32.7509,
+      "segments_modified": 8,
+      "segments_retained": 8,
+      "retention_rate": 1.0,
+      "elapsed_ms": 579.22,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_35",
+      "reduction_pct": 0.4385,
+      "segments_modified": 2,
+      "segments_retained": 2,
+      "retention_rate": 1.0,
+      "elapsed_ms": 643.02,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_36",
+      "reduction_pct": 50.6321,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 308.6,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_37",
+      "reduction_pct": 40.7314,
+      "segments_modified": 5,
+      "segments_retained": 5,
+      "retention_rate": 1.0,
+      "elapsed_ms": 617.5,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_38",
+      "reduction_pct": 53.4616,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 332.81,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_39",
+      "reduction_pct": 33.225,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 647.87,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_40",
+      "reduction_pct": 35.3357,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 346.43,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_41",
+      "reduction_pct": 51.081,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 480.11,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_42",
+      "reduction_pct": 15.8583,
+      "segments_modified": 6,
+      "segments_retained": 6,
+      "retention_rate": 1.0,
+      "elapsed_ms": 610.14,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_43",
+      "reduction_pct": 46.8028,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 405.76,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_44",
+      "reduction_pct": 34.9994,
+      "segments_modified": 10,
+      "segments_retained": 10,
+      "retention_rate": 1.0,
+      "elapsed_ms": 657.98,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_45",
+      "reduction_pct": 36.2325,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 355.78,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_46",
+      "reduction_pct": 18.4078,
+      "segments_modified": 1,
+      "segments_retained": 1,
+      "retention_rate": 1.0,
+      "elapsed_ms": 407.94,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_47",
+      "reduction_pct": 3.7849,
+      "segments_modified": 3,
+      "segments_retained": 3,
+      "retention_rate": 1.0,
+      "elapsed_ms": 806.74,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_48",
+      "reduction_pct": 13.8012,
+      "segments_modified": 2,
+      "segments_retained": 2,
+      "retention_rate": 1.0,
+      "elapsed_ms": 605.19,
+      "skipped": false
+    },
+    {
+      "instance_id": "line_49",
+      "reduction_pct": 29.3532,
+      "segments_modified": 2,
+      "segments_retained": 2,
+      "retention_rate": 1.0,
+      "elapsed_ms": 385.5,
+      "skipped": false
+    }
+  ]
+}
