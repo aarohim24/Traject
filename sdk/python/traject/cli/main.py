@@ -1,8 +1,8 @@
 """Traject SDK command-line interface.
 
-Provides three commands: analyze (read JSONL span logs and display cost
-summary), version (print the SDK version), and doctor (check that all
-required dependencies are installed).
+Provides commands: analyze (read JSONL span logs and display cost summary),
+version (print the SDK version), doctor (check dependencies), mcp (start
+MCP server), and proxy (start compression proxy).
 """
 from __future__ import annotations
 
@@ -324,3 +324,109 @@ def doctor() -> None:
 
     console.print(table)
     raise typer.Exit(code=0 if all_required_ok else 1)
+
+
+@app.command(name="mcp")
+def mcp_server(
+    host: Annotated[str, typer.Option("--host", help="Host to bind.")] = "localhost",
+    port: Annotated[int, typer.Option("--port", help="Port to listen on.")] = 3000,
+    transport: Annotated[
+        str,
+        typer.Option("--transport", help="Transport: stdio or sse."),
+    ] = "stdio",
+) -> None:
+    """Start the Traject MCP server for use with Copilot, Claude Desktop, or Cursor.
+
+    Add to your MCP client config::
+
+        command: traject
+        args: ["mcp"]
+
+    Args:
+        host: Host hint forwarded to the MCP server (stdio transport ignores it).
+        port: Port hint forwarded to the MCP server (stdio transport ignores it).
+        transport: MCP transport protocol — ``"stdio"`` (default) or ``"sse"``.
+    """
+    try:
+        from traject.mcp.server import run
+    except ImportError:
+        typer.echo(
+            "Error: MCP server requires 'mcp' package. "
+            "Install with: pip install 'traject-sdk[mcp]'",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    console.print("[cyan]Starting Traject MCP server...[/cyan]")
+    console.print(f"  Transport: {transport}")
+    console.print("  Tools: traject_compress, traject_stats, traject_budget")
+    run(host=host, port=port)
+
+
+@app.command(name="proxy")
+def proxy_server(
+    port: Annotated[
+        int,
+        typer.Option("--port", "-p", help="Port to listen on."),
+    ] = 8080,
+    backend: Annotated[
+        str,
+        typer.Option("--backend", "-b", help="Upstream API base URL."),
+    ] = "https://api.openai.com",
+    strategy: Annotated[
+        str,
+        typer.Option("--strategy", "-s", help="Compression strategy."),
+    ] = "conservative",
+    live: Annotated[
+        bool,
+        typer.Option("--live", help="Enable live compression (default: shadow mode)."),
+    ] = False,
+) -> None:
+    """Start the Traject transparent compression proxy.
+
+    Points your agent at ``http://localhost:<port>`` instead of the
+    provider URL.  Compresses context transparently — no code changes
+    required.
+
+    Example::
+
+        traject proxy --port 8080 --backend https://api.openai.com
+        # Then set: OPENAI_BASE_URL=http://localhost:8080
+
+    Args:
+        port: TCP port to listen on.
+        backend: Upstream OpenAI-compatible provider base URL.
+        strategy: Compression strategy (``"conservative"``, ``"moderate"``,
+            or ``"aggressive"``).
+        live: When ``True``, applies live compression. Default is shadow mode
+            (metrics only, original messages forwarded).
+    """
+    try:
+        from traject.proxy.app import run
+    except ImportError:
+        typer.echo(
+            "Error: Proxy requires fastapi+uvicorn. "
+            "Install with: pip install 'traject-sdk[proxy]'",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    from traject.compression.strategies import CompressionStrategy
+
+    shadow = not live
+    console.print(f"[cyan]Starting Traject proxy on port {port}[/cyan]")
+    console.print(f"  Backend:    {backend}")
+    console.print(f"  Strategy:   {strategy}")
+    console.print(
+        f"  Mode:       {'shadow (metrics only)' if shadow else 'LIVE COMPRESSION'}"
+    )
+    console.print(f"\n  Set in your agent: OPENAI_BASE_URL=http://localhost:{port}")
+
+    strategy_enum = CompressionStrategy(strategy)
+    run(
+        host="0.0.0.0",
+        port=port,
+        backend_url=backend,
+        strategy=strategy_enum,
+        shadow_mode=shadow,
+    )
