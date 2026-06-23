@@ -5,6 +5,7 @@ cost delta, and fallback behaviour).
 
 **Validates: Requirements 2.3, 2.4, 2.5, 2.6, 2.7, 3.1, 3.2, 3.3, 3.4**
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -40,19 +41,69 @@ def _simple_messages(content: str = "hello") -> list[dict[str, Any]]:
     ("task_type", "complexity_tier", "expected_model_tier", "expected_model"),
     [
         # SUMMARIZATION always gets TIER_1 for LOW/MEDIUM, TIER_2 for HIGH
-        (TaskType.SUMMARIZATION, ComplexityTier.LOW, ModelTier.TIER_1, "claude-3-5-haiku-20241022"),
-        (TaskType.SUMMARIZATION, ComplexityTier.MEDIUM, ModelTier.TIER_1, "claude-3-5-haiku-20241022"),
-        (TaskType.SUMMARIZATION, ComplexityTier.HIGH, ModelTier.TIER_2, "claude-3-5-sonnet-20241022"),
+        (
+            TaskType.SUMMARIZATION,
+            ComplexityTier.LOW,
+            ModelTier.TIER_1,
+            "claude-3-5-haiku-20241022",
+        ),
+        (
+            TaskType.SUMMARIZATION,
+            ComplexityTier.MEDIUM,
+            ModelTier.TIER_1,
+            "claude-3-5-haiku-20241022",
+        ),
+        (
+            TaskType.SUMMARIZATION,
+            ComplexityTier.HIGH,
+            ModelTier.TIER_2,
+            "claude-3-5-sonnet-20241022",
+        ),
         # CODE_GENERATION reaches TIER_3 at HIGH
-        (TaskType.CODE_GENERATION, ComplexityTier.LOW, ModelTier.TIER_1, "claude-3-5-haiku-20241022"),
-        (TaskType.CODE_GENERATION, ComplexityTier.MEDIUM, ModelTier.TIER_2, "claude-3-5-sonnet-20241022"),
-        (TaskType.CODE_GENERATION, ComplexityTier.HIGH, ModelTier.TIER_3, "claude-3-opus-20240229"),
+        (
+            TaskType.CODE_GENERATION,
+            ComplexityTier.LOW,
+            ModelTier.TIER_1,
+            "claude-3-5-haiku-20241022",
+        ),
+        (
+            TaskType.CODE_GENERATION,
+            ComplexityTier.MEDIUM,
+            ModelTier.TIER_2,
+            "claude-3-5-sonnet-20241022",
+        ),
+        (
+            TaskType.CODE_GENERATION,
+            ComplexityTier.HIGH,
+            ModelTier.TIER_3,
+            "claude-3-opus-20240229",
+        ),
         # REASONING reaches TIER_3 at HIGH
-        (TaskType.REASONING, ComplexityTier.HIGH, ModelTier.TIER_3, "claude-3-opus-20240229"),
-        (TaskType.REASONING, ComplexityTier.MEDIUM, ModelTier.TIER_2, "claude-3-5-sonnet-20241022"),
+        (
+            TaskType.REASONING,
+            ComplexityTier.HIGH,
+            ModelTier.TIER_3,
+            "claude-3-opus-20240229",
+        ),
+        (
+            TaskType.REASONING,
+            ComplexityTier.MEDIUM,
+            ModelTier.TIER_2,
+            "claude-3-5-sonnet-20241022",
+        ),
         # UNKNOWN always TIER_2
-        (TaskType.UNKNOWN, ComplexityTier.LOW, ModelTier.TIER_2, "claude-3-5-sonnet-20241022"),
-        (TaskType.UNKNOWN, ComplexityTier.HIGH, ModelTier.TIER_2, "claude-3-5-sonnet-20241022"),
+        (
+            TaskType.UNKNOWN,
+            ComplexityTier.LOW,
+            ModelTier.TIER_2,
+            "claude-3-5-sonnet-20241022",
+        ),
+        (
+            TaskType.UNKNOWN,
+            ComplexityTier.HIGH,
+            ModelTier.TIER_2,
+            "claude-3-5-sonnet-20241022",
+        ),
     ],
 )
 def test_route_anthropic_provider_tier_selection(
@@ -68,15 +119,16 @@ def test_route_anthropic_provider_tier_selection(
     router = RuleRouter(provider="anthropic")
     messages = _simple_messages()
 
-    with patch(
-        "traject.router.rule_router.classify_task", return_value=task_type
-    ), patch(
-        "traject.router.rule_router.estimate_complexity",
-        return_value={
-            ComplexityTier.LOW: 0.1,
-            ComplexityTier.MEDIUM: 0.55,
-            ComplexityTier.HIGH: 0.85,
-        }[complexity_tier],
+    with (
+        patch("traject.router.rule_router.classify_task", return_value=task_type),
+        patch(
+            "traject.router.rule_router.estimate_complexity",
+            return_value={
+                ComplexityTier.LOW: 0.1,
+                ComplexityTier.MEDIUM: 0.55,
+                ComplexityTier.HIGH: 0.85,
+            }[complexity_tier],
+        ),
     ):
         decision = router.route(messages, "claude-3-5-sonnet-20241022")
 
@@ -168,9 +220,7 @@ def test_route_override_task_type_skips_classify() -> None:
     router = RuleRouter(provider="openai")
     messages = _simple_messages()
 
-    with patch(
-        "traject.router.rule_router.classify_task"
-    ) as mock_classify:
+    with patch("traject.router.rule_router.classify_task") as mock_classify:
         decision = router.route(
             messages, "gpt-4o", override_task_type=TaskType.SUMMARIZATION
         )
@@ -193,10 +243,11 @@ def test_cost_delta_pct_zero_when_same_model() -> None:
     # Force the router to pick gpt-4o by routing UNKNOWN (always TIER_2 → gpt-4o)
     messages = _simple_messages("do the thing")
 
-    with patch(
-        "traject.router.rule_router.classify_task", return_value=TaskType.UNKNOWN
-    ), patch(
-        "traject.router.rule_router.estimate_complexity", return_value=0.1
+    with (
+        patch(
+            "traject.router.rule_router.classify_task", return_value=TaskType.UNKNOWN
+        ),
+        patch("traject.router.rule_router.estimate_complexity", return_value=0.1),
     ):
         decision = router.route(messages, "gpt-4o")
 
@@ -213,10 +264,12 @@ def test_cost_delta_pct_negative_when_downgraded() -> None:
     router = RuleRouter(provider="openai")
     messages = [{"role": "user", "content": "summarize this text"}]
 
-    with patch(
-        "traject.router.rule_router.classify_task", return_value=TaskType.SUMMARIZATION
-    ), patch(
-        "traject.router.rule_router.estimate_complexity", return_value=0.1
+    with (
+        patch(
+            "traject.router.rule_router.classify_task",
+            return_value=TaskType.SUMMARIZATION,
+        ),
+        patch("traject.router.rule_router.estimate_complexity", return_value=0.1),
     ):
         # requested gpt-4o, should get gpt-4o-mini (cheaper)
         decision = router.route(messages, "gpt-4o")
@@ -237,7 +290,10 @@ def test_cost_delta_pct_zero_for_unknown_model() -> None:
     assert isinstance(decision.cost_delta_pct, float)
     # If original is unknown, delta must be 0.0 per spec
     if decision.original_model not in (
-        "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"
+        "gpt-4o",
+        "gpt-4o-mini",
+        "gpt-4-turbo",
+        "gpt-3.5-turbo",
     ):
         assert decision.cost_delta_pct == 0.0
 
@@ -300,7 +356,9 @@ def test_ab_test_config_invalid_pct_raises_axon_config_error() -> None:
         ABTestConfig(treatment_model="gpt-4o-mini", treatment_pct=1.5, feature_tag=None)
 
     with pytest.raises(TrajectConfigError):
-        ABTestConfig(treatment_model="gpt-4o-mini", treatment_pct=-0.1, feature_tag=None)
+        ABTestConfig(
+            treatment_model="gpt-4o-mini", treatment_pct=-0.1, feature_tag=None
+        )
 
 
 def test_ab_test_different_request_ids_may_get_different_groups() -> None:
@@ -356,10 +414,12 @@ def test_route_with_ab_test_control_group_uses_routed_model() -> None:
     )
     router = RuleRouter(provider="openai", ab_test=ab)
 
-    with patch(
-        "traject.router.rule_router.classify_task", return_value=TaskType.SUMMARIZATION
-    ), patch(
-        "traject.router.rule_router.estimate_complexity", return_value=0.1
+    with (
+        patch(
+            "traject.router.rule_router.classify_task",
+            return_value=TaskType.SUMMARIZATION,
+        ),
+        patch("traject.router.rule_router.estimate_complexity", return_value=0.1),
     ):
         decision = router.route(_simple_messages(), "gpt-4o")
 
@@ -388,10 +448,12 @@ def test_rule_router_uses_custom_routing_table() -> None:
     }
     router = RuleRouter(provider="openai", routing_table=custom_table)
 
-    with patch(
-        "traject.router.rule_router.classify_task", return_value=TaskType.SUMMARIZATION
-    ), patch(
-        "traject.router.rule_router.estimate_complexity", return_value=0.1
+    with (
+        patch(
+            "traject.router.rule_router.classify_task",
+            return_value=TaskType.SUMMARIZATION,
+        ),
+        patch("traject.router.rule_router.estimate_complexity", return_value=0.1),
     ):
         decision = router.route(_simple_messages(), "gpt-4o")
 

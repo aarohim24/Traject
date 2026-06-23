@@ -2,6 +2,7 @@
 
 Validates: Requirements R1.4, R3.6, R16.5
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -12,14 +13,19 @@ import pytest
 from traject.core.pricing import PROVIDER_PRICING
 
 _EXPECTED_MODELS = [
-    "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo",
-    "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229",
-    "gemini-1.5-pro", "gemini-1.5-flash",
+    "gpt-4o",
+    "gpt-4o-mini",
+    "gpt-4-turbo",
+    "gpt-3.5-turbo",
+    "claude-3-5-sonnet-20241022",
+    "claude-3-5-haiku-20241022",
+    "claude-3-opus-20240229",
+    "gemini-1.5-pro",
+    "gemini-1.5-flash",
 ]
 
 
 class TestProviderPricing:
-
     def test_all_nine_models_present(self) -> None:
         for model in _EXPECTED_MODELS:
             assert model in PROVIDER_PRICING, f"Missing model: {model}"

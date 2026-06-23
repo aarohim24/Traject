@@ -2,6 +2,7 @@
 
 Validates: Requirements R1.1-R1.6, R2.3, R14.1-R14.4
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -177,9 +178,7 @@ class TestPatch:
         spans: list[Any] = []
         resp = _mock_response()
         mock_client = SimpleNamespace(
-            chat=SimpleNamespace(
-                completions=SimpleNamespace(create=lambda **kw: resp)
-            )
+            chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **kw: resp))
         )
         traject.patch(mock_client, feature_tag="patch-test", shadow_mode=True)
 

@@ -9,6 +9,7 @@ Session state is maintained at module level (per-process). Thread safety is
 not guaranteed in concurrent environments; for MVP single-process deployments
 this is acceptable.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -89,10 +90,7 @@ def _parse_strategy(strategy: str) -> CompressionStrategy:
     normalised = strategy.strip().lower()
     if normalised not in _VALID_STRATEGIES:
         valid = ", ".join(f'"{v}"' for v in _VALID_STRATEGIES)
-        raise ValueError(
-            f"Unknown strategy {strategy!r}. "
-            f"Valid options are: {valid}."
-        )
+        raise ValueError(f"Unknown strategy {strategy!r}. Valid options are: {valid}.")
     return _VALID_STRATEGIES[normalised]
 
 

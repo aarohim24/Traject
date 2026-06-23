@@ -1,4 +1,5 @@
 """Unit tests for axon.classifier.artifact_type."""
+
 from __future__ import annotations
 
 import time
@@ -23,18 +24,29 @@ class TestArtifactTypeEnum:
 
 
 class TestClassify:
-
     def test_system_role_returns_system_prompt(self) -> None:
-        assert classify({"role": "system", "content": "hi"}, 0, 1) == ArtifactType.SYSTEM_PROMPT
+        assert (
+            classify({"role": "system", "content": "hi"}, 0, 1)
+            == ArtifactType.SYSTEM_PROMPT
+        )
 
     def test_tool_role_returns_tool_result(self) -> None:
-        assert classify({"role": "tool", "content": "result"}, 1, 3) == ArtifactType.TOOL_RESULT
+        assert (
+            classify({"role": "tool", "content": "result"}, 1, 3)
+            == ArtifactType.TOOL_RESULT
+        )
 
     def test_tool_calls_field_returns_tool_call(self) -> None:
-        assert classify({"role": "assistant", "tool_calls": [{"id": "1"}]}, 1, 3) == ArtifactType.TOOL_CALL
+        assert (
+            classify({"role": "assistant", "tool_calls": [{"id": "1"}]}, 1, 3)
+            == ArtifactType.TOOL_CALL
+        )
 
     def test_assistant_reasoning_markers_returns_reasoning_block(self) -> None:
-        msg = {"role": "assistant", "content": "<thinking>Let me think step by step</thinking>"}
+        msg = {
+            "role": "assistant",
+            "content": "<thinking>Let me think step by step</thinking>",
+        }
         assert classify(msg, 1, 5) == ArtifactType.REASONING_BLOCK
 
     def test_user_at_position_0_with_few_shot_markers_returns_few_shot(self) -> None:
@@ -46,13 +58,22 @@ class TestClassify:
         assert classify(msg, 1, 5) == ArtifactType.RAG_CHUNK
 
     def test_plain_user_message(self) -> None:
-        assert classify({"role": "user", "content": "Hello!"}, 1, 5) == ArtifactType.USER_MESSAGE
+        assert (
+            classify({"role": "user", "content": "Hello!"}, 1, 5)
+            == ArtifactType.USER_MESSAGE
+        )
 
     def test_plain_assistant_message(self) -> None:
-        assert classify({"role": "assistant", "content": "Here you go."}, 2, 5) == ArtifactType.ASSISTANT_MESSAGE
+        assert (
+            classify({"role": "assistant", "content": "Here you go."}, 2, 5)
+            == ArtifactType.ASSISTANT_MESSAGE
+        )
 
     def test_unknown_role_returns_unknown(self) -> None:
-        assert classify({"role": "system_admin", "content": "x"}, 0, 1) == ArtifactType.UNKNOWN
+        assert (
+            classify({"role": "system_admin", "content": "x"}, 0, 1)
+            == ArtifactType.UNKNOWN
+        )
 
     def test_empty_dict_returns_unknown(self) -> None:
         assert classify({}, 0, 1) == ArtifactType.UNKNOWN
@@ -83,7 +104,9 @@ class TestClassify:
     ) -> None:
         """P1: Any message with role=='system' always returns SYSTEM_PROMPT."""
         msg = {"role": "system", "content": content}
-        assert classify(msg, position_index, total_messages) == ArtifactType.SYSTEM_PROMPT
+        assert (
+            classify(msg, position_index, total_messages) == ArtifactType.SYSTEM_PROMPT
+        )
 
     @given(st.dictionaries(st.text(), st.text()))
     @settings(max_examples=100)
@@ -103,7 +126,6 @@ class TestClassify:
 
 
 class TestClassifySequence:
-
     def test_empty_list_returns_empty(self) -> None:
         assert classify_sequence([]) == []
 

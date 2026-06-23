@@ -13,6 +13,7 @@ P-CACHE-4  Cache is disabled (zero hits) when no task hint is provided,
 P-CACHE-5  ``compress()`` result exposes ``cache_hits`` and
            ``cache_hit_rate`` fields.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -135,9 +136,9 @@ class TestCompressionCacheInternals:
 
         # 1 put + 2 hits + 1 miss
         cache.put_semantic("x", seg_emb, task_emb, 0.8)
-        cache.get_semantic("x", seg_emb, task_emb)   # hit
-        cache.get_semantic("x", seg_emb, task_emb)   # hit
-        cache.get_semantic("y", seg_emb, task_emb)   # miss
+        cache.get_semantic("x", seg_emb, task_emb)  # hit
+        cache.get_semantic("x", seg_emb, task_emb)  # hit
+        cache.get_semantic("y", seg_emb, task_emb)  # miss
 
         assert cache.hits == 2
         assert cache.misses == 1
@@ -246,7 +247,7 @@ class TestCompressExposesCache:
         msgs: list[dict[str, Any]] = [
             {"role": "system", "content": "You are an assistant."},
             {"role": "user", "content": "Step 1"},
-            {"role": "tool", "content": long_tool_result},   # turn 0 — old
+            {"role": "tool", "content": long_tool_result},  # turn 0 — old
             {"role": "user", "content": "Step 2"},
             {"role": "assistant", "content": "Processed."},
             {"role": "user", "content": "Step 3"},
@@ -262,9 +263,7 @@ class TestCompressExposesCache:
         )
         result = compress(msgs, cfg, task_hint="process steps")
 
-        all_content = " ".join(
-            str(m.get("content", "")) for m in result.messages
-        )
+        all_content = " ".join(str(m.get("content", "")) for m in result.messages)
         assert "Axon" not in all_content
         # If summarization occurred, 'Traject' label must be present
         if result.segments_summarized > 0:
@@ -292,10 +291,7 @@ class TestCompressionCacheProperties:
         self, contents: list[str], task: str
     ) -> None:
         """P-CACHE-1 (property): for any segments and task hint, cached == uncached."""
-        segments = [
-            _seg(i, content, i)
-            for i, content in enumerate(contents)
-        ]
+        segments = [_seg(i, content, i) for i, content in enumerate(contents)]
 
         scores_no_cache = score_segments(segments, task_hint=task, cache=None)
 
@@ -303,7 +299,9 @@ class TestCompressionCacheProperties:
         scores_with_cache = score_segments(segments, task_hint=task, cache=cache)
 
         assert len(scores_no_cache) == len(scores_with_cache)
-        for i, (s1, s2) in enumerate(zip(scores_no_cache, scores_with_cache, strict=False)):
+        for i, (s1, s2) in enumerate(
+            zip(scores_no_cache, scores_with_cache, strict=False)
+        ):
             assert abs(s1 - s2) < 1e-5, (
                 f"Score mismatch at index {i}: no_cache={s1}, cached={s2}, "
                 f"content={contents[i]!r}"
@@ -318,8 +316,8 @@ class TestCompressionCacheProperties:
         task_emb = [1.0, 0.0]
 
         cache.put_semantic("content", seg_emb, task_emb, score)
-        cache.get_semantic("content", seg_emb, task_emb)   # hit
-        cache.get_semantic("other", seg_emb, task_emb)     # miss
+        cache.get_semantic("content", seg_emb, task_emb)  # hit
+        cache.get_semantic("other", seg_emb, task_emb)  # miss
 
         expected = cache.hits / (cache.hits + cache.misses)
         assert cache.hit_rate == pytest.approx(expected, abs=1e-9)

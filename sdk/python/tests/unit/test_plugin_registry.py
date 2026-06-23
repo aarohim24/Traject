@@ -9,6 +9,7 @@ Tests cover:
 - Typed getter methods return empty lists before registration and populated
   lists after registration
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -32,7 +33,9 @@ from traject.router.routing_table import RoutingDecision
 class MinimalCompressionPlugin(CompressionPlugin):
     """Minimal CompressionPlugin implementation for testing."""
 
-    def compress(self, segments: list[str], **kwargs: Any) -> list[str]:  # Any: provider-specific kwargs
+    def compress(
+        self, segments: list[str], **kwargs: Any
+    ) -> list[str]:  # Any: provider-specific kwargs
         """Return segments unchanged."""
         return segments
 
@@ -53,7 +56,9 @@ class MinimalRoutingPlugin(RoutingPlugin):
 class MinimalArtifactClassifierPlugin(ArtifactClassifierPlugin):
     """Minimal ArtifactClassifierPlugin implementation for testing."""
 
-    def classify(self, content: str, **kwargs: Any) -> ArtifactType | None:  # Any: provider-specific kwargs
+    def classify(
+        self, content: str, **kwargs: Any
+    ) -> ArtifactType | None:  # Any: provider-specific kwargs
         """Always defer to default classifier."""
         return None
 
@@ -136,7 +141,9 @@ class TestRegisterTypeError:
 
         **Validates: Requirements 5.2**
         """
-        with pytest.raises(TypeError, match=r"CompressionPlugin|RoutingPlugin|ArtifactClassifierPlugin"):
+        with pytest.raises(
+            TypeError, match=r"CompressionPlugin|RoutingPlugin|ArtifactClassifierPlugin"
+        ):
             _registry().register("unexpected")  # type: ignore[arg-type]
 
 
@@ -256,7 +263,9 @@ class TestGettersAfterRegistration:
         assert len(result) == 1
         assert result[0] is plugin
 
-    def test_compression_plugin_does_not_appear_in_routing_or_classifier_lists(self) -> None:
+    def test_compression_plugin_does_not_appear_in_routing_or_classifier_lists(
+        self,
+    ) -> None:
         """Registering a CompressionPlugin does not pollute the other lists.
 
         **Validates: Requirements 5.3**
@@ -266,7 +275,9 @@ class TestGettersAfterRegistration:
         assert _registry().get_routing_plugins() == []
         assert _registry().get_classifier_plugins() == []
 
-    def test_routing_plugin_does_not_appear_in_compression_or_classifier_lists(self) -> None:
+    def test_routing_plugin_does_not_appear_in_compression_or_classifier_lists(
+        self,
+    ) -> None:
         """Registering a RoutingPlugin does not pollute the other lists.
 
         **Validates: Requirements 5.3**
@@ -276,7 +287,9 @@ class TestGettersAfterRegistration:
         assert _registry().get_compression_plugins() == []
         assert _registry().get_classifier_plugins() == []
 
-    def test_classifier_plugin_does_not_appear_in_compression_or_routing_lists(self) -> None:
+    def test_classifier_plugin_does_not_appear_in_compression_or_routing_lists(
+        self,
+    ) -> None:
         """Registering an ArtifactClassifierPlugin does not pollute the other lists.
 
         **Validates: Requirements 5.3**

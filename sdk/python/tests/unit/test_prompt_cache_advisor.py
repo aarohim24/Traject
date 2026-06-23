@@ -2,6 +2,7 @@
 
 Validates: Requirements 6.1–6.7 (Prompt Cache Optimization Advisor)
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -187,9 +188,7 @@ class TestVolatilePatternDetection:
     def _make_prompt_with_volatile(self, stable_lines: int, volatile_line: str) -> str:
         """Return a long enough prompt with *stable_lines* stable lines then a volatile."""
         # Each "stable" line has many repeated words to push past token threshold
-        stable = "\n".join(
-            "word " * 80 for _ in range(stable_lines)
-        )
+        stable = "\n".join("word " * 80 for _ in range(stable_lines))
         return stable + "\n" + volatile_line
 
     def test_format_placeholder_triggers_volatility(self) -> None:
@@ -315,9 +314,7 @@ class TestAnalyzeDirectory:
     def test_valid_jsonl_returns_report_without_raising(self) -> None:
         """Requirement 6.6: valid JSONL file → AdvisorReport with no exception."""
         advisor = PromptCacheAdvisor()
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".jsonl", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             f.write(_span_json(prompt_hash="a" * 64) + "\n")
             f.write(_span_json(prompt_hash="b" * 64) + "\n")
             tmp_path = f.name
@@ -332,9 +329,7 @@ class TestAnalyzeDirectory:
     def test_malformed_lines_are_skipped(self) -> None:
         """Malformed JSONL lines do not cause an exception."""
         advisor = PromptCacheAdvisor()
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".jsonl", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             f.write(_span_json() + "\n")
             f.write("this is not valid json\n")
             f.write(_span_json(prompt_hash="c" * 64) + "\n")
@@ -349,9 +344,7 @@ class TestAnalyzeDirectory:
     def test_empty_file_returns_zero_analyzed(self) -> None:
         """An empty JSONL file yields analyzed_prompts == 0."""
         advisor = PromptCacheAdvisor()
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".jsonl", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             tmp_path = f.name  # empty file
 
         try:
@@ -371,9 +364,7 @@ class TestCacheAdvisorCLI:
 
     def test_exits_0_with_valid_jsonl(self) -> None:
         """Requirement 6.7: CLI with valid JSONL exits 0 and prints a table."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".jsonl", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             f.write(_span_json() + "\n")
             tmp_path = f.name
 
@@ -392,9 +383,7 @@ class TestCacheAdvisorCLI:
 
     def test_provider_option_accepted(self) -> None:
         """The --provider option is accepted without error."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".jsonl", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             f.write(_span_json() + "\n")
             tmp_path = f.name
 

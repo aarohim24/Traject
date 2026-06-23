@@ -88,7 +88,14 @@ def test_inject_extract_round_trip() -> None:
         {"traceparent": "not-a-traceparent-value"},
         {"x-other-header": "something"},
     ],
-    ids=["empty", "empty-value", "truncated-trace-id", "bad-version", "garbage", "unrelated-header"],
+    ids=[
+        "empty",
+        "empty-value",
+        "truncated-trace-id",
+        "bad-version",
+        "garbage",
+        "unrelated-header",
+    ],
 )
 def test_extract_returns_none_for_invalid_headers(headers: dict[str, str]) -> None:
     """extract_trace_context returns None for missing, empty, or malformed traceparent.

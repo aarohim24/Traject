@@ -9,6 +9,7 @@ Tests cover:
 - Claude-via-Bedrock response shape: usage.input_tokens / usage.output_tokens / content[0].text
 - Llama response shape: prompt_token_count / generation_token_count / generation
 """
+
 from __future__ import annotations
 
 import importlib
@@ -153,6 +154,7 @@ class TestBedrockAdapterTitanResponse:
             from traject.providers.bedrock import (
                 BedrockAdapter as BA,
             )
+
             adapter = BA()
 
         # Swap the real client for our controlled mock after construction
@@ -235,6 +237,7 @@ class TestBedrockAdapterClaudeResponse:
             from traject.providers.bedrock import (
                 BedrockAdapter as BA,
             )
+
             adapter = BA()
 
         adapter._client = mock_client
@@ -316,6 +319,7 @@ class TestBedrockAdapterLlamaResponse:
             from traject.providers.bedrock import (
                 BedrockAdapter as BA,
             )
+
             adapter = BA()
 
         adapter._client = mock_client
@@ -389,6 +393,7 @@ class TestBedrockAdapterUnsupportedModel:
             from traject.providers.bedrock import (
                 BedrockAdapter as BA,
             )
+
             adapter = BA()
 
         adapter._client = mock_client

@@ -1,4 +1,5 @@
 """Unit tests for traject.proxy.app — OpenAI-compatible compression proxy."""
+
 from __future__ import annotations
 
 import json
@@ -176,9 +177,7 @@ async def test_chat_completions_handles_compression_error() -> None:
 @respx.mock
 async def test_models_endpoint_passes_through() -> None:
     """GET /v1/models forwards to the backend and returns its response."""
-    respx.get(_MODELS_URL).mock(
-        return_value=httpx.Response(200, json=_FAKE_MODELS)
-    )
+    respx.get(_MODELS_URL).mock(return_value=httpx.Response(200, json=_FAKE_MODELS))
 
     async with _make_client() as client:
         response = await client.get("/v1/models")

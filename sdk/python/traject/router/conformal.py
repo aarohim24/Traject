@@ -46,6 +46,7 @@ class _RouterProtocol(Protocol):
         """Return a routing decision for the given messages."""
         ...
 
+
 # ---------------------------------------------------------------------------
 # ConformalPredictionResult
 # ---------------------------------------------------------------------------

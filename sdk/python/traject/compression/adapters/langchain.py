@@ -4,6 +4,7 @@ Normalizes LangChain BaseMessage subclasses to the canonical list[dict] format
 required by the compression engine, and converts results back. Requires the
 langchain-core optional dependency (pip install traject-sdk[langchain]).
 """
+
 from __future__ import annotations
 
 from typing import Any

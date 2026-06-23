@@ -1,4 +1,5 @@
 """Unit tests for traject.compression.relevance_scorer."""
+
 from __future__ import annotations
 
 from traject.classifier.artifact_type import ArtifactType
@@ -14,14 +15,17 @@ def _seg(
     art_type: ArtifactType = ArtifactType.USER_MESSAGE,
 ) -> Segment:
     return Segment(
-        index=index, role="user", content=content,
-        artifact_type=art_type, token_count=len(content.split()),
-        turn_index=turn_index, protected=protected,
+        index=index,
+        role="user",
+        content=content,
+        artifact_type=art_type,
+        token_count=len(content.split()),
+        turn_index=turn_index,
+        protected=protected,
     )
 
 
 class TestScoreSegments:
-
     def test_empty_input_returns_empty(self) -> None:
         assert score_segments([]) == []
 
@@ -36,7 +40,9 @@ class TestScoreSegments:
             assert 0.0 <= s <= 1.0
 
     def test_protected_segment_scores_1_0(self) -> None:
-        segs = [_seg(0, "system", 0, protected=True, art_type=ArtifactType.SYSTEM_PROMPT)]
+        segs = [
+            _seg(0, "system", 0, protected=True, art_type=ArtifactType.SYSTEM_PROMPT)
+        ]
         scores = score_segments(segs)
         assert scores[0] == 1.0
 

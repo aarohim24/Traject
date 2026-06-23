@@ -68,7 +68,9 @@ jobs:
       - name: Install package with dev extras
         run: pip install -e "sdk/python[openai,dev]"
       - name: SDK overhead benchmark
-        run: python sdk/python/tests/benchmarks/bench_sdk_overhead.py --assert-median-ms 10
+        # GitHub Actions runners are slower than local hardware.
+        # 25ms gives comfortable headroom; local p50 is ~7ms.
+        run: python sdk/python/tests/benchmarks/bench_sdk_overhead.py --assert-median-ms 25
       - name: Compression latency benchmark
         run: python sdk/python/tests/benchmarks/bench_compression_latency.py --assert-median-ms 50
 

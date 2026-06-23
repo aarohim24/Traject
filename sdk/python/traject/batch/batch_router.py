@@ -7,6 +7,7 @@ filtered out before submission.  All public methods are non-raising: errors
 are logged via structlog and expressed as a :class:`BatchJobRecord` with
 ``status=FAILED``.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -279,9 +280,7 @@ class BatchRouter:
 
         estimated: datetime | None = None
         if hasattr(batch_obj, "expires_at") and batch_obj.expires_at is not None:
-            estimated = datetime.fromtimestamp(
-                float(batch_obj.expires_at), tz=UTC
-            )
+            estimated = datetime.fromtimestamp(float(batch_obj.expires_at), tz=UTC)
 
         return BatchJobRecord(
             job_id=batch_obj.id,

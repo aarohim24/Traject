@@ -1,4 +1,5 @@
 """Unit tests for segment parser and framework adapters."""
+
 from __future__ import annotations
 
 import pytest
@@ -10,7 +11,6 @@ from traject.exceptions import TrajectCompressionError
 
 
 class TestRawOpenAIAdapter:
-
     def test_accepts_valid_list_of_dicts(self) -> None:
         msgs = [{"role": "user", "content": "hi"}]
         assert RawOpenAIAdapter.accepts(msgs) is True
@@ -41,14 +41,17 @@ class TestRawOpenAIAdapter:
 
 
 class TestSegmentParser:
-
     def test_basic_three_message_conversation(self) -> None:
         messages = [
             {"role": "system", "content": "You are helpful."},
             {"role": "user", "content": "Hello!"},
             {"role": "assistant", "content": "Hi there!"},
         ]
-        art_types = [ArtifactType.SYSTEM_PROMPT, ArtifactType.USER_MESSAGE, ArtifactType.ASSISTANT_MESSAGE]
+        art_types = [
+            ArtifactType.SYSTEM_PROMPT,
+            ArtifactType.USER_MESSAGE,
+            ArtifactType.ASSISTANT_MESSAGE,
+        ]
         segments = parse(messages, art_types)
         assert len(segments) == 3
         assert segments[0].role == "system"
@@ -63,8 +66,10 @@ class TestSegmentParser:
             {"role": "assistant", "content": "A2"},
         ]
         art_types = [
-            ArtifactType.USER_MESSAGE, ArtifactType.ASSISTANT_MESSAGE,
-            ArtifactType.USER_MESSAGE, ArtifactType.ASSISTANT_MESSAGE,
+            ArtifactType.USER_MESSAGE,
+            ArtifactType.ASSISTANT_MESSAGE,
+            ArtifactType.USER_MESSAGE,
+            ArtifactType.ASSISTANT_MESSAGE,
         ]
         segments = parse(messages, art_types)
         assert segments[0].turn_index == 0
@@ -94,7 +99,9 @@ class TestSegmentParser:
         assert parse([], []) == []
 
     def test_list_content_counted(self) -> None:
-        messages = [{"role": "user", "content": [{"type": "text", "text": "hello world"}]}]
+        messages = [
+            {"role": "user", "content": [{"type": "text", "text": "hello world"}]}
+        ]
         art_types = [ArtifactType.USER_MESSAGE]
         segments = parse(messages, art_types)
         assert segments[0].token_count > 0

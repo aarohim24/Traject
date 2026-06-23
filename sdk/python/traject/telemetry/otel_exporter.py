@@ -22,7 +22,6 @@ full OTEL JSON output.
 from __future__ import annotations
 
 import os
-import sys
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -175,7 +174,7 @@ def emit_span(span_data: InferenceSpan, export_to_stdout: bool = True) -> None:
     configure_exporter()
 
     if export_to_stdout and _export_format == "summary":
-        print(_format_summary(span_data), flush=True)  # noqa: T201 — intentional user-facing output
+        print(_format_summary(span_data), flush=True)
 
     # Use the module-level provider directly to allow test injection
     # without triggering the OTEL global-override guard.

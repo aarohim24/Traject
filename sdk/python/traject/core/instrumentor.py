@@ -5,6 +5,7 @@ Anthropic LLM calls with zero behavioral change to the caller. Orchestrates
 the full Traject pipeline: compression (shadow mode), token extraction, cost
 calculation, artifact classification, and OTEL span emission.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -238,9 +239,7 @@ def _run_pipeline(
         # Fire-and-forget to backend if configured
         if _backend_client is not None:
             with contextlib.suppress(RuntimeError):
-                asyncio.create_task(
-                    _backend_client.send_span(span)
-                )
+                asyncio.create_task(_backend_client.send_span(span))
     except TrajectError as exc:
         _logger.warning("traject.span_emission.failed", error=str(exc))
     except Exception as exc:
@@ -287,6 +286,7 @@ def instrument(
 
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         if asyncio.iscoroutinefunction(fn):
+
             @functools.wraps(fn)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 start_time = time.perf_counter()
@@ -335,6 +335,7 @@ def instrument(
 
             return async_wrapper
         else:
+
             @functools.wraps(fn)
             def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 start_time = time.perf_counter()

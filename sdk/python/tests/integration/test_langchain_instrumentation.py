@@ -2,6 +2,7 @@
 
 Tests adapter behavior with and without langchain-core installed.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -10,7 +11,6 @@ from traject.exceptions import TrajectDependencyError
 
 
 class TestLangChainAdapterImport:
-
     def test_raises_dependency_error_when_langchain_missing(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -34,7 +34,6 @@ class TestLangChainAdapterImport:
 
 
 class TestLangChainAdapterIntegration:
-
     @pytest.fixture(autouse=True)
     def require_langchain(self) -> None:
         pytest.importorskip("langchain_core")
@@ -44,18 +43,25 @@ class TestLangChainAdapterIntegration:
 
         from traject.compression.adapters.langchain import LangChainAdapter
 
-        assert LangChainAdapter.accepts([SystemMessage(content="hi"), HumanMessage(content="hello")]) is True
+        assert (
+            LangChainAdapter.accepts(
+                [SystemMessage(content="hi"), HumanMessage(content="hello")]
+            )
+            is True
+        )
 
     def test_normalize_produces_canonical_dicts(self) -> None:
         from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
         from traject.compression.adapters.langchain import LangChainAdapter
 
-        normalized = LangChainAdapter().normalize([
-            SystemMessage(content="sys"),
-            HumanMessage(content="user"),
-            AIMessage(content="asst"),
-        ])
+        normalized = LangChainAdapter().normalize(
+            [
+                SystemMessage(content="sys"),
+                HumanMessage(content="user"),
+                AIMessage(content="asst"),
+            ]
+        )
         assert normalized[0] == {"role": "system", "content": "sys"}
         assert normalized[1] == {"role": "user", "content": "user"}
         assert normalized[2] == {"role": "assistant", "content": "asst"}
@@ -68,6 +74,10 @@ class TestLangChainAdapterIntegration:
         from traject.compression.strategies import CompressionStrategy, get_config
 
         messages = [SystemMessage(content="System."), HumanMessage(content="Question.")]
-        result = compress(messages, get_config(CompressionStrategy.CONSERVATIVE), adapter=LangChainAdapter())
+        result = compress(
+            messages,
+            get_config(CompressionStrategy.CONSERVATIVE),
+            adapter=LangChainAdapter(),
+        )
         assert result.shadow_mode is True
         assert result.segments_analyzed >= 1

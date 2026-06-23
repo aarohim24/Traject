@@ -109,8 +109,8 @@ class TestTelemetryReporterEnabled:
         mock_client_instance.post.assert_called_once()
         call_args = mock_client_instance.post.call_args
         actual_url: str = call_args[0][0] if call_args[0] else call_args.kwargs["url"]
-        actual_body: dict[str, Any] = (
-            call_args.kwargs.get("json") or call_args[1].get("json", {})
+        actual_body: dict[str, Any] = call_args.kwargs.get("json") or call_args[1].get(
+            "json", {}
         )
 
         assert actual_url == expected_url, (
@@ -177,7 +177,9 @@ class TestTelemetryReporterNetworkErrors:
 class TestTelemetryReporterEnvVar:
     """Tests for environment-variable override behaviour."""
 
-    def test_env_var_false_keeps_disabled(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_env_var_false_keeps_disabled(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """TRAJECT_TELEMETRY_ENABLED=false overrides constructor enabled=True.
 
         When the env var is set to ``"false"`` (case-insensitive), the
@@ -193,7 +195,9 @@ class TestTelemetryReporterEnvVar:
             f"got _enabled={reporter._enabled}"
         )
 
-    def test_env_var_true_enables_reporter(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_env_var_true_enables_reporter(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """TRAJECT_TELEMETRY_ENABLED=true enables reporter even when enabled=False.
 
         **Validates: Requirements 24.2**

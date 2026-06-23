@@ -2,6 +2,7 @@
 
 Validates: Requirements R12.1–R12.4, R13.1–R13.5
 """
+
 from __future__ import annotations
 
 import json
@@ -53,7 +54,6 @@ def _span_json(**overrides: Any) -> str:
 
 
 class TestVersionCommand:
-
     def test_prints_version(self) -> None:
         result = runner.invoke(app, ["version"])
         assert result.exit_code == 0
@@ -61,8 +61,9 @@ class TestVersionCommand:
 
 
 class TestDoctorCommand:
-
-    def test_exits_with_nonzero_when_deps_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_exits_with_nonzero_when_deps_missing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         import importlib
 
         orig_import_module = importlib.import_module
@@ -84,7 +85,6 @@ class TestDoctorCommand:
 
 
 class TestAnalyzeCommand:
-
     def test_nonexistent_file_exits_1(self) -> None:
         result = runner.invoke(app, ["analyze", "--input", "/nonexistent/file.jsonl"])
         assert result.exit_code == 1
@@ -116,7 +116,9 @@ class TestAnalyzeCommand:
             f.write(_span_json() + "\n")
             tmp_path = f.name
 
-        result = runner.invoke(app, ["analyze", "--input", tmp_path, "--format", "json"])
+        result = runner.invoke(
+            app, ["analyze", "--input", tmp_path, "--format", "json"]
+        )
         assert result.exit_code == 0
         # Output should be valid JSON
         try:
@@ -129,13 +131,21 @@ class TestAnalyzeCommand:
     def test_aggregates_by_model_and_feature_tag(self) -> None:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             # Two spans with same model+feature_tag
-            f.write(_span_json(model="gpt-4o", feature_tag="bot", input_tokens=100) + "\n")
-            f.write(_span_json(model="gpt-4o", feature_tag="bot", input_tokens=200) + "\n")
+            f.write(
+                _span_json(model="gpt-4o", feature_tag="bot", input_tokens=100) + "\n"
+            )
+            f.write(
+                _span_json(model="gpt-4o", feature_tag="bot", input_tokens=200) + "\n"
+            )
             # One span with different feature_tag
-            f.write(_span_json(model="gpt-4o", feature_tag="other", input_tokens=50) + "\n")
+            f.write(
+                _span_json(model="gpt-4o", feature_tag="other", input_tokens=50) + "\n"
+            )
             tmp_path = f.name
 
-        result = runner.invoke(app, ["analyze", "--input", tmp_path, "--format", "json"])
+        result = runner.invoke(
+            app, ["analyze", "--input", tmp_path, "--format", "json"]
+        )
         data = json.loads(result.output.strip())
         # Should have 2 rows: (gpt-4o, bot) and (gpt-4o, other)
         assert len(data) == 2

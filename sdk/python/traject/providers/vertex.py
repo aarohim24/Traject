@@ -111,9 +111,7 @@ class VertexAdapter:
 
         model_obj: Any = self._GenerativeModel(model)  # Any: no stubs
 
-        contents: str = "\n".join(
-            str(msg.get("content", "")) for msg in messages
-        )
+        contents: str = "\n".join(str(msg.get("content", "")) for msg in messages)
 
         response: Any = model_obj.generate_content(contents)  # Any: no stubs
 

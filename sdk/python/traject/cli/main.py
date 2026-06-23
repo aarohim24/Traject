@@ -4,6 +4,7 @@ Provides commands: analyze (read JSONL span logs and display cost summary),
 version (print the SDK version), doctor (check dependencies), mcp (start
 MCP server), and proxy (start compression proxy).
 """
+
 from __future__ import annotations
 
 import importlib

@@ -9,6 +9,7 @@ Usage:
 
 Exits with code 1 if the median overhead exceeds the assertion threshold.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -94,9 +95,7 @@ def main() -> None:
             decorated(messages=messages)
             instrumented_times.append((time.perf_counter() - t0) * 1000)
 
-    overhead = [
-        i - b for i, b in zip(instrumented_times, baseline_times, strict=False)
-    ]
+    overhead = [i - b for i, b in zip(instrumented_times, baseline_times, strict=False)]
     overhead.sort()
 
     p50 = statistics.median(overhead)

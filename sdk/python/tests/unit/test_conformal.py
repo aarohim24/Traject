@@ -4,6 +4,7 @@ Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9
 
 **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9**
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -348,7 +349,9 @@ def test_conformal_router_escalates_tier_and_prefixes_rule_when_not_covered() ->
 
     messages: list[dict[str, Any]] = [{"role": "user", "content": "hello"}]
 
-    with patch.object(calibrated_predictor, "predict_set", return_value=not_covered_result):
+    with patch.object(
+        calibrated_predictor, "predict_set", return_value=not_covered_result
+    ):
         result = router.route(messages, "gpt-4o")
 
     # Tier should have escalated TIER_1 → TIER_2

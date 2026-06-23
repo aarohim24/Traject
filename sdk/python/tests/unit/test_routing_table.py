@@ -4,6 +4,7 @@ Validates: Requirements 2.1, 2.2 (routing table completeness and model map).
 
 **Validates: Requirements 2.1, 2.2**
 """
+
 from __future__ import annotations
 
 import pytest
@@ -190,6 +191,7 @@ def test_routing_decision_is_frozen() -> None:
         ab_test_group=None,
     )
     import dataclasses
+
     with pytest.raises(dataclasses.FrozenInstanceError):
         decision.selected_model = "gpt-4o"  # type: ignore[misc]
 

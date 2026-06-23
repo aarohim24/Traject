@@ -64,7 +64,9 @@ def _make_span(*, batch_eligible: bool = True) -> InferenceSpan:
     )
 
 
-def _make_openai_client(*, file_id: str = "file-123", batch_id: str = "batch-456") -> Any:
+def _make_openai_client(
+    *, file_id: str = "file-123", batch_id: str = "batch-456"
+) -> Any:
     """Build a minimal mock openai client that succeeds.
 
     Args:
@@ -189,7 +191,11 @@ def _span_strategy() -> st.SearchStrategy[InferenceSpan]:
     return st.builds(
         InferenceSpan,
         id=st.builds(uuid4),
-        trace_id=st.text(alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd")), min_size=1, max_size=32),
+        trace_id=st.text(
+            alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd")),
+            min_size=1,
+            max_size=32,
+        ),
         parent_span_id=st.none(),
         span_name=st.just("gen_ai.openai.gpt-4o"),
         timestamp=st.just(datetime.now(tz=UTC)),
@@ -251,7 +257,9 @@ async def test_submit_batch_returns_failed_when_anthropic_client_none() -> None:
 
 @given(spans=st.lists(_span_strategy(), min_size=1, max_size=20))
 @settings(max_examples=30, deadline=None)
-def test_submit_batch_never_raises_for_eligible_spans(spans: list[InferenceSpan]) -> None:
+def test_submit_batch_never_raises_for_eligible_spans(
+    spans: list[InferenceSpan],
+) -> None:
     """submit_batch() always returns a BatchJobRecord — never raises.
 
     **Validates: Requirements 20.2**

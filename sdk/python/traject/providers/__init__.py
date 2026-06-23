@@ -5,6 +5,7 @@ Contains the :class:`ProviderResponse` dataclass that all provider adapters
 that adapters are importable from ``traject.providers`` without requiring their
 optional cloud-SDK dependencies to be installed.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -2,6 +2,7 @@
 
 Validates: Requirements R6.4, R6.5, R17.2
 """
+
 from __future__ import annotations
 
 import pytest
@@ -84,11 +85,13 @@ class TestLangChainAdapterIntegration:
 
         from traject.compression.adapters.langchain import LangChainAdapter
 
-        normalized = LangChainAdapter().normalize([
-            SystemMessage(content="sys"),
-            HumanMessage(content="user"),
-            AIMessage(content="asst"),
-        ])
+        normalized = LangChainAdapter().normalize(
+            [
+                SystemMessage(content="sys"),
+                HumanMessage(content="user"),
+                AIMessage(content="asst"),
+            ]
+        )
         assert normalized[0] == {"role": "system", "content": "sys"}
         assert normalized[1] == {"role": "user", "content": "user"}
         assert normalized[2] == {"role": "assistant", "content": "asst"}

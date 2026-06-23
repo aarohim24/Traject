@@ -1,4 +1,5 @@
 """Unit tests for traject.compression.strategies."""
+
 from __future__ import annotations
 
 import pytest
@@ -30,19 +31,31 @@ class TestStrategyDefaults:
             assert s in STRATEGY_DEFAULTS
 
     def test_conservative_target(self) -> None:
-        assert STRATEGY_DEFAULTS[CompressionStrategy.CONSERVATIVE].target_reduction_pct == 0.20
+        assert (
+            STRATEGY_DEFAULTS[CompressionStrategy.CONSERVATIVE].target_reduction_pct
+            == 0.20
+        )
 
     def test_moderate_target(self) -> None:
-        assert STRATEGY_DEFAULTS[CompressionStrategy.MODERATE].target_reduction_pct == 0.35
+        assert (
+            STRATEGY_DEFAULTS[CompressionStrategy.MODERATE].target_reduction_pct == 0.35
+        )
 
     def test_aggressive_target(self) -> None:
-        assert STRATEGY_DEFAULTS[CompressionStrategy.AGGRESSIVE].target_reduction_pct == 0.55
+        assert (
+            STRATEGY_DEFAULTS[CompressionStrategy.AGGRESSIVE].target_reduction_pct
+            == 0.55
+        )
 
     def test_conservative_min_turns(self) -> None:
-        assert STRATEGY_DEFAULTS[CompressionStrategy.CONSERVATIVE].min_turns_protected == 3
+        assert (
+            STRATEGY_DEFAULTS[CompressionStrategy.CONSERVATIVE].min_turns_protected == 3
+        )
 
     def test_aggressive_min_turns(self) -> None:
-        assert STRATEGY_DEFAULTS[CompressionStrategy.AGGRESSIVE].min_turns_protected == 2
+        assert (
+            STRATEGY_DEFAULTS[CompressionStrategy.AGGRESSIVE].min_turns_protected == 2
+        )
 
     def test_all_default_shadow_mode_true(self) -> None:
         for config in STRATEGY_DEFAULTS.values():

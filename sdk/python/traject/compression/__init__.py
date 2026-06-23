@@ -12,8 +12,10 @@ def __getattr__(name: str) -> object:
     """Lazy-load compression symbols to avoid circular imports."""
     if name == "compress":
         from traject.compression.engine import compress
+
         return compress
     if name == "CompressionStrategy":
         from traject.compression.strategies import CompressionStrategy
+
         return CompressionStrategy
     raise AttributeError(f"module 'traject.compression' has no attribute {name!r}")

@@ -15,11 +15,11 @@ P-REF-5  Soft-protected segments resist compression: a TOOL_RESULT with score
          SUMMARIZED only when score < 0.30 (CONSERVATIVE).
 P-REF-6  The compress() result exposes segments_soft_protected count.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
-import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
@@ -28,7 +28,6 @@ from traject.compression.engine import _apply_strategy, compress
 from traject.compression.relevance_scorer import compute_semantic_reference_scores
 from traject.compression.strategies import CompressionConfig, CompressionStrategy
 from traject.models import Segment
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -137,8 +136,12 @@ class TestComputeSemanticReferenceScores:
         # seg0 is very similar to seg5, but seg5 is outside window=2
         similar_content = "The authentication token has expired and must be refreshed"
         seg0 = _seg(0, similar_content, 0)
-        fillers = [_seg(i + 1, f"unrelated filler content chunk {i}", i + 1) for i in range(4)]
-        seg5 = _seg(5, "Token expiry requires refreshing the authentication credential", 5)
+        fillers = [
+            _seg(i + 1, f"unrelated filler content chunk {i}", i + 1) for i in range(4)
+        ]
+        seg5 = _seg(
+            5, "Token expiry requires refreshing the authentication credential", 5
+        )
 
         all_segs = [seg0] + fillers + [seg5]
         scores_narrow = compute_semantic_reference_scores(all_segs, window=2)
@@ -167,41 +170,57 @@ class TestApplyStrategyWithSoftProtect:
         With soft_protected, the threshold drops to < 0.15, so 0.20 → RETAIN.
         """
         seg = _seg(
-            0, "Tool output", 0,
+            0,
+            "Tool output",
+            0,
             art=ArtifactType.TOOL_RESULT,
             soft_protected=True,
         )
-        decision = _apply_strategy(seg, score=0.20, strategy=CompressionStrategy.CONSERVATIVE, max_turn=5)
+        decision = _apply_strategy(
+            seg, score=0.20, strategy=CompressionStrategy.CONSERVATIVE, max_turn=5
+        )
         assert decision == "RETAIN"
 
     def test_soft_protected_tool_result_summarized_at_score_0_10(self) -> None:
         """P-REF-5: soft_protected TOOL_RESULT with score 0.10 is SUMMARIZED."""
         seg = _seg(
-            0, "Tool output", 0,
+            0,
+            "Tool output",
+            0,
             art=ArtifactType.TOOL_RESULT,
             soft_protected=True,
         )
-        decision = _apply_strategy(seg, score=0.10, strategy=CompressionStrategy.CONSERVATIVE, max_turn=5)
+        decision = _apply_strategy(
+            seg, score=0.10, strategy=CompressionStrategy.CONSERVATIVE, max_turn=5
+        )
         assert decision == "SUMMARIZE"
 
     def test_normal_tool_result_summarized_at_score_0_20(self) -> None:
         """Without soft_protected, CONSERVATIVE SUMMARIZES TOOL_RESULT at score 0.20."""
         seg = _seg(
-            0, "Tool output", 0,
+            0,
+            "Tool output",
+            0,
             art=ArtifactType.TOOL_RESULT,
             soft_protected=False,
         )
-        decision = _apply_strategy(seg, score=0.20, strategy=CompressionStrategy.CONSERVATIVE, max_turn=5)
+        decision = _apply_strategy(
+            seg, score=0.20, strategy=CompressionStrategy.CONSERVATIVE, max_turn=5
+        )
         assert decision == "SUMMARIZE"
 
     def test_soft_protected_reasoning_block_retained_at_score_0_20(self) -> None:
         """Soft_protected REASONING_BLOCK with score 0.20 is RETAINED (threshold < 0.15)."""
         seg = _seg(
-            0, "Reasoning content", 0,
+            0,
+            "Reasoning content",
+            0,
             art=ArtifactType.REASONING_BLOCK,
             soft_protected=True,
         )
-        decision = _apply_strategy(seg, score=0.20, strategy=CompressionStrategy.AGGRESSIVE, max_turn=5)
+        decision = _apply_strategy(
+            seg, score=0.20, strategy=CompressionStrategy.AGGRESSIVE, max_turn=5
+        )
         assert decision == "RETAIN"
 
     def test_soft_protected_takes_precedence_over_all_strategies(self) -> None:
@@ -252,11 +271,26 @@ class TestCompressSoftProtectIntegration:
         msgs: list[dict[str, Any]] = [
             {"role": "system", "content": "You are an API integration assistant."},
             {"role": "tool", "content": tool_content},
-            {"role": "user", "content": "Why did authentication fail? The 401 error is blocking us."},
-            {"role": "assistant", "content": "The API key expired, causing the 401 auth failure."},
-            {"role": "user", "content": "How do we fix the expired token authentication issue?"},
-            {"role": "assistant", "content": "Refresh the expired credential to resolve the auth error."},
-            {"role": "user", "content": "Has the authentication token been refreshed yet?"},
+            {
+                "role": "user",
+                "content": "Why did authentication fail? The 401 error is blocking us.",
+            },
+            {
+                "role": "assistant",
+                "content": "The API key expired, causing the 401 auth failure.",
+            },
+            {
+                "role": "user",
+                "content": "How do we fix the expired token authentication issue?",
+            },
+            {
+                "role": "assistant",
+                "content": "Refresh the expired credential to resolve the auth error.",
+            },
+            {
+                "role": "user",
+                "content": "Has the authentication token been refreshed yet?",
+            },
         ]
         cfg = _live_config(
             strategy=CompressionStrategy.CONSERVATIVE,

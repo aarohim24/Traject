@@ -132,8 +132,7 @@ class InferenceSpan(BaseModel):
         """Assert prompt_hash is a 64-character lowercase hex SHA-256 digest."""
         if not _PROMPT_HASH_RE.match(v):
             raise ValueError(
-                f"prompt_hash must match ^[a-f0-9]{{64}}$, got {v!r} "
-                f"(length {len(v)})"
+                f"prompt_hash must match ^[a-f0-9]{{64}}$, got {v!r} (length {len(v)})"
             )
         return v
 
@@ -288,9 +287,7 @@ class CompressionResult(BaseModel):
     def _validate_compression_ratio(cls, v: float) -> float:
         """Assert compression_ratio is in [0.0, 1.0]."""
         if not (0.0 <= v <= 1.0):
-            raise ValueError(
-                f"compression_ratio must be in [0.0, 1.0], got {v}"
-            )
+            raise ValueError(f"compression_ratio must be in [0.0, 1.0], got {v}")
         return v
 
     @model_validator(mode="after")
@@ -309,9 +306,7 @@ class CompressionResult(BaseModel):
     def _validate_segment_counts(self) -> CompressionResult:
         """Assert segment counts sum to segments_analyzed."""
         total = (
-            self.segments_retained
-            + self.segments_summarized
-            + self.segments_dropped
+            self.segments_retained + self.segments_summarized + self.segments_dropped
         )
         if total != self.segments_analyzed:
             raise ValueError(

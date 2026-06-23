@@ -3,6 +3,7 @@
 Tests the full pipeline: @instrument() -> response -> span emission.
 No real API calls — provider response is mocked via SimpleNamespace.
 """
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -116,9 +117,7 @@ class TestOpenAIInstrumentation:
         spans: list[Any] = []
         resp = _mock_response()
         mock_client = SimpleNamespace(
-            chat=SimpleNamespace(
-                completions=SimpleNamespace(create=lambda **kw: resp)
-            )
+            chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **kw: resp))
         )
         traject.patch(mock_client, feature_tag="patch-test", shadow_mode=True)
 

@@ -8,6 +8,7 @@ Tests cover:
   candidates_token_count)
 - content and provider label returned correctly
 """
+
 from __future__ import annotations
 
 import importlib

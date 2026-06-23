@@ -4,6 +4,7 @@ Handles the canonical format used by the OpenAI Python SDK: a list of dicts
 with 'role' and 'content' keys. This is the always-available default adapter
 requiring no optional dependencies.
 """
+
 from __future__ import annotations
 
 from typing import Any

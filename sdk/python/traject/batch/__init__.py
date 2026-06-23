@@ -13,6 +13,7 @@ Typical usage::
     router = BatchRouter(openai_client=my_openai_client)
     record = await router.submit_batch(spans, provider="openai")
 """
+
 from __future__ import annotations
 
 from traject.batch.batch_router import BatchJobRecord, BatchJobStatus, BatchRouter

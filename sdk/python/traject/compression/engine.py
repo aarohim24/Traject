@@ -48,15 +48,15 @@ logger = structlog.get_logger(__name__)
 
 _HIGH_INFO_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r'File "[^"]+\.py", line \d+'),
-    re.compile(r'\.py:\d+'),
-    re.compile(r'(?:Error|Exception|Traceback)[:\s]'),
-    re.compile(r'exit code[:\s]+\d+', re.I),
-    re.compile(r'FAILED|PASSED|ERROR', re.M),
-    re.compile(r'assert\w*.*(?:Error|Fail)', re.I),
-    re.compile(r'\b(?:raise|raised)\s+\w+Error'),
-    re.compile(r'https?://\S+'),
-    re.compile(r'\b[0-9a-f]{7,40}\b'),
-    re.compile(r'(?:commit|sha|hash)[\s:]+[0-9a-f]{7}', re.I),
+    re.compile(r"\.py:\d+"),
+    re.compile(r"(?:Error|Exception|Traceback)[:\s]"),
+    re.compile(r"exit code[:\s]+\d+", re.I),
+    re.compile(r"FAILED|PASSED|ERROR", re.M),
+    re.compile(r"assert\w*.*(?:Error|Fail)", re.I),
+    re.compile(r"\b(?:raise|raised)\s+\w+Error"),
+    re.compile(r"https?://\S+"),
+    re.compile(r"\b[0-9a-f]{7,40}\b"),
+    re.compile(r"(?:commit|sha|hash)[\s:]+[0-9a-f]{7}", re.I),
 ]
 
 _CODE_EXTENSIONS: frozenset[str] = frozenset(
@@ -80,6 +80,7 @@ def _has_high_information_content(content: str) -> bool:
         if pattern.search(content):
             return True
     return False
+
 
 # ---------------------------------------------------------------------------
 # Structured tool result summarization helpers
@@ -187,7 +188,9 @@ def _summarize_tool_result(content: str) -> str:
             summary_body = "\n".join(indented[:3]) if indented else content[:100]
 
     else:
-        sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", content.strip()) if s.strip()]
+        sentences = [
+            s.strip() for s in re.split(r"(?<=[.!?])\s+", content.strip()) if s.strip()
+        ]
         if len(sentences) <= 1:
             summary_body = sentences[0] if sentences else content[:100]
         else:
@@ -245,16 +248,22 @@ def _select_compression_candidates(
         art = seg.artifact_type
         turns_ago = max_turn - seg.turn_index
         eligible = False
-        if art == ArtifactType.TOOL_RESULT and turns_ago > 3:
-            eligible = True
-        elif art == ArtifactType.REASONING_BLOCK:
-            eligible = True
-        elif art == ArtifactType.RAG_CHUNK and strategy in (
-            CompressionStrategy.MODERATE,
-            CompressionStrategy.AGGRESSIVE,
+        if (
+            (art == ArtifactType.TOOL_RESULT and turns_ago > 3)
+            or art == ArtifactType.REASONING_BLOCK
+            or (
+                art == ArtifactType.RAG_CHUNK
+                and strategy
+                in (
+                    CompressionStrategy.MODERATE,
+                    CompressionStrategy.AGGRESSIVE,
+                )
+            )
+            or (
+                art == ArtifactType.FEW_SHOT_EXAMPLE
+                and strategy == CompressionStrategy.AGGRESSIVE
+            )
         ):
-            eligible = True
-        elif art == ArtifactType.FEW_SHOT_EXAMPLE and strategy == CompressionStrategy.AGGRESSIVE:
             eligible = True
         if eligible:
             candidates.append((score, seg.index, seg))
@@ -308,9 +317,9 @@ def _compute_substring_protection(
         Set of ``segment.index`` values that should be hard-protected.
     """
     candidate_tokens: set[str] = {
-        word for word in current_task.split()
-        if len(word) >= min_token_len
-        and any(c in word for c in "0123456789_./\\")
+        word
+        for word in current_task.split()
+        if len(word) >= min_token_len and any(c in word for c in "0123456789_./\\")
     }
     if not candidate_tokens:
         return set()
@@ -589,7 +598,11 @@ def compress(
             dropped.append(seg)
 
     compressed_tokens: int = sum(
-        len(enc.encode(m.get("content", "") if isinstance(m.get("content"), str) else ""))
+        len(
+            enc.encode(
+                m.get("content", "") if isinstance(m.get("content"), str) else ""
+            )
+        )
         for m in compressed_messages
     )
     # Clamp: summarization may produce output longer than input for short content.
@@ -601,7 +614,9 @@ def compress(
 
     # Step 7: VALIDATE
     try:
-        _validate_compression_result(normalized, compressed_messages, artifact_types, config)
+        _validate_compression_result(
+            normalized, compressed_messages, artifact_types, config
+        )
     except TrajectCompressionError as exc:
         logger.warning("traject.compression.validation_failed", error=str(exc))
         return CompressionResult(
@@ -616,7 +631,9 @@ def compress(
             shadow_mode=config.shadow_mode,
             strategy_applied=config.strategy.value,
             messages=list(messages),
-            warnings=[f"Compression validation failed: {exc}. Original messages returned."],
+            warnings=[
+                f"Compression validation failed: {exc}. Original messages returned."
+            ],
             cache_hits=cache.hits,
             cache_hit_rate=cache.hit_rate,
             segments_soft_protected=segments_soft_protected_count,
@@ -632,7 +649,11 @@ def compress(
         final_messages = adapter.denormalize(compressed_messages, messages)
         final_tokens = compressed_tokens
         final_saved = tokens_saved_raw
-        ratio = max(0.0, 1.0 - (final_tokens / original_tokens)) if original_tokens > 0 else 0.0
+        ratio = (
+            max(0.0, 1.0 - (final_tokens / original_tokens))
+            if original_tokens > 0
+            else 0.0
+        )
 
     logger.info(
         "traject.compression.complete",

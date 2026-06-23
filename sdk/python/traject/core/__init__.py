@@ -15,5 +15,6 @@ def __getattr__(name: str) -> object:
             instrument,
             patch,
         )
+
         return {"configure": configure, "instrument": instrument, "patch": patch}[name]
     raise AttributeError(f"module 'traject.core' has no attribute {name!r}")

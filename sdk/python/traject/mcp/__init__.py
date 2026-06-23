@@ -8,6 +8,7 @@ Three tools are registered:
 Start with: traject mcp --host localhost --port 3000
 Or from Python: uvicorn traject.mcp.server:app
 """
+
 from __future__ import annotations
 
 from traject.mcp.server import create_mcp_server

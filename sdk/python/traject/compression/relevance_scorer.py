@@ -19,6 +19,12 @@ from __future__ import annotations
 
 import hashlib
 import math
+
+# ---------------------------------------------------------------------------
+# Module-level model singleton — loaded ONCE at import time (ADR-003).
+# Never reload; never instantiate inside a function.
+# ---------------------------------------------------------------------------
+import sys as _sys
 from dataclasses import dataclass
 from typing import Any  # noqa: F401  # retained for re-export consistency
 
@@ -28,12 +34,6 @@ from sentence_transformers import SentenceTransformer
 from traject.classifier.artifact_type import ArtifactType
 from traject.exceptions import TrajectConfigError
 from traject.models import Segment
-
-# ---------------------------------------------------------------------------
-# Module-level model singleton — loaded ONCE at import time (ADR-003).
-# Never reload; never instantiate inside a function.
-# ---------------------------------------------------------------------------
-import sys as _sys
 
 _model_load_announced: bool = False
 
@@ -110,15 +110,11 @@ class TaskAwareWeights:
     CODE_GENERATION: ScoreWeights = ScoreWeights(
         recency=0.25, semantic=0.35, reference=0.40
     )
-    REASONING: ScoreWeights = ScoreWeights(
-        recency=0.50, semantic=0.35, reference=0.15
-    )
+    REASONING: ScoreWeights = ScoreWeights(recency=0.50, semantic=0.35, reference=0.15)
     SUMMARIZATION: ScoreWeights = ScoreWeights(
         recency=0.35, semantic=0.50, reference=0.15
     )
-    DEFAULT: ScoreWeights = ScoreWeights(
-        recency=0.40, semantic=0.40, reference=0.20
-    )
+    DEFAULT: ScoreWeights = ScoreWeights(recency=0.40, semantic=0.40, reference=0.20)
 
 
 # ---------------------------------------------------------------------------
@@ -167,6 +163,7 @@ def _detect_task_weights(segments: list[Segment]) -> ScoreWeights:
     if any(kw in system_content for kw in _SUMMARIZATION_KEYWORDS):
         return TaskAwareWeights.SUMMARIZATION
     return TaskAwareWeights.DEFAULT
+
 
 # Number of buckets used to discretise task-hint similarity when computing
 # cache keys. A higher value gives finer-grained cache separation at the cost
@@ -457,16 +454,16 @@ def score_segments(
         return []
 
     # Resolve scoring weights: use provided weights or auto-detect from system prompt.
-    active_weights: ScoreWeights = weights if weights is not None else _detect_task_weights(segments)
+    active_weights: ScoreWeights = (
+        weights if weights is not None else _detect_task_weights(segments)
+    )
 
     max_turn: int = max(s.turn_index for s in segments)
 
     # Encode the task hint once, if provided.
     task_embedding: list[float] | None = None
     if task_hint:
-        task_embedding = _model.encode(
-            task_hint, normalize_embeddings=True
-        ).tolist()
+        task_embedding = _model.encode(task_hint, normalize_embeddings=True).tolist()
 
     # Batch-encode content for all non-protected segments (only when a task
     # hint is present, since semantic scoring is only meaningful then).

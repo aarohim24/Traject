@@ -7,6 +7,7 @@ at http://localhost:8080 instead of https://api.openai.com.
 
 Start with: traject proxy --port 8080 --backend https://api.openai.com
 """
+
 from __future__ import annotations
 
 from traject.proxy.app import create_app, run

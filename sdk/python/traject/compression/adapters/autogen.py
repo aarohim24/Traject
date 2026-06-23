@@ -5,6 +5,7 @@ addition to 'role' and 'content') to the canonical list[dict] format, and
 converts results back. Requires the pyautogen optional dependency
 (pip install traject-sdk[autogen]).
 """
+
 from __future__ import annotations
 
 from typing import Any

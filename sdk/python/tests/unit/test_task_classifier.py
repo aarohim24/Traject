@@ -5,6 +5,7 @@ Validates: Requirements 1.1–1.14 (task classification and complexity estimatio
 **Validates: Requirements 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.10,
 1.11, 1.12, 1.13, 1.14**
 """
+
 from __future__ import annotations
 
 from typing import Any

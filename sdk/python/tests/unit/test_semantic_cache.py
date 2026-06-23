@@ -104,7 +104,10 @@ async def test_lookup_returns_none_on_cache_miss() -> None:
     mock_client = _make_backend_client(post_response=miss_response)
     cache = SemanticCacheClient(mock_client)
 
-    with patch("traject.cache.semantic_cache._get_embedding_model", return_value=_make_embedding_model()):
+    with patch(
+        "traject.cache.semantic_cache._get_embedding_model",
+        return_value=_make_embedding_model(),
+    ):
         result = await cache.lookup(_MESSAGES, _MODEL)
 
     # On a miss the method should return a CacheLookupResult with hit=False
@@ -128,7 +131,10 @@ async def test_store_does_not_raise() -> None:
     mock_client = _make_backend_client()
     cache = SemanticCacheClient(mock_client)
 
-    with patch("traject.cache.semantic_cache._get_embedding_model", return_value=_make_embedding_model()):
+    with patch(
+        "traject.cache.semantic_cache._get_embedding_model",
+        return_value=_make_embedding_model(),
+    ):
         # Must not raise
         result = await cache.store(
             messages=_MESSAGES,
@@ -157,12 +163,13 @@ async def test_lookup_returns_none_on_backend_error() -> None:
     )
     cache = SemanticCacheClient(mock_client)
 
-    with patch("traject.cache.semantic_cache._get_embedding_model", return_value=_make_embedding_model()):
+    with patch(
+        "traject.cache.semantic_cache._get_embedding_model",
+        return_value=_make_embedding_model(),
+    ):
         result = await cache.lookup(_MESSAGES, _MODEL)
 
-    assert result is None, (
-        f"Expected None on backend error (fail open), got {result!r}"
-    )
+    assert result is None, f"Expected None on backend error (fail open), got {result!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -181,7 +188,10 @@ async def test_store_does_not_raise_on_backend_error() -> None:
     )
     cache = SemanticCacheClient(mock_client)
 
-    with patch("traject.cache.semantic_cache._get_embedding_model", return_value=_make_embedding_model()):
+    with patch(
+        "traject.cache.semantic_cache._get_embedding_model",
+        return_value=_make_embedding_model(),
+    ):
         # Must not raise
         try:
             await cache.store(
@@ -192,9 +202,7 @@ async def test_store_does_not_raise_on_backend_error() -> None:
                 cost_usd=_COST,
             )
         except Exception as exc:
-            pytest.fail(
-                f"store raised {type(exc).__name__} on backend error: {exc}"
-            )
+            pytest.fail(f"store raised {type(exc).__name__} on backend error: {exc}")
 
 
 # ---------------------------------------------------------------------------
@@ -214,12 +222,13 @@ async def test_lookup_returns_none_on_non_success_http_status() -> None:
     mock_client = _make_backend_client(post_response=error_response)
     cache = SemanticCacheClient(mock_client)
 
-    with patch("traject.cache.semantic_cache._get_embedding_model", return_value=_make_embedding_model()):
+    with patch(
+        "traject.cache.semantic_cache._get_embedding_model",
+        return_value=_make_embedding_model(),
+    ):
         result = await cache.lookup(_MESSAGES, _MODEL)
 
-    assert result is None, (
-        f"Expected None on non-success HTTP status, got {result!r}"
-    )
+    assert result is None, f"Expected None on non-success HTTP status, got {result!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +250,10 @@ async def test_lookup_returns_result_with_hit_true_on_cache_hit() -> None:
     mock_client = _make_backend_client(post_response=hit_response)
     cache = SemanticCacheClient(mock_client)
 
-    with patch("traject.cache.semantic_cache._get_embedding_model", return_value=_make_embedding_model()):
+    with patch(
+        "traject.cache.semantic_cache._get_embedding_model",
+        return_value=_make_embedding_model(),
+    ):
         result = await cache.lookup(_MESSAGES, _MODEL)
 
     assert result is not None

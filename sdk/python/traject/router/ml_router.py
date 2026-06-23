@@ -54,19 +54,16 @@ _TASK_TYPE_COUNT: int = len(_TASK_TYPE_ORDER)
 FEATURE_VECTOR_SIZE: int = 18
 
 # Ordered feature names aligned with the 18-dim vector.
-FEATURE_NAMES: list[str] = (
-    [f"task_type_{tt.value}" for tt in _TASK_TYPE_ORDER]
-    + [
-        "complexity_score",
-        "input_token_count_norm",
-        "has_code_blocks",
-        "has_tool_calls",
-        "hour_of_day_sin",
-        "hour_of_day_cos",
-        "day_of_week_sin",
-        "day_of_week_cos",
-    ]
-)
+FEATURE_NAMES: list[str] = [f"task_type_{tt.value}" for tt in _TASK_TYPE_ORDER] + [
+    "complexity_score",
+    "input_token_count_norm",
+    "has_code_blocks",
+    "has_tool_calls",
+    "hour_of_day_sin",
+    "hour_of_day_cos",
+    "day_of_week_sin",
+    "day_of_week_cos",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -251,9 +248,7 @@ class MLRouter:
         provider: str,
         rule_router: RuleRouter | None = None,
         model_artifact_path: str | None = None,
-        routing_table: (
-            dict[TaskType, dict[ComplexityTier, ModelTier]] | None
-        ) = None,
+        routing_table: (dict[TaskType, dict[ComplexityTier, ModelTier]] | None) = None,
         model_map: dict[str, dict[ModelTier, str]] | None = None,
     ) -> None:
         """Initialise the MLRouter, importing sklearn lazily.

@@ -7,6 +7,7 @@ normalises the response into a :class:`~traject.providers.ProviderResponse`.
 boto3 is an optional dependency; an :class:`~traject.exceptions.TrajectDependencyError`
 is raised at construction time if it is not installed.
 """
+
 from __future__ import annotations
 
 import json
@@ -50,6 +51,7 @@ class BedrockAdapter:
         """
         try:
             import boto3
+
             self._client: Any = boto3.client(  # Any: boto3 client has no stubs
                 "bedrock-runtime", region_name=region_name
             )
@@ -83,9 +85,7 @@ class BedrockAdapter:
             ValueError: If the model prefix is not recognised.
         """
         if model.startswith(self._TITAN_PREFIX):
-            text = "\n".join(
-                str(m.get("content", "")) for m in messages
-            )
+            text = "\n".join(str(m.get("content", "")) for m in messages)
             body: dict[str, Any] = {"inputText": text}  # Any: Titan body
             body.update(kwargs)
             return body

@@ -90,16 +90,14 @@ def calculate_cost(
 
     non_cached_input = input_tokens - cached_tokens
     input_cost = (
-        (Decimal(non_cached_input) / million)
-        * pricing.input_cost_per_1m_tokens
-    )
+        Decimal(non_cached_input) / million
+    ) * pricing.input_cost_per_1m_tokens
 
     cache_cost = Decimal("0")
     if cached_tokens > 0 and pricing.cache_read_cost_per_1m_tokens is not None:
         cache_cost = (
-            (Decimal(cached_tokens) / million)
-            * pricing.cache_read_cost_per_1m_tokens
-        )
+            Decimal(cached_tokens) / million
+        ) * pricing.cache_read_cost_per_1m_tokens
 
     output_cost = (Decimal(output_tokens) / million) * pricing.output_cost_per_1m_tokens
 

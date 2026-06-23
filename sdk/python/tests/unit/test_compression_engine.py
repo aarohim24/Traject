@@ -3,6 +3,7 @@
 Validates correctness properties P4-P8 and protection invariants.
 Coverage target: >= 90% on engine.py.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -72,6 +73,7 @@ def _seg(
 
 # ── Shadow Mode Identity (P4) ──────────────────────────────────────────────
 
+
 class TestShadowModeIdentity:
     """P4: compress(..., shadow_mode=True).messages == original messages."""
 
@@ -84,8 +86,10 @@ class TestShadowModeIdentity:
     def test_multi_turn_conversation(self) -> None:
         msgs = _msgs(
             ("system", "You are helpful."),
-            ("user", "Q1"), ("assistant", "A1"),
-            ("user", "Q2"), ("assistant", "A2"),
+            ("user", "Q1"),
+            ("assistant", "A1"),
+            ("user", "Q2"),
+            ("assistant", "A2"),
         )
         result = compress(msgs, _shadow_config())
         assert result.messages == msgs
@@ -136,38 +140,61 @@ def test_p5_system_prompt_never_dropped(roles_contents: list[tuple[str, str]]) -
 
 # ── Segment Count Invariant (P6) ──────────────────────────────────────────
 
+
 class TestSegmentCountInvariant:
     """P6: retained + summarized + dropped == analyzed."""
 
     def test_conservative(self) -> None:
         msgs = _msgs(
-            ("system", "sys"), ("user", "Q1"), ("assistant", "A1"),
-            ("user", "Q2"), ("assistant", "A2"),
+            ("system", "sys"),
+            ("user", "Q1"),
+            ("assistant", "A1"),
+            ("user", "Q2"),
+            ("assistant", "A2"),
         )
         result = compress(msgs, _shadow_config(CompressionStrategy.CONSERVATIVE))
-        total = result.segments_retained + result.segments_summarized + result.segments_dropped
+        total = (
+            result.segments_retained
+            + result.segments_summarized
+            + result.segments_dropped
+        )
         assert total == result.segments_analyzed
 
     def test_moderate(self) -> None:
         msgs = _msgs(
-            ("system", "sys"), ("user", "Q1"), ("assistant", "A1"),
-            ("user", "Q2"), ("assistant", "A2"),
+            ("system", "sys"),
+            ("user", "Q1"),
+            ("assistant", "A1"),
+            ("user", "Q2"),
+            ("assistant", "A2"),
         )
         result = compress(msgs, _shadow_config(CompressionStrategy.MODERATE))
-        total = result.segments_retained + result.segments_summarized + result.segments_dropped
+        total = (
+            result.segments_retained
+            + result.segments_summarized
+            + result.segments_dropped
+        )
         assert total == result.segments_analyzed
 
     def test_aggressive(self) -> None:
         msgs = _msgs(
-            ("system", "sys"), ("user", "Q1"), ("assistant", "A1"),
-            ("user", "Q2"), ("assistant", "A2"),
+            ("system", "sys"),
+            ("user", "Q1"),
+            ("assistant", "A1"),
+            ("user", "Q2"),
+            ("assistant", "A2"),
         )
         result = compress(msgs, _shadow_config(CompressionStrategy.AGGRESSIVE))
-        total = result.segments_retained + result.segments_summarized + result.segments_dropped
+        total = (
+            result.segments_retained
+            + result.segments_summarized
+            + result.segments_dropped
+        )
         assert total == result.segments_analyzed
 
 
 # ── Compression Ratio Bounds (P7) ─────────────────────────────────────────
+
 
 class TestCompressionRatioBounds:
     """P7: 0.0 <= compression_ratio <= 1.0."""
@@ -181,6 +208,7 @@ class TestCompressionRatioBounds:
 
 # ── Token Savings Consistency (P8) ────────────────────────────────────────
 
+
 class TestTokenSavingsConsistency:
     """P8: tokens_saved == original_tokens - compressed_tokens."""
 
@@ -191,8 +219,11 @@ class TestTokenSavingsConsistency:
 
     def test_non_shadow_mode(self) -> None:
         msgs = _msgs(
-            ("system", "sys"), ("user", "Q1"), ("assistant", "A1"),
-            ("user", "Q2"), ("assistant", "A2"),
+            ("system", "sys"),
+            ("user", "Q1"),
+            ("assistant", "A1"),
+            ("user", "Q2"),
+            ("assistant", "A2"),
         )
         config = CompressionConfig(
             strategy=CompressionStrategy.CONSERVATIVE,
@@ -206,6 +237,7 @@ class TestTokenSavingsConsistency:
 
 
 # ── Validation Fallback ────────────────────────────────────────────────────
+
 
 class TestValidationFallback:
     """When validation fails, engine falls back to original messages."""
@@ -223,6 +255,7 @@ class TestValidationFallback:
 
 
 # ── Strategy Decision Tests ────────────────────────────────────────────────
+
 
 class TestStrategyDecisions:
     """Strategy-specific compression decisions on non-protected segments."""
@@ -253,6 +286,7 @@ class TestStrategyDecisions:
 
 # ── Live Compression Mode (shadow_mode=False) ─────────────────────────────
 
+
 class TestLiveCompression:
     """Verify shadow_mode=False returns the compressed message list."""
 
@@ -272,10 +306,14 @@ class TestLiveCompression:
         config = _live_config(CompressionStrategy.CONSERVATIVE, min_turns=0)
 
         # Force a low relevance score for the REASONING_BLOCK so it gets dropped
-        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
+        def mock_scores(
+            segments: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config)
 
         assert result.shadow_mode is False
@@ -296,10 +334,14 @@ class TestLiveCompression:
         ]
         config = _live_config(CompressionStrategy.AGGRESSIVE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
+        def mock_scores(
+            segments: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config)
 
         assert result.shadow_mode is False
@@ -319,10 +361,14 @@ class TestLiveCompression:
         ]
         config = _live_config(CompressionStrategy.AGGRESSIVE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
+        def mock_scores(
+            segments: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
             return [0.01 if not s.protected else 1.0 for s in segments]
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config)
 
         contents = [m.get("content") for m in result.messages]
@@ -349,7 +395,9 @@ class TestLiveCompression:
         config = _live_config(CompressionStrategy.CONSERVATIVE, min_turns=0)
 
         # Force score low on the tool message, high on everything else
-        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
+        def mock_scores(
+            segments: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
             scores = []
             for s in segments:
                 if s.artifact_type == ArtifactType.TOOL_RESULT:
@@ -358,11 +406,14 @@ class TestLiveCompression:
                     scores.append(1.0)
             return scores
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config)
 
         summarized_contents = [
-            m.get("content", "") for m in result.messages
+            m.get("content", "")
+            for m in result.messages
             if "[summarized by Traject" in str(m.get("content", ""))
         ]
         assert len(summarized_contents) >= 1
@@ -372,6 +423,7 @@ class TestLiveCompression:
 
 # ── _apply_strategy Branch Coverage ──────────────────────────────────────
 
+
 class TestApplyStrategyBranches:
     """Direct unit tests for every decision branch in _apply_strategy."""
 
@@ -379,124 +431,195 @@ class TestApplyStrategyBranches:
     def test_conservative_tool_result_summarize(self) -> None:
         s = _seg(ArtifactType.TOOL_RESULT, turn=0)
         # turns_ago = 4 - 0 = 4 > 3, score = 0.10 < 0.30
-        assert _apply_strategy(s, 0.10, CompressionStrategy.CONSERVATIVE, max_turn=4) == "SUMMARIZE"
+        assert (
+            _apply_strategy(s, 0.10, CompressionStrategy.CONSERVATIVE, max_turn=4)
+            == "SUMMARIZE"
+        )
 
     def test_conservative_tool_result_retain_score_too_high(self) -> None:
         s = _seg(ArtifactType.TOOL_RESULT, turn=0)
         # score >= 0.30 → RETAIN
-        assert _apply_strategy(s, 0.50, CompressionStrategy.CONSERVATIVE, max_turn=4) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.50, CompressionStrategy.CONSERVATIVE, max_turn=4)
+            == "RETAIN"
+        )
 
     def test_conservative_tool_result_retain_turns_not_enough(self) -> None:
         s = _seg(ArtifactType.TOOL_RESULT, turn=2)
         # turns_ago = 3 - 2 = 1, not > 3 → RETAIN
-        assert _apply_strategy(s, 0.10, CompressionStrategy.CONSERVATIVE, max_turn=3) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.10, CompressionStrategy.CONSERVATIVE, max_turn=3)
+            == "RETAIN"
+        )
 
     def test_conservative_reasoning_block_drop(self) -> None:
         s = _seg(ArtifactType.REASONING_BLOCK, turn=0)
         # score = 0.30 < 0.40
-        assert _apply_strategy(s, 0.30, CompressionStrategy.CONSERVATIVE, max_turn=4) == "DROP"
+        assert (
+            _apply_strategy(s, 0.30, CompressionStrategy.CONSERVATIVE, max_turn=4)
+            == "DROP"
+        )
 
     def test_conservative_reasoning_block_retain(self) -> None:
         s = _seg(ArtifactType.REASONING_BLOCK, turn=0)
         # score >= 0.40 → RETAIN
-        assert _apply_strategy(s, 0.50, CompressionStrategy.CONSERVATIVE, max_turn=4) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.50, CompressionStrategy.CONSERVATIVE, max_turn=4)
+            == "RETAIN"
+        )
 
     def test_conservative_other_artifact_retain(self) -> None:
         s = _seg(ArtifactType.USER_MESSAGE, turn=0)
-        assert _apply_strategy(s, 0.10, CompressionStrategy.CONSERVATIVE, max_turn=4) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.10, CompressionStrategy.CONSERVATIVE, max_turn=4)
+            == "RETAIN"
+        )
 
     # MODERATE strategy
     def test_moderate_tool_result_summarize(self) -> None:
         s = _seg(ArtifactType.TOOL_RESULT, turn=0)
         # turns_ago = 3 - 0 = 3 > 2, score = 0.20 < 0.40
-        assert _apply_strategy(s, 0.20, CompressionStrategy.MODERATE, max_turn=3) == "SUMMARIZE"
+        assert (
+            _apply_strategy(s, 0.20, CompressionStrategy.MODERATE, max_turn=3)
+            == "SUMMARIZE"
+        )
 
     def test_moderate_tool_result_retain_turns_not_enough(self) -> None:
         s = _seg(ArtifactType.TOOL_RESULT, turn=2)
         # turns_ago = 3 - 2 = 1, not > 2 → RETAIN
-        assert _apply_strategy(s, 0.10, CompressionStrategy.MODERATE, max_turn=3) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.10, CompressionStrategy.MODERATE, max_turn=3)
+            == "RETAIN"
+        )
 
     def test_moderate_tool_result_retain_score_too_high(self) -> None:
         s = _seg(ArtifactType.TOOL_RESULT, turn=0)
         # score >= 0.40 → RETAIN
-        assert _apply_strategy(s, 0.60, CompressionStrategy.MODERATE, max_turn=3) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.60, CompressionStrategy.MODERATE, max_turn=3)
+            == "RETAIN"
+        )
 
     def test_moderate_reasoning_block_drop(self) -> None:
         s = _seg(ArtifactType.REASONING_BLOCK, turn=0)
         # score = 0.40 < 0.50
-        assert _apply_strategy(s, 0.40, CompressionStrategy.MODERATE, max_turn=3) == "DROP"
+        assert (
+            _apply_strategy(s, 0.40, CompressionStrategy.MODERATE, max_turn=3) == "DROP"
+        )
 
     def test_moderate_reasoning_block_retain(self) -> None:
         s = _seg(ArtifactType.REASONING_BLOCK, turn=0)
         # score >= 0.50 → RETAIN
-        assert _apply_strategy(s, 0.60, CompressionStrategy.MODERATE, max_turn=3) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.60, CompressionStrategy.MODERATE, max_turn=3)
+            == "RETAIN"
+        )
 
     def test_moderate_rag_chunk_drop(self) -> None:
         s = _seg(ArtifactType.RAG_CHUNK, turn=0)
         # score = 0.20 < 0.35
-        assert _apply_strategy(s, 0.20, CompressionStrategy.MODERATE, max_turn=3) == "DROP"
+        assert (
+            _apply_strategy(s, 0.20, CompressionStrategy.MODERATE, max_turn=3) == "DROP"
+        )
 
     def test_moderate_rag_chunk_retain(self) -> None:
         s = _seg(ArtifactType.RAG_CHUNK, turn=0)
         # score >= 0.35 → RETAIN
-        assert _apply_strategy(s, 0.50, CompressionStrategy.MODERATE, max_turn=3) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.50, CompressionStrategy.MODERATE, max_turn=3)
+            == "RETAIN"
+        )
 
     def test_moderate_user_message_retain(self) -> None:
         s = _seg(ArtifactType.USER_MESSAGE, turn=0)
-        assert _apply_strategy(s, 0.05, CompressionStrategy.MODERATE, max_turn=3) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.05, CompressionStrategy.MODERATE, max_turn=3)
+            == "RETAIN"
+        )
 
     # AGGRESSIVE strategy
     def test_aggressive_tool_result_summarize(self) -> None:
         s = _seg(ArtifactType.TOOL_RESULT, turn=0)
         # turns_ago = 2 - 0 = 2 > 1, score = 0.30 < 0.50
-        assert _apply_strategy(s, 0.30, CompressionStrategy.AGGRESSIVE, max_turn=2) == "SUMMARIZE"
+        assert (
+            _apply_strategy(s, 0.30, CompressionStrategy.AGGRESSIVE, max_turn=2)
+            == "SUMMARIZE"
+        )
 
     def test_aggressive_tool_result_retain_turns_not_enough(self) -> None:
         s = _seg(ArtifactType.TOOL_RESULT, turn=1)
         # turns_ago = 2 - 1 = 1, not > 1 → RETAIN
-        assert _apply_strategy(s, 0.10, CompressionStrategy.AGGRESSIVE, max_turn=2) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.10, CompressionStrategy.AGGRESSIVE, max_turn=2)
+            == "RETAIN"
+        )
 
     def test_aggressive_tool_result_retain_score_too_high(self) -> None:
         s = _seg(ArtifactType.TOOL_RESULT, turn=0)
         # score >= 0.50 → RETAIN
-        assert _apply_strategy(s, 0.70, CompressionStrategy.AGGRESSIVE, max_turn=2) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.70, CompressionStrategy.AGGRESSIVE, max_turn=2)
+            == "RETAIN"
+        )
 
     def test_aggressive_reasoning_block_drop(self) -> None:
         s = _seg(ArtifactType.REASONING_BLOCK, turn=0)
         # score = 0.50 < 0.60
-        assert _apply_strategy(s, 0.50, CompressionStrategy.AGGRESSIVE, max_turn=2) == "DROP"
+        assert (
+            _apply_strategy(s, 0.50, CompressionStrategy.AGGRESSIVE, max_turn=2)
+            == "DROP"
+        )
 
     def test_aggressive_reasoning_block_retain(self) -> None:
         s = _seg(ArtifactType.REASONING_BLOCK, turn=0)
         # score >= 0.60 → RETAIN
-        assert _apply_strategy(s, 0.70, CompressionStrategy.AGGRESSIVE, max_turn=2) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.70, CompressionStrategy.AGGRESSIVE, max_turn=2)
+            == "RETAIN"
+        )
 
     def test_aggressive_rag_chunk_drop(self) -> None:
         s = _seg(ArtifactType.RAG_CHUNK, turn=0)
         # score = 0.30 < 0.45
-        assert _apply_strategy(s, 0.30, CompressionStrategy.AGGRESSIVE, max_turn=2) == "DROP"
+        assert (
+            _apply_strategy(s, 0.30, CompressionStrategy.AGGRESSIVE, max_turn=2)
+            == "DROP"
+        )
 
     def test_aggressive_rag_chunk_retain(self) -> None:
         s = _seg(ArtifactType.RAG_CHUNK, turn=0)
         # score >= 0.45 → RETAIN
-        assert _apply_strategy(s, 0.60, CompressionStrategy.AGGRESSIVE, max_turn=2) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.60, CompressionStrategy.AGGRESSIVE, max_turn=2)
+            == "RETAIN"
+        )
 
     def test_aggressive_few_shot_drop(self) -> None:
         s = _seg(ArtifactType.FEW_SHOT_EXAMPLE, turn=0)
         # score = 0.30 < 0.40
-        assert _apply_strategy(s, 0.30, CompressionStrategy.AGGRESSIVE, max_turn=2) == "DROP"
+        assert (
+            _apply_strategy(s, 0.30, CompressionStrategy.AGGRESSIVE, max_turn=2)
+            == "DROP"
+        )
 
     def test_aggressive_few_shot_retain(self) -> None:
         s = _seg(ArtifactType.FEW_SHOT_EXAMPLE, turn=0)
         # score >= 0.40 → RETAIN
-        assert _apply_strategy(s, 0.50, CompressionStrategy.AGGRESSIVE, max_turn=2) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.50, CompressionStrategy.AGGRESSIVE, max_turn=2)
+            == "RETAIN"
+        )
 
     def test_aggressive_other_artifact_retain(self) -> None:
         s = _seg(ArtifactType.USER_MESSAGE, turn=0)
-        assert _apply_strategy(s, 0.01, CompressionStrategy.AGGRESSIVE, max_turn=2) == "RETAIN"
+        assert (
+            _apply_strategy(s, 0.01, CompressionStrategy.AGGRESSIVE, max_turn=2)
+            == "RETAIN"
+        )
 
 
 # ── Integration: Decision Branches via compress() ─────────────────────────
+
 
 class TestDecisionBranchesViaCompress:
     """Exercise SUMMARIZE / DROP branches end-to-end through compress()."""
@@ -510,10 +633,14 @@ class TestDecisionBranchesViaCompress:
         ]
         config = _live_config(CompressionStrategy.CONSERVATIVE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
+        def mock_scores(
+            segments: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config)
 
         assert result.segments_dropped >= 1
@@ -535,10 +662,14 @@ class TestDecisionBranchesViaCompress:
         ]
         config = _live_config(CompressionStrategy.MODERATE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
+        def mock_scores(
+            segments: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config)
 
         assert result.segments_dropped >= 1
@@ -552,10 +683,14 @@ class TestDecisionBranchesViaCompress:
         ]
         config = _live_config(CompressionStrategy.AGGRESSIVE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
+        def mock_scores(
+            segments: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
             return [0.05 if not s.protected else 1.0 for s in segments]
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config)
 
         # At least one segment was evaluated — few-shot may or may not be dropped
@@ -583,25 +718,31 @@ class TestDecisionBranchesViaCompress:
 
         config = _live_config(CompressionStrategy.CONSERVATIVE, min_turns=0)
 
-        def mock_scores(segments: list[Any], hint: Any = None, **_kwargs: Any) -> list[float]:
+        def mock_scores(
+            segments: list[Any], hint: Any = None, **_kwargs: Any
+        ) -> list[float]:
             return [
                 0.10 if s.artifact_type == ArtifactType.TOOL_RESULT else 1.0
                 for s in segments
             ]
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config)
 
         assert result.segments_summarized >= 1
         # Summarized message contains the Traject marker
         summarized = [
-            m for m in result.messages
+            m
+            for m in result.messages
             if "[summarized by Traject" in str(m.get("content", ""))
         ]
         assert len(summarized) >= 1
 
 
 # ── _detect_adapter Branch Coverage ──────────────────────────────────────
+
 
 class TestDetectAdapter:
     """Tests for _detect_adapter including error paths."""
@@ -627,7 +768,8 @@ class TestDetectAdapter:
             patch(
                 "traject.compression.adapters.langchain.LangChainAdapter",
                 side_effect=TrajectDependencyError("langchain not installed"),
-            ),pytest.raises(TrajectCompressionError, match="No adapter found")
+            ),
+            pytest.raises(TrajectCompressionError, match="No adapter found"),
         ):
             _detect_adapter([{"role": "user", "content": "hi"}])
 
@@ -687,6 +829,7 @@ class TestDetectAdapter:
 
 
 # ── Validation Error Paths ────────────────────────────────────────────────
+
 
 class TestValidationErrorPaths:
     """Tests for _validate_compression_result error paths (lines 138, 154)."""
@@ -777,6 +920,7 @@ class TestValidationErrorPaths:
 
 # ── Task Hint (semantic scoring) ─────────────────────────────────────────
 
+
 class TestTaskHint:
     """task_hint parameter exercises the semantic scoring branch."""
 
@@ -807,7 +951,12 @@ class TestScoreWeightsValidation:
         """All TaskAwareWeights profiles must sum to exactly 1.0."""
         from traject.exceptions import TrajectConfigError
 
-        for profile_name in ("CODE_GENERATION", "REASONING", "SUMMARIZATION", "DEFAULT"):
+        for profile_name in (
+            "CODE_GENERATION",
+            "REASONING",
+            "SUMMARIZATION",
+            "DEFAULT",
+        ):
             profile: ScoreWeights = getattr(TaskAwareWeights, profile_name)
             total = profile.recency + profile.semantic + profile.reference
             assert abs(total - 1.0) < 1e-6, (
@@ -820,7 +969,10 @@ class TestScoreWeightsValidation:
 
     def test_code_generation_weights_reference_higher_than_default(self) -> None:
         """CODE_GENERATION.reference must be higher than DEFAULT.reference."""
-        assert TaskAwareWeights.CODE_GENERATION.reference > TaskAwareWeights.DEFAULT.reference
+        assert (
+            TaskAwareWeights.CODE_GENERATION.reference
+            > TaskAwareWeights.DEFAULT.reference
+        )
 
 
 class TestScoreCeiling:
@@ -855,7 +1007,9 @@ class TestScoreCeiling:
                 for s in segments
             ]
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config)
 
         # Score 0.50 > ceiling 0.45 — the tool result must NOT be compressed.
@@ -895,13 +1049,13 @@ class TestScoreCeiling:
                 for s in segments
             ]
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config)
 
         # With a 1% target, we should NOT compress all 8 tool results.
-        total_tool_msgs = sum(
-            1 for m in msgs if m.get("role") == "tool"
-        )
+        total_tool_msgs = sum(1 for m in msgs if m.get("role") == "tool")
         assert result.segments_summarized < total_tool_msgs, (
             "Adaptive threshold did not stop at target — over-compressed."
         )
@@ -978,7 +1132,9 @@ class TestDynamicProtection:
                 protected=False,
             ),
         ]
-        protected = _compute_substring_protection(segments, "fix authentication.py module")
+        protected = _compute_substring_protection(
+            segments, "fix authentication.py module"
+        )
         assert 0 in protected, "Segment with 'authentication.py' should be protected"
         assert 1 not in protected, "Unrelated segment should not be protected"
 
@@ -1023,12 +1179,14 @@ class TestDynamicProtection:
             # Give the tool result the lowest possible score to force compression.
             return [0.01 for _ in segs]
 
-        with patch("traject.compression.engine.score_segments", side_effect=mock_scores):
+        with patch(
+            "traject.compression.engine.score_segments", side_effect=mock_scores
+        ):
             result = compress(msgs, config, task_hint="fix authentication.py issue")
 
         # The tool result contains "authentication.py" which is in the task hint.
         # Dynamic protection must hard-protect it.
         result_contents = [m.get("content", "") for m in result.messages]
-        assert any(
-            tool_content in str(c) for c in result_contents
-        ), "Dynamically protected segment was incorrectly compressed."
+        assert any(tool_content in str(c) for c in result_contents), (
+            "Dynamically protected segment was incorrectly compressed."
+        )

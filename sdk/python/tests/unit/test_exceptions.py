@@ -1,4 +1,5 @@
 """Unit tests for traject.exceptions."""
+
 from __future__ import annotations
 
 import pytest
@@ -13,7 +14,6 @@ from traject.exceptions import (
 
 
 class TestTrajectErrorHierarchy:
-
     def test_axon_error_is_exception(self) -> None:
         assert issubclass(TrajectError, Exception)
 
@@ -29,7 +29,16 @@ class TestTrajectErrorHierarchy:
     def test_provider_error_is_axon_error(self) -> None:
         assert issubclass(TrajectProviderError, TrajectError)
 
-    @pytest.mark.parametrize("cls", [TrajectError, TrajectConfigError, TrajectDependencyError, TrajectCompressionError, TrajectProviderError])
+    @pytest.mark.parametrize(
+        "cls",
+        [
+            TrajectError,
+            TrajectConfigError,
+            TrajectDependencyError,
+            TrajectCompressionError,
+            TrajectProviderError,
+        ],
+    )
     def test_instantiable_with_message(self, cls: type) -> None:
         exc = cls("test message")
         assert str(exc) == "test message"

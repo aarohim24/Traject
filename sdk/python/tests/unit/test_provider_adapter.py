@@ -1,4 +1,5 @@
 """Unit tests for traject.core.provider_adapter."""
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -49,7 +50,6 @@ def _anthropic_response(
 
 
 class TestOpenAIAdapter:
-
     def test_extract_usage_exact(self) -> None:
         adapter = OpenAIAdapter()
         usage = adapter.extract_usage(_openai_response(100, 50))
@@ -85,7 +85,6 @@ class TestOpenAIAdapter:
 
 
 class TestAnthropicAdapter:
-
     def test_extract_usage_exact(self) -> None:
         adapter = AnthropicAdapter()
         usage = adapter.extract_usage(_anthropic_response(80, 40))
@@ -109,7 +108,6 @@ class TestAnthropicAdapter:
 
 
 class TestGetAdapter:
-
     def test_openai_returns_openai_adapter(self) -> None:
         assert isinstance(get_adapter("openai"), OpenAIAdapter)
 

@@ -60,7 +60,9 @@ def test_calculate_cost_zero_tokens_returns_zero() -> None:
     assert result == Decimal("0.00000000")
 
 
-def test_calculate_cost_unknown_model_returns_none(caplog: pytest.LogCaptureFixture) -> None:
+def test_calculate_cost_unknown_model_returns_none(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Unknown model returns None without raising an exception."""
     result = calculate_cost("totally-unknown-model-abc123", 100, 100)
     assert result is None
@@ -87,7 +89,9 @@ def test_calculate_cost_cached_tokens_uses_cache_rate() -> None:
       → cache_cost = (1000/1_000_000) * 1.25 = 0.00000125
       → output_cost = 0
     """
-    result = calculate_cost("gpt-4o", input_tokens=1000, output_tokens=0, cached_tokens=1000)
+    result = calculate_cost(
+        "gpt-4o", input_tokens=1000, output_tokens=0, cached_tokens=1000
+    )
     assert result is not None
     # cache_cost only: 1000 / 1_000_000 * 1.25
     expected = (Decimal("1000") / Decimal("1000000")) * Decimal("1.25")
@@ -103,7 +107,9 @@ def test_calculate_cost_no_cache_rate_model_ignores_cached_tokens() -> None:
       → non_cached_input = 500, cache_cost = 0 (no cache rate)
       → input_cost = (500/1_000_000) * 10.00
     """
-    result = calculate_cost("gpt-4-turbo", input_tokens=1000, output_tokens=0, cached_tokens=500)
+    result = calculate_cost(
+        "gpt-4-turbo", input_tokens=1000, output_tokens=0, cached_tokens=500
+    )
     assert result is not None
     expected = (Decimal("500") / Decimal("1000000")) * Decimal("10.00")
     expected = expected.quantize(Decimal("0.00000001"))

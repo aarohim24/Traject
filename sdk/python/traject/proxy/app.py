@@ -11,6 +11,7 @@ additional response headers are injected:
 - ``X-Traject-Tokens-Saved``: tokens eliminated (0 in shadow mode)
 - ``X-Traject-Shadow-Mode``: ``"true"`` or ``"false"``
 """
+
 from __future__ import annotations
 
 import os
@@ -233,8 +234,7 @@ def create_app(
 
         # 2. Convert to plain dicts for the compression engine.
         messages_plain: list[dict[str, Any]] = [
-            {"role": msg.role, "content": msg.content}
-            for msg in chat_req.messages
+            {"role": msg.role, "content": msg.content} for msg in chat_req.messages
         ]
 
         # 3. Compress (fall back on error).
@@ -339,6 +339,7 @@ async def _forward_streaming(
         :class:`~fastapi.responses.StreamingResponse` that proxies the
         upstream SSE stream to the caller.
     """
+
     async def _stream_generator() -> AsyncGenerator[bytes, None]:
         """Yield raw bytes from the upstream streaming response.
 

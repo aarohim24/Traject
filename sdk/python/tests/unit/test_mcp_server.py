@@ -1,4 +1,5 @@
 """Unit tests for traject.mcp.server — MCP tool implementations."""
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -7,7 +8,6 @@ from unittest.mock import patch
 import pytest
 
 from traject.exceptions import TrajectError
-
 
 # ---------------------------------------------------------------------------
 # Helpers — reset global session state before each test
