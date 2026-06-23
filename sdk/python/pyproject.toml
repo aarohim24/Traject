@@ -53,6 +53,8 @@ dev = [
     "pre-commit>=3.7",
     "openai>=1.30",
     "anthropic>=0.28",
+    "sqlalchemy[asyncio]>=2.0",
+    "aiosqlite>=0.19",
 ]
 
 [project.scripts]
@@ -147,6 +149,46 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "google.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fastapi"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fastapi.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "uvicorn"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "uvicorn.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "langchain_core.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "opentelemetry.exporter.otlp.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# FastAPI route decorators are untyped — disable decorator errors for proxy module
+module = "traject.proxy.app"
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+# FastMCP @mcp.tool() decorators are untyped — disable decorator errors for MCP server
+module = "traject.mcp.server"
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+# SQLAlchemy DeclarativeBase is Any when sqlalchemy is not installed —
+# ignore misc errors in job_tracker which uses ORM base class
+module = "traject.batch.job_tracker"
+ignore_errors = true
 
 
 [tool.pytest.ini_options]

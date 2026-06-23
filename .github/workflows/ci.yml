@@ -47,6 +47,7 @@ jobs:
           python-version: "3.11"
       - name: Install package with all test-relevant extras
         # mcp and proxy are included so their unit tests can import the modules.
+        # dev extras now include sqlalchemy+aiosqlite for batch/job_tracker tests.
         run: pip install -e "sdk/python[openai,anthropic,langchain,mcp,proxy,dev]"
       - name: Run tests
         run: pytest sdk/python/tests/unit/ sdk/python/tests/integration/ --cov=traject --cov-fail-under=80 --cov-report=xml
