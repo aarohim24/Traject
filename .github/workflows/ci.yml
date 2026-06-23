@@ -31,9 +31,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install SDK with all optional deps (required for mypy --strict)
-        # mcp and proxy are installed so mypy can resolve their imports.
-        # ml/bedrock/vertex use ignore_missing_imports overrides in pyproject.toml.
-        run: pip install -e "sdk/python[dev,openai,anthropic,langchain,mcp,proxy]" -q
+        # All optional extras installed so mypy can resolve every import.
+        # autogen has no stubs — covered by ignore_missing_imports in pyproject.toml.
+        run: pip install -e "sdk/python[dev,openai,anthropic,langchain,mcp,proxy,ml,bedrock,vertex]" -q
       - name: mypy strict
         run: mypy sdk/python/traject --strict
 
