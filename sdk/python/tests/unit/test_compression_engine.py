@@ -1231,9 +1231,7 @@ class TestEncodingForModel:
         """Anthropic has no tiktoken tokenizer; approximate with cl100k_base."""
         from traject.compression.segment_parser import _encoding_for_model
 
-        assert (
-            _encoding_for_model("claude-3-5-sonnet-20241022").name == "cl100k_base"
-        )
+        assert _encoding_for_model("claude-3-5-sonnet-20241022").name == "cl100k_base"
 
     def test_gemini_falls_back_to_cl100k_approximation(self) -> None:
         from traject.compression.segment_parser import _encoding_for_model

@@ -15,7 +15,9 @@ from traject.compression.engine import _DEDUP_STUB, compress
 from traject.compression.strategies import CompressionConfig, CompressionStrategy
 
 
-def _live(strategy: CompressionStrategy = CompressionStrategy.CONSERVATIVE) -> CompressionConfig:
+def _live(
+    strategy: CompressionStrategy = CompressionStrategy.CONSERVATIVE,
+) -> CompressionConfig:
     return CompressionConfig(
         strategy=strategy,
         target_reduction_pct=0.20,
@@ -29,11 +31,15 @@ def _agent_loop_with_repeats(repeats: int) -> list[dict[str, Any]]:
     """A loop that re-reads the same large file `repeats` times."""
     big = "$ cat module.py\n" + "\n".join(f"line {i} of source code" for i in range(80))
     msgs: list[dict[str, Any]] = [{"role": "system", "content": "You are an agent."}]
-    msgs.append({"role": "user", "content": "Fix the bug in module.py at line 42 (ValueError)."})
+    msgs.append(
+        {"role": "user", "content": "Fix the bug in module.py at line 42 (ValueError)."}
+    )
     for i in range(repeats):
         msgs.append({"role": "assistant", "content": f"Step {i}: read module.py."})
         msgs.append({"role": "tool", "content": big})
-    msgs.append({"role": "assistant", "content": "Now I will apply the fix and run tests."})
+    msgs.append(
+        {"role": "assistant", "content": "Now I will apply the fix and run tests."}
+    )
     msgs.append({"role": "tool", "content": "$ pytest\n1 passed"})
     return msgs
 
@@ -79,9 +85,9 @@ class TestDedup:
         ]
         result = compress(msgs, _live())
         # The preserved early copy must not be stubbed.
-        assert any(
-            m.get("content") == big for m in result.messages
-        ), "preserved duplicate should remain verbatim"
+        assert any(m.get("content") == big for m in result.messages), (
+            "preserved duplicate should remain verbatim"
+        )
 
 
 class TestInflationGuard:
