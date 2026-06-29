@@ -2,47 +2,51 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_USER: axon
-      POSTGRES_PASSWORD: axon
-      POSTGRES_DB: axon
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set (see .env.example)}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set (see .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set (see .env.example)}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U axon"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    # Bind to loopback only — Postgres must not be reachable on all interfaces.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
+    # Require a password — Redis has no auth by default.
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set (see .env.example)}
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
+    # Bind to loopback only — Redis must not be reachable on all interfaces.
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
 
   traject-backend:
     build:
       context: ../backend
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql+asyncpg://axon:axon@postgres:5432/axon
-      REDIS_URL: redis://redis:6379/0
-      API_KEY: ${TRAJECT_API_KEY:-dev-key-change-in-production}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      API_KEY: ${TRAJECT_API_KEY:?TRAJECT_API_KEY must be set (see .env.example)}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Bind to loopback for local dev; change to "8000:8000" to expose externally.
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -52,17 +56,22 @@ services:
   grafana:
     image: grafana/grafana:10.4.0
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      # No weak default — Grafana admin password must be supplied via env.
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD must be set (see .env.example)}
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_INSTALL_PLUGINS: "marcusolsson-json-datasource"
+      # Consumed by the provisioned datasource's X-Traject-API-Key header
+      # (datasource.yml uses ${API_KEY}). Must match the backend's API_KEY.
+      API_KEY: ${TRAJECT_API_KEY}
     volumes:
       - ../dashboards/grafana/provisioning:/etc/grafana/provisioning
       - ../dashboards/grafana/dashboards:/var/lib/grafana/dashboards
       - grafana_data:/var/lib/grafana/data
     depends_on:
       - traject-backend
+    # Bind to loopback for local dev; change to "3000:3000" to expose externally.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
 
 volumes:
   postgres_data:

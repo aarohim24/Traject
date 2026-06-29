@@ -1,7 +1,7 @@
 {
   "id": null,
-  "uid": "axon-budget-burn-rate",
-  "title": "Axon \u2014 Budget Burn Rate",
+  "uid": "traject-budget-burn-rate",
+  "title": "Traject \u2014 Budget Burn Rate",
   "schemaVersion": 39,
   "version": 1,
   "refresh": "1m",
@@ -10,7 +10,7 @@
   "timezone": "browser",
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "tags": ["axon"],
+  "tags": ["traject"],
   "templating": { "list": [] },
   "annotations": { "list": [] },
   "links": [],
@@ -20,10 +20,10 @@
       "title": "Budget Utilization by Feature Tag",
       "type": "gauge",
       "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
       "targets": [
         {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
           "refId": "A",
           "url": "/v1/budgets"
         }
@@ -55,10 +55,10 @@
       "title": "Daily Spend vs Daily Budget",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
       "targets": [
         {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
           "refId": "B",
           "url": "/v1/attribution",
           "queryParams": "group_by=feature_tag"
@@ -71,10 +71,10 @@
       "title": "Features Approaching Budget Limit",
       "type": "table",
       "gridPos": { "x": 0, "y": 16, "w": 24, "h": 8 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
       "targets": [
         {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
           "refId": "C",
           "url": "/v1/budgets"
         }

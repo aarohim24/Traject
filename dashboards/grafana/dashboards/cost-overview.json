@@ -1,7 +1,7 @@
 {
   "id": null,
-  "uid": "axon-cost-overview",
-  "title": "Axon \u2014 Cost Overview",
+  "uid": "traject-cost-overview",
+  "title": "Traject \u2014 Cost Overview",
   "schemaVersion": 39,
   "version": 1,
   "refresh": "5m",
@@ -10,7 +10,7 @@
   "timezone": "browser",
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "tags": ["axon"],
+  "tags": ["traject"],
   "templating": { "list": [] },
   "annotations": { "list": [] },
   "links": [],
@@ -20,10 +20,10 @@
       "title": "Total Cost Over Time (by Feature Tag)",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
       "targets": [
         {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
           "refId": "A",
           "url": "/v1/attribution",
           "queryParams": "group_by=feature_tag"
@@ -40,10 +40,10 @@
       "title": "Cost by Model",
       "type": "barchart",
       "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
       "targets": [
         {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
           "refId": "B",
           "url": "/v1/attribution",
           "queryParams": "group_by=model"
@@ -59,10 +59,10 @@
       "title": "Cost by Provider",
       "type": "piechart",
       "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
       "targets": [
         {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
           "refId": "C",
           "url": "/v1/attribution",
           "queryParams": "group_by=provider"
@@ -78,10 +78,10 @@
       "title": "Top Feature Tags by Cost",
       "type": "table",
       "gridPos": { "x": 0, "y": 16, "w": 24, "h": 8 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
       "targets": [
         {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
           "refId": "D",
           "url": "/v1/attribution/summary",
           "queryParams": "period=weekly"
@@ -95,10 +95,10 @@
       "title": "Input vs Output Tokens",
       "type": "barchart",
       "gridPos": { "x": 0, "y": 24, "w": 24, "h": 8 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
       "targets": [
         {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "${datasource}" },
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "traject-backend" },
           "refId": "E",
           "url": "/v1/attribution",
           "queryParams": "group_by=feature_tag"

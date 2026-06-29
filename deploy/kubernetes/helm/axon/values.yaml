@@ -33,8 +33,12 @@ ingress:
   host: ""
 
 config:
-  DATABASE_URL: "postgresql+asyncpg://axon:axon@postgres:5432/axon"
-  REDIS_URL: "redis://redis:6379/0"
-  API_KEY: "change-me-in-production"
+  # Replace the credentials below with strong, unique values before deploying.
+  # Do NOT reuse the old axon/axon defaults.
+  DATABASE_URL: "postgresql+asyncpg://traject:CHANGE_ME_STRONG_PASSWORD@postgres:5432/traject"
+  # Redis requires a password; include it in the URL (redis://:<password>@host).
+  REDIS_URL: "redis://:CHANGE_ME_STRONG_PASSWORD@redis:6379/0"
+  # The backend REFUSES TO START on this placeholder — set a strong unique key.
+  API_KEY: "CHANGE_ME_API_KEY"
   API_HOST: "0.0.0.0"
   API_PORT: "8000"

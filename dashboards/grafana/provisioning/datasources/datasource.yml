@@ -1,13 +1,14 @@
 apiVersion: 1
 
 datasources:
-  - name: Axon Backend
+  - name: Traject Backend
+    uid: traject-backend
     type: marcusolsson-json-datasource
     access: proxy
-    url: http://axon-backend:8000
+    url: http://traject-backend:8000
     jsonData:
       queryParams: ""
     secureJsonData:
-      headers: '{"X-Axon-API-Key": "dev-key-change-in-production"}'
+      headers: '{"X-Traject-API-Key": "${API_KEY}"}'
     isDefault: true
     editable: true
