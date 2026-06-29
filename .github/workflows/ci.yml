@@ -7,6 +7,18 @@ on:
     branches: ["**"]
 
 jobs:
+  compile:
+    name: Compile Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Byte-compile all backend and SDK source
+        # Fast gate: a non-compiling commit (e.g. SyntaxError) must never go green.
+        run: python -m compileall backend/traject_backend sdk/python/traject
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -158,3 +170,54 @@ jobs:
         run: npm run lint
       - name: Test
         run: npm test -- --coverage
+
+  pip-audit:
+    name: Dependency Audit (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pip-audit
+        run: pip install pip-audit -q
+      - name: Install SDK with all optional deps
+        run: pip install -e "sdk/python[dev,openai,anthropic,langchain,mcp,proxy,ml,bedrock,vertex]" -q
+      - name: Install backend dev dependencies
+        run: pip install -e "backend[dev]" -q
+      - name: Audit installed dependencies
+        # Audits the resolved environment (backend + SDK + extras). Fails the
+        # build on any known vulnerability so a vulnerable dep can't ship.
+        run: pip-audit
+
+  bandit:
+    name: Static Security Analysis (bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install bandit
+        run: pip install bandit -q
+      - name: Run bandit (medium+ severity)
+        run: bandit -r backend/traject_backend sdk/python/traject -ll
+
+  npm-audit:
+    name: Dependency Audit (npm)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Audit dashboard dependencies
+        working-directory: dashboard
+        run: |
+          npm install --package-lock-only
+          npm audit --audit-level=high
+      - name: Audit TypeScript SDK dependencies
+        working-directory: sdk/typescript
+        run: |
+          npm install --package-lock-only
+          npm audit --audit-level=high
