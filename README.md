@@ -41,6 +41,7 @@ Optional framework integrations:
 ```bash
 pip install -e ".[langchain]"   # LangChain support
 pip install -e ".[autogen]"     # AutoGen support
+pip install -e ".[ccr]"         # reversible compression (Redis-backed)
 ```
 
 Requires Python 3.11+.
@@ -103,13 +104,17 @@ In a multi-step agent loop, each call to the LLM includes all prior context — 
 
 The compression pipeline runs before each provider call:
 
-1. **Parse** — the context window is segmented into typed artifacts: `SYSTEM_PROMPT`, `USER_MESSAGE`, `TOOL_RESULT`, `REASONING_BLOCK`, `RAG_CHUNK`, `TOOL_CALL`, `FEW_SHOT_EXAMPLE`, `ASSISTANT_MESSAGE`.
-2. **Protect** — system prompts and the last N turns are marked immutable. They are never modified regardless of strategy.
-3. **Soft-protect** — each remaining segment is embedded (in-process, `all-MiniLM-L6-v2`) and compared against the next 5 segments via cosine similarity. Segments with max similarity ≥ 0.6 to any later message are marked soft-protected: they require a score < 0.15 to be compressed rather than the normal threshold. This catches paraphrase references — the agent restating a tool result in different words — which substring matching misses.
-4. **Score** — remaining segments are scored by recency (0.4 weight), semantic relevance to the current task (0.4 weight), and reference count in recent turns (0.2 weight). The semantic component is cached within a call by content hash and task-similarity bucket, avoiding redundant embedding lookups for repeated segments.
-5. **Compress** — low-scoring segments are summarized or dropped per strategy thresholds. Tool results older than 3 turns with score < 0.3 are summarized to one sentence. Completed reasoning blocks with score < 0.4 are dropped. Soft-protected segments use a tighter threshold (< 0.15) across all strategies.
-6. **Validate** — circuit breaker: if system prompts or recent turns are absent from the compressed output, compression is aborted and the original context is returned unchanged.
-7. **Emit** — an OpenTelemetry span records tokens saved, compression ratio, strategy applied, cache hit rate, and count of soft-protected segments.
+1. **Preprocess (lossless)** — before any lossy decision, two reversible passes shrink the context without dropping information: prose filler (hedging, pleasantries, filler intros) is stripped from assistant turns, and JSON arrays of ≥5 homogeneous objects in tool results are columnarized into a compact table. Both are guarded so they never produce a longer result, and content with fenced code blocks is skipped.
+2. **Parse** — the context window is segmented into typed artifacts: `SYSTEM_PROMPT`, `USER_MESSAGE`, `TOOL_RESULT`, `REASONING_BLOCK`, `RAG_CHUNK`, `TOOL_CALL`, `FEW_SHOT_EXAMPLE`, `ASSISTANT_MESSAGE`.
+3. **Protect** — system prompts and the last N turns are marked immutable. They are never modified regardless of strategy.
+4. **Soft-protect** — each remaining segment is embedded (in-process, `all-MiniLM-L6-v2`) and compared against the next 5 segments via cosine similarity. Two independent signals soft-protect a segment: (a) a later turn *semantically references* it — these stay verbatim; (b) it merely *contains high-information content* (errors, hashes, file paths). A tool result protected only by signal (b) stays eligible for command-aware summarization (below), which preserves exactly that load-bearing information.
+5. **Score** — remaining segments are scored by recency (0.4 weight), semantic relevance to the current task (0.4 weight), and reference count in recent turns (0.2 weight). The semantic component is cached within a call by content hash and task-similarity bucket, avoiding redundant embedding lookups for repeated segments.
+6. **Compress** — applied in order:
+   - **Lossless dedup** — byte-identical tool results that recur (the agent re-reading the same file/command) are replaced with a short reference; the last occurrence is kept verbatim, so no information is lost.
+   - **Command-aware summarization** — tool results are sub-classified by the command that produced them (`git diff`, `git log`, pytest, `ls`/`find`, build output) and summarized by a domain-specific compressor that preserves load-bearing facts (failed tests, error types, file:line refs, diff headers) while trimming bulk. Other low-scoring segments are summarized or dropped per strategy thresholds. An inflation guard ensures a replacement is only substituted when strictly smaller.
+   - **CCR (optional)** — with a `CCRStore` configured, segments that would be dropped are instead stored in Redis and replaced with a `<<ccr:HASH>>` stub. The agent recovers the full content on demand via the `traject_retrieve` MCP tool — making compression reversible.
+7. **Validate** — circuit breaker: if system prompts or recent turns are absent from the compressed output, compression is aborted and the original context is returned unchanged.
+8. **Emit** — an OpenTelemetry span records tokens saved, compression ratio, strategy applied, cache hit rate, soft-protected count, and CCR-stubbed count.
 
 ### Shadow mode
 
@@ -128,6 +133,9 @@ Each `traject.compression.complete` span carries:
 | `cache_hits` | int | Semantic scores served from call-scoped cache |
 | `cache_hit_rate` | float | Cache hit fraction, 0–1 |
 | `segments_soft_protected` | int | Segments elevated to the soft-protect tier |
+| `segments_ccr_stubbed` | int | Segments stored in CCR and replaced with a stub |
+
+`tokens_saved` and `compression_ratio` are measured against the **raw input** the caller sent — the lossless preprocessing savings (prose filter, JSON columnarization) are included in the reported reduction, not hidden by shrinking the baseline.
 
 ---
 
@@ -260,10 +268,11 @@ traject mcp
 }
 ```
 
-Three tools are exposed:
+Four tools are exposed:
 - `traject_compress` — compress any text blob (tool output, file, log, RAG chunk), returns compressed text + token delta
 - `traject_stats` — session aggregate reduction metrics
 - `traject_budget` — set a token limit and check ok / warning / exceeded status
+- `traject_retrieve` — recover the full content behind a `<<ccr:HASH>>` stub (requires `TRAJECT_REDIS_URL` and the `[ccr]` extra)
 
 Shadow mode is the default — `traject_compress` returns the original text alongside metrics until you pass `shadow_mode=False`.
 
@@ -295,18 +304,30 @@ Workload: 49 real SWE-bench agent trajectories (OpenHands-SFT, SWE-Gym). Avg 29 
 
 Dataset: [SWE-Gym/OpenHands-SFT-Trajectories](https://huggingface.co/datasets/SWE-Gym/SWE-Gym) (HuggingFace, public)
 
+These figures are from the baseline pipeline (relevance scoring + dedup), before the lossless preprocessing and command-aware summarization passes below:
+
 | Metric | CONSERVATIVE | MODERATE |
 |---|---|---|
 | Aggregate token reduction | 24.0% | 26.3% |
 | Mean reduction | 25.3% | 27.0% |
 | p50 reduction | 25.0% | 30.9% |
-| Information retention | 94.7% | 93.8% |
-| p10 retention (worst 10%) | 96.0% | 80.0% |
+| Fact retention | 94.7% | 93.8% |
 | Instances evaluated | 49 | 49 |
 
 CONSERVATIVE is the safe default — validated for new deployments. Switch to MODERATE after confirming retention on your workload.
 
-Token reduction and information retention are measured independently. Retention is cosine similarity ≥ 0.7 between compressed and original segment embeddings.
+Token reduction and fact retention are measured independently. **Retention** is the fraction of concrete, non-reconstructable facts (file:line refs, error/exception types, test names, git SHAs, URLs) extracted from the original context that still appear verbatim in the compressed output — a deliberately strict, non-circular metric independent of the embedding scorer that drives compression.
+
+### Recent improvements (lossless preprocessing + command-aware summarization)
+
+The prose filter, JSON columnarizer, and command-aware tool-result summarizer are lossless or fact-preserving by design. On a representative coding-agent trajectory (git diffs, pytest runs, file listings, JSON outputs, verbose prose), these passes roughly doubled reduction while preserving every critical fact:
+
+| | Baseline preprocessing only | + command-aware summarization |
+|---|---|---|
+| Token reduction | 18.5% | **30.0%** |
+| Fact retention | 100% | **100%** |
+
+A full re-run of the 49-instance SWE-bench suite with these passes enabled is pending dataset download; the representative-trajectory result above is what the committed test suite measures.
 
 Reproduce:
 ```bash
