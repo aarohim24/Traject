@@ -64,7 +64,7 @@ import argparse
 import json
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -76,6 +76,7 @@ try:
     from traject.compression.strategies import (
         CompressionConfig,
         CompressionStrategy,
+        get_config,
     )
 except ImportError as exc:
     print(
@@ -500,9 +501,32 @@ def evaluate_instance(
         )
 
 
+def build_config(
+    strategy: CompressionStrategy, unprotected: bool = False
+) -> CompressionConfig:
+    """Return the config to benchmark.
+
+    Defaults to the **shipped** strategy config from ``STRATEGY_DEFAULTS`` — so
+    ``min_turns_protected`` is the real production value (3 for conservative /
+    moderate, 2 for aggressive), not 0. ``shadow_mode`` is forced off *only* so
+    that the compressed output can be measured; no provider calls are made by
+    this offline script.
+
+    When *unprotected* is True the legacy benchmark-only configuration is used
+    (``min_turns_protected=0``). That config disables the recent-turn safety
+    guarantee that ships by default, so its numbers do **not** describe the
+    behaviour a user gets out of the box — it exists only to reproduce and
+    contrast with the previously published figures.
+    """
+    config = replace(get_config(strategy), shadow_mode=False)
+    if unprotected:
+        config = replace(config, min_turns_protected=0)
+    return config
+
+
 def run_evaluation(
     instances: list[tuple[str, list[dict[str, Any]]]],
-    strategy: CompressionStrategy,
+    config: CompressionConfig,
     show_progress: bool = True,
 ) -> list[InstanceResult]:
     """Run compression evaluation across all instances.
@@ -510,34 +534,12 @@ def run_evaluation(
     Args:
         instances: List of ``(instance_id, messages)`` tuples from
             :func:`load_trajectories`.
-        strategy: The compression strategy to apply.
+        config: The compression config to apply (see :func:`build_config`).
         show_progress: Print progress to stderr when True.
 
     Returns:
         List of :class:`InstanceResult` objects, one per instance.
     """
-    config = CompressionConfig(
-        strategy=strategy,
-        target_reduction_pct={
-            CompressionStrategy.CONSERVATIVE: 0.20,
-            CompressionStrategy.MODERATE: 0.35,
-            CompressionStrategy.AGGRESSIVE: 0.55,
-        }[strategy],
-        # SWE-bench trajectories are tool-calling agent loops where turn_index
-        # rarely exceeds 1 (few user→assistant transitions). Using
-        # min_turns_protected=3 (the chat-style default) would protect every
-        # segment. Set to 0 — protection is provided by protect_system_prompt=True
-        # and the soft-protect tier (segments semantically referenced by later
-        # messages). Older tool results and reasoning blocks become compressible.
-        min_turns_protected=0,
-        protect_system_prompt=True,
-        # Run with shadow_mode=False to measure actual token reduction.
-        # This is safe for offline analysis — no provider calls are made
-        # by the eval script; compression operates only on the local messages.
-        # shadow_mode=True would always report 0% reduction by design.
-        shadow_mode=False,
-    )
-
     results: list[InstanceResult] = []
     total = len(instances)
 
@@ -752,7 +754,7 @@ def write_json_output(
     results: list[InstanceResult],
     agg: AggregateStats,
     path: Path,
-    strategy: CompressionStrategy,
+    config: CompressionConfig,
 ) -> None:
     """Write results to a JSON file for downstream processing.
 
@@ -760,12 +762,20 @@ def write_json_output(
         results: Per-instance results.
         agg: Aggregate statistics.
         path: Output file path.
-        strategy: Strategy used for the evaluation.
+        config: The exact config used for the evaluation. Recorded verbatim so
+            the results file never misrepresents how it was produced.
     """
     payload: dict[str, Any] = {
         "metadata": {
-            "strategy": strategy.value,
-            "shadow_mode": True,
+            "strategy": config.strategy.value,
+            # Report the config exactly as run. The eval forces shadow_mode off
+            # to observe compression offline; recording True here (as a prior
+            # version did) misrepresents the run.
+            "shadow_mode": config.shadow_mode,
+            "min_turns_protected": config.min_turns_protected,
+            "target_reduction_pct": config.target_reduction_pct,
+            "shipped_default_config": config.min_turns_protected
+            == get_config(config.strategy).min_turns_protected,
             "traject_version": _get_traject_version(),
         },
         "aggregate": {
@@ -842,6 +852,15 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Compression strategy to apply. Default: conservative.",
     )
     parser.add_argument(
+        "--unprotected",
+        action="store_true",
+        help=(
+            "Reproduce the legacy benchmark-only config (min_turns_protected=0). "
+            "This disables the recent-turn safety guarantee that ships by default; "
+            "its numbers do NOT describe out-of-the-box behaviour."
+        ),
+    )
+    parser.add_argument(
         "--output-json", "-o",
         type=Path,
         default=None,
@@ -862,6 +881,7 @@ def main() -> None:
     args = parser.parse_args()
 
     strategy = CompressionStrategy(args.strategy)
+    config = build_config(strategy, unprotected=args.unprotected)
 
     print(
         f"Loading trajectories from: {args.input}",
@@ -876,15 +896,20 @@ def main() -> None:
         print("ERROR: No valid instances found in input file.", file=sys.stderr)
         sys.exit(1)
 
+    config_label = (
+        "LEGACY unprotected config (min_turns_protected=0)"
+        if args.unprotected
+        else f"shipped default config (min_turns_protected={config.min_turns_protected})"
+    )
     print(
-        f"Running {strategy.value.upper()} compression (shadow mode) on "
-        f"{len(instances)} instances...",
+        f"Measuring {strategy.value.upper()} compression on {len(instances)} "
+        f"instances — {config_label}. No provider calls are made.",
         file=sys.stderr,
     )
 
     results = run_evaluation(
         instances,
-        strategy=strategy,
+        config=config,
         show_progress=not args.no_progress,
     )
     agg = compute_aggregate(results)
@@ -895,7 +920,7 @@ def main() -> None:
         print_results_plain(results, agg, strategy)
 
     if args.output_json:
-        write_json_output(results, agg, args.output_json, strategy)
+        write_json_output(results, agg, args.output_json, config)
 
 
 if __name__ == "__main__":

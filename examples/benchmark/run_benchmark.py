@@ -1,20 +1,31 @@
 #!/usr/bin/env python3
 """
-Axon Benchmark: Trajectory Compression — No API Key Required
-=============================================================
+Traject Benchmark: Trajectory Compression — No API Key Required
+===============================================================
 
-Simulates a realistic 6-step multi-tool agent trajectory and
-measures actual token reduction from Axon's compression engine.
+Simulates a realistic multi-tool agent trajectory and measures actual token
+reduction from Traject's compression engine.
 
 No LLM API key needed. Token counts use tiktoken (exact).
 The compression engine runs on real accumulated context.
 
-Usage:
-    cd /Users/aarohimathur/Desktop/projects/axon/sdk/python
-    source .venv/bin/activate
-    python ../../examples/benchmark/run_benchmark.py
+Cost honesty
+------------
+Compression reduces *input* (prompt) tokens only. The model still generates
+the same output, so output cost is **not** reduced. This benchmark therefore
+reports:
 
-Runtime: ~10 seconds
+* input-token reduction %  (what compression directly achieves),
+* total-cost reduction %    (lower — it accounts for the un-compressible
+  output tokens that every step still pays for), and
+* compression overhead     (wall-clock ms/call — local CPU, no API $, but real
+  latency that an honest evaluation must surface).
+
+Prices are sourced from ``traject.core.pricing`` (the single source of truth)
+rather than hardcoded, so they cannot drift from the SDK.
+
+Usage:
+    python examples/benchmark/run_benchmark.py
 """
 
 import json
@@ -30,16 +41,25 @@ try:
     import traject
     from traject.compression.engine import compress
     from traject.compression.strategies import CompressionConfig, CompressionStrategy
+    from traject.core.pricing import PROVIDER_PRICING
 except ImportError:
     raise SystemExit(
-        "Axon SDK not found. Run from sdk/python with .venv activated."
+        "Traject SDK not found. Run from the repo root after "
+        "`pip install -e sdk/python`."
     )
 
-# ── Pricing (gpt-4o-mini, for realistic cost projection) ─────────
-INPUT_COST_PER_TOKEN  = Decimal("0.00000015")   # $0.15 / 1M tokens
-OUTPUT_COST_PER_TOKEN = Decimal("0.0000006")    # $0.60 / 1M tokens
+# ── Pricing — sourced from the SDK's authoritative table (no duplication) ──
+_MODEL = "gpt-4o-mini"
+_PRICING = PROVIDER_PRICING[_MODEL]
+INPUT_COST_PER_TOKEN = _PRICING.input_cost_per_1m_tokens / Decimal(1_000_000)
+OUTPUT_COST_PER_TOKEN = _PRICING.output_cost_per_1m_tokens / Decimal(1_000_000)
 
-ENCODER = tiktoken.encoding_for_model("gpt-4o-mini")
+# Compression shrinks the prompt, not the completion. We model a realistic,
+# fixed completion size per step so the *total* cost reflects the output tokens
+# that are paid in full on every call regardless of compression.
+OUTPUT_TOKENS_PER_STEP = 400
+
+ENCODER = tiktoken.encoding_for_model(_MODEL)
 
 
 def count_tokens(text: str) -> int:
@@ -597,6 +617,7 @@ class StepResult:
     step: int
     baseline_tokens: int
     compressed_tokens: int
+    compress_ms: float = 0.0
 
     @property
     def tokens_saved(self) -> int:
@@ -644,13 +665,16 @@ def run_benchmark(
         for step_idx, messages in enumerate(trajectory):
             baseline_tokens = count_messages_tokens(messages)
 
+            t0 = time.perf_counter()
             result = compress(messages, config=config, task_hint=task_hint)
+            compress_ms = (time.perf_counter() - t0) * 1000.0
             compressed_tokens = count_messages_tokens(result.messages)
 
             iteration_steps.append(StepResult(
                 step=step_idx + 1,
                 baseline_tokens=baseline_tokens,
                 compressed_tokens=compressed_tokens,
+                compress_ms=compress_ms,
             ))
 
         all_step_results.append(iteration_steps)
@@ -680,64 +704,104 @@ def run_benchmark(
     avg_saved      = statistics.mean(savings_totals)
     avg_pct        = avg_saved / avg_baseline * 100 if avg_baseline else 0
 
-    avg_baseline_cost   = avg_baseline   * float(INPUT_COST_PER_TOKEN)
-    avg_compressed_cost = avg_compressed * float(INPUT_COST_PER_TOKEN)
-    avg_cost_saved      = avg_baseline_cost - avg_compressed_cost
+    in_cost = float(INPUT_COST_PER_TOKEN)
+    out_cost = float(OUTPUT_COST_PER_TOKEN)
+
+    # Output tokens are generated fresh every step and are NOT reduced by
+    # compression — they are paid in full in both the baseline and compressed
+    # runs. Including them is what separates honest *total cost* reduction from
+    # the (larger) input-token reduction.
+    output_tokens_per_run = OUTPUT_TOKENS_PER_STEP * len(trajectory)
+    output_cost_per_run = output_tokens_per_run * out_cost
+
+    avg_baseline_input_cost   = avg_baseline   * in_cost
+    avg_compressed_input_cost = avg_compressed * in_cost
+    avg_baseline_total_cost   = avg_baseline_input_cost   + output_cost_per_run
+    avg_compressed_total_cost = avg_compressed_input_cost + output_cost_per_run
+
+    input_cost_pct = (
+        (avg_baseline_input_cost - avg_compressed_input_cost)
+        / avg_baseline_input_cost * 100
+        if avg_baseline_input_cost else 0
+    )
+    total_cost_pct = (
+        (avg_baseline_total_cost - avg_compressed_total_cost)
+        / avg_baseline_total_cost * 100
+        if avg_baseline_total_cost else 0
+    )
+
+    all_steps = [s for itr in all_step_results for s in itr]
+    avg_compress_ms = statistics.mean(s.compress_ms for s in all_steps) if all_steps else 0.0
 
     summary = {
         "date": str(date.today()),
         "strategy": strategy.value,
-        "model_projected": "gpt-4o-mini",
+        "model_projected": _MODEL,
+        "pricing_last_verified": str(_PRICING.last_verified),
         "iterations": n_iterations,
         "steps_per_run": len(trajectory),
+        "output_tokens_per_step_modeled": OUTPUT_TOKENS_PER_STEP,
         "baseline": {
             "avg_input_tokens": round(avg_baseline),
-            "avg_cost_usd": round(avg_baseline_cost, 8),
+            "avg_input_cost_usd": round(avg_baseline_input_cost, 8),
+            "avg_total_cost_usd": round(avg_baseline_total_cost, 8),
         },
-        "with_axon": {
+        "with_traject": {
             "avg_input_tokens": round(avg_compressed),
-            "avg_cost_usd": round(avg_compressed_cost, 8),
+            "avg_input_cost_usd": round(avg_compressed_input_cost, 8),
+            "avg_total_cost_usd": round(avg_compressed_total_cost, 8),
         },
         "reduction": {
             "avg_tokens_saved": round(avg_saved),
             "input_tokens_pct": round(avg_pct, 1),
-            "cost_pct": round(avg_pct, 1),
+            "input_cost_pct": round(input_cost_pct, 1),
+            "total_cost_pct": round(total_cost_pct, 1),
+        },
+        "overhead": {
+            "avg_compress_ms_per_call": round(avg_compress_ms, 2),
+            "note": "local CPU (embedding) — no API cost, but real added latency",
         },
     }
 
-    return [s for itr in all_step_results for s in itr], summary
+    return all_steps, summary
 
 
 def print_summary(summary: dict) -> None:
     b = summary["baseline"]
-    a = summary["with_axon"]
+    a = summary["with_traject"]
     r = summary["reduction"]
+    o = summary["overhead"]
 
-    print(f"\n{'═'*62}")
+    print(f"\n{'═'*64}")
     print(f"  RESULTS  ({summary['iterations']} iterations × "
           f"{summary['steps_per_run']} steps)")
-    print(f"{'═'*62}")
-    print(f"  {'Metric':<32} {'Baseline':>12} {'With Axon':>12}")
-    print(f"  {'─'*32} {'─'*12} {'─'*12}")
-    print(f"  {'Avg input tokens / run':<32} "
-          f"{b['avg_input_tokens']:>12,} "
-          f"{a['avg_input_tokens']:>12,}")
-    print(f"  {'Avg input cost / run (USD)':<32} "
-          f"${b['avg_cost_usd']:>11.6f} "
-          f"${a['avg_cost_usd']:>11.6f}")
-    print(f"  {'Tokens saved / run':<32} "
-          f"{'—':>12} "
-          f"{r['avg_tokens_saved']:>+12,}")
-    print(f"  {'Input token reduction':<32} "
-          f"{'—':>12} "
-          f"{r['input_tokens_pct']:>11.1f}%")
-    print(f"{'═'*62}")
+    print(f"{'═'*64}")
+    print(f"  {'Metric':<34} {'Baseline':>12} {'Traject':>12}")
+    print(f"  {'─'*34} {'─'*12} {'─'*12}")
+    print(f"  {'Avg input tokens / run':<34} "
+          f"{b['avg_input_tokens']:>12,} {a['avg_input_tokens']:>12,}")
+    print(f"  {'Avg input cost / run (USD)':<34} "
+          f"${b['avg_input_cost_usd']:>11.6f} ${a['avg_input_cost_usd']:>11.6f}")
+    print(f"  {'Avg TOTAL cost / run (USD)':<34} "
+          f"${b['avg_total_cost_usd']:>11.6f} ${a['avg_total_cost_usd']:>11.6f}")
+    print(f"  {'(incl. un-compressible output)':<34}")
+    print(f"  {'─'*34} {'─'*12} {'─'*12}")
+    print(f"  {'Tokens saved / run':<34} {'—':>12} {r['avg_tokens_saved']:>+12,}")
+    print(f"  {'Input token reduction':<34} {'—':>12} {r['input_tokens_pct']:>11.1f}%")
+    print(f"  {'TOTAL cost reduction':<34} {'—':>12} {r['total_cost_pct']:>11.1f}%")
+    print(f"{'═'*64}")
+    print(f"  Compression overhead: {o['avg_compress_ms_per_call']:.1f} ms/call "
+          f"({o['note']})")
+    print(f"  Pricing: {summary['model_projected']} "
+          f"(last verified {summary['pricing_last_verified']}), "
+          f"{summary['output_tokens_per_step_modeled']} output tokens/step modeled")
 
 
 def print_readme_block(summary: dict) -> None:
     b = summary["baseline"]
-    a = summary["with_axon"]
+    a = summary["with_traject"]
     r = summary["reduction"]
+    o = summary["overhead"]
 
     block = f"""
 ## Benchmark
@@ -745,21 +809,27 @@ def print_readme_block(summary: dict) -> None:
 > **Workload:** 10-step code review agent (read source → security scan →
 > test coverage → dependency audit → reasoning → second security pass →
 > complexity check → documentation check → synthesis → final report)
-> **Token counting:** tiktoken (exact), projected cost at {summary["model_projected"]} pricing
+> **Token counting:** tiktoken (exact); cost at {summary["model_projected"]} pricing
+> (last verified {summary["pricing_last_verified"]}),
+> modeling {summary["output_tokens_per_step_modeled"]} output tokens/step
 > **Compression strategy:** {summary["strategy"].upper()}
 > **Iterations:** {summary["iterations"]}
 
-| Metric | Without Axon | With Axon | Reduction |
-|--------|-------------|-----------|-----------|
+| Metric | Without Traject | With Traject | Reduction |
+|--------|-----------------|--------------|-----------|
 | Input tokens per run | {b["avg_input_tokens"]:,} | {a["avg_input_tokens"]:,} | **{r["input_tokens_pct"]}%** |
-| Projected cost per run | ${b["avg_cost_usd"]:.6f} | ${a["avg_cost_usd"]:.6f} | **{r["cost_pct"]}%** |
+| Input cost per run | ${b["avg_input_cost_usd"]:.6f} | ${a["avg_input_cost_usd"]:.6f} | **{r["input_cost_pct"]}%** |
+| **Total** cost per run (incl. output) | ${b["avg_total_cost_usd"]:.6f} | ${a["avg_total_cost_usd"]:.6f} | **{r["total_cost_pct"]}%** |
 | Tokens saved per run | — | {r["avg_tokens_saved"]:,} | — |
+| Compression overhead | — | {o["avg_compress_ms_per_call"]:.1f} ms/call | — |
 
-In a multi-step agent, each LLM call re-pays for all prior tool results
-and reasoning in the context window. Axon's trajectory compression engine
-identifies stale tool outputs and completed reasoning blocks, compresses
-them before each call, and reduces input token spend by **{r["input_tokens_pct"]}%**
-on this workload — without changing the agent's final output.
+In a multi-step agent, each LLM call re-pays for all prior tool results and
+reasoning in the context window. Traject's compression engine identifies stale
+tool outputs and completed reasoning blocks and compresses them before each
+call, cutting **input** token spend by **{r["input_tokens_pct"]}%** on this
+workload. Because the model still produces the same output (which compression
+cannot shrink), the **total** cost reduction is **{r["total_cost_pct"]}%** —
+the honest figure to plan against.
 
 _Reproduced with `python examples/benchmark/run_benchmark.py` — no API key required._
 """
@@ -773,7 +843,7 @@ _Reproduced with `python examples/benchmark/run_benchmark.py` — no API key req
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Axon compression benchmark")
+    parser = argparse.ArgumentParser(description="Traject compression benchmark")
     parser.add_argument("--iterations", type=int, default=10)
     parser.add_argument("--strategy", choices=["conservative", "moderate", "aggressive"],
                         default="conservative")
