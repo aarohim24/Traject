@@ -15,7 +15,9 @@ from traject.compression.engine import _DEDUP_STUB, compress
 from traject.compression.strategies import CompressionConfig, CompressionStrategy
 
 
-def _live(strategy: CompressionStrategy = CompressionStrategy.CONSERVATIVE) -> CompressionConfig:
+def _live(
+    strategy: CompressionStrategy = CompressionStrategy.CONSERVATIVE,
+) -> CompressionConfig:
     return CompressionConfig(
         strategy=strategy,
         target_reduction_pct=0.20,
@@ -29,11 +31,15 @@ def _agent_loop_with_repeats(repeats: int) -> list[dict[str, Any]]:
     """A loop that re-reads the same large file `repeats` times."""
     big = "$ cat module.py\n" + "\n".join(f"line {i} of source code" for i in range(80))
     msgs: list[dict[str, Any]] = [{"role": "system", "content": "You are an agent."}]
-    msgs.append({"role": "user", "content": "Fix the bug in module.py at line 42 (ValueError)."})
+    msgs.append(
+        {"role": "user", "content": "Fix the bug in module.py at line 42 (ValueError)."}
+    )
     for i in range(repeats):
         msgs.append({"role": "assistant", "content": f"Step {i}: read module.py."})
         msgs.append({"role": "tool", "content": big})
-    msgs.append({"role": "assistant", "content": "Now I will apply the fix and run tests."})
+    msgs.append(
+        {"role": "assistant", "content": "Now I will apply the fix and run tests."}
+    )
     msgs.append({"role": "tool", "content": "$ pytest\n1 passed"})
     return msgs
 
@@ -79,9 +85,9 @@ class TestDedup:
         ]
         result = compress(msgs, _live())
         # The preserved early copy must not be stubbed.
-        assert any(
-            m.get("content") == big for m in result.messages
-        ), "preserved duplicate should remain verbatim"
+        assert any(m.get("content") == big for m in result.messages), (
+            "preserved duplicate should remain verbatim"
+        )
 
 
 class TestInflationGuard:
@@ -107,3 +113,52 @@ class TestInflationGuard:
             result = compress(msgs, _live())
             assert result.compressed_tokens <= result.original_tokens
             assert result.tokens_saved >= 0
+
+
+class TestPreprocessingSavingsAreReported:
+    """The reported baseline must include lossless preprocessing savings.
+
+    Regression guard: ``original_tokens`` is measured on the RAW input, BEFORE
+    the prose filter and JSON columnarizer run, so their savings appear in
+    ``compression_ratio`` and ``tokens_saved`` rather than silently shrinking
+    the baseline.
+    """
+
+    def test_prose_filler_savings_surfaced(self) -> None:
+        # An assistant turn padded with filler the prose filter removes.
+        filler = (
+            "Certainly! It's worth noting that I think the answer is 42. "
+            "Let me know if you have any questions!"
+        )
+        msgs: list[dict[str, Any]] = [
+            {"role": "system", "content": "Sys."},
+            {"role": "user", "content": "What is the answer?"},
+            {"role": "assistant", "content": filler},
+            {"role": "user", "content": "Thanks, and one more thing."},
+            {"role": "assistant", "content": filler},
+            {"role": "user", "content": "Done."},
+        ]
+        result = compress(msgs, _live())
+        # The prose filter strips filler from the older assistant turn, so the
+        # pipeline must report a positive, lossless reduction.
+        assert result.tokens_saved > 0
+        assert result.compression_ratio > 0.0
+        assert result.compressed_tokens < result.original_tokens
+
+    def test_json_columnarization_savings_surfaced(self) -> None:
+        import json
+
+        big_array = json.dumps(
+            [
+                {"id": i, "name": f"item_{i}", "status": "ok", "value": i * 7}
+                for i in range(40)
+            ]
+        )
+        msgs: list[dict[str, Any]] = [{"role": "system", "content": "Sys."}]
+        msgs.append({"role": "tool", "content": big_array})
+        for i in range(5):
+            msgs.append({"role": "user", "content": f"q{i}"})
+            msgs.append({"role": "assistant", "content": f"a{i}"})
+        result = compress(msgs, _live())
+        assert result.tokens_saved > 0
+        assert result.compressed_tokens < result.original_tokens
