@@ -12,6 +12,7 @@ this is acceptable.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
@@ -20,6 +21,7 @@ import structlog
 import tiktoken
 from mcp.server.fastmcp import FastMCP
 
+from traject.compression.ccr import CCRStore
 from traject.compression.engine import compress
 from traject.compression.strategies import (
     CompressionConfig,
@@ -59,6 +61,32 @@ class _SessionStats:
 
 
 _session: _SessionStats = _SessionStats()
+
+# ---------------------------------------------------------------------------
+# CCR store — lazily initialized from TRAJECT_REDIS_URL env var
+# ---------------------------------------------------------------------------
+
+_ccr_store: CCRStore | None = None
+
+
+def _get_ccr_store() -> CCRStore | None:
+    """Return the module-level CCR store, initializing it on first call.
+
+    Reads ``TRAJECT_REDIS_URL`` from the environment.  Returns ``None`` when
+    the variable is unset or when the ``redis`` package is not installed.
+    """
+    global _ccr_store
+    if _ccr_store is not None:
+        return _ccr_store
+    redis_url = os.environ.get("TRAJECT_REDIS_URL", "")
+    if not redis_url:
+        return None
+    try:
+        _ccr_store = CCRStore.from_url(redis_url)
+    except Exception:
+        return None
+    return _ccr_store
+
 
 # ---------------------------------------------------------------------------
 # MCP server
@@ -311,6 +339,71 @@ def traject_budget(
         "budget_remaining": remaining,
         "pct_used": pct_used,
         "status": status,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Tool: traject_retrieve
+# ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+def traject_retrieve(hash_prefix: str) -> dict[str, Any]:
+    """Retrieve content that was previously compressed via CCR.
+
+    When Traject's CCR (Content-Compress-Retrieve) mode is active, dropped
+    segments are stored in Redis and replaced with a ``<<ccr:HASH>>`` stub.
+    This tool fetches the original full content by its hash prefix.
+
+    Args:
+        hash_prefix: The 16-character hash extracted from a ``<<ccr:HASH>>``
+            stub.  Pass the value between ``<<ccr:`` and ``>>``.
+
+    Returns:
+        dict with keys:
+
+        - **found** (bool): ``True`` when content was retrieved successfully
+        - **content** (str): the original content, or ``""`` when not found
+        - **hash_prefix** (str): echoed back for correlation
+        - **error** (str | None): error message when retrieval failed
+    """
+    store = _get_ccr_store()
+    if store is None:
+        return {
+            "found": False,
+            "content": "",
+            "hash_prefix": hash_prefix,
+            "error": (
+                "CCR store not configured. "
+                "Set TRAJECT_REDIS_URL to enable CCR retrieval."
+            ),
+        }
+
+    try:
+        content = store.retrieve(hash_prefix)
+    except Exception as exc:
+        _log.warning("traject.mcp.ccr_retrieve_error", error=str(exc))
+        return {
+            "found": False,
+            "content": "",
+            "hash_prefix": hash_prefix,
+            "error": f"Retrieval failed: {exc}",
+        }
+
+    if content is None:
+        return {
+            "found": False,
+            "content": "",
+            "hash_prefix": hash_prefix,
+            "error": "Content not found or expired.",
+        }
+
+    _log.info("traject.mcp.ccr_retrieved", hash_prefix=hash_prefix, length=len(content))
+    return {
+        "found": True,
+        "content": content,
+        "hash_prefix": hash_prefix,
+        "error": None,
     }
 
 

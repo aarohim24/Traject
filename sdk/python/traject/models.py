@@ -264,6 +264,9 @@ class CompressionResult(BaseModel):
             soft-protect tier by the semantic reference dependency pass.
             These segments require a lower composite score (< 0.15) to be
             compressed versus the default threshold.
+        segments_ccr_stubbed: Number of segments stored in the CCR Redis
+            store and replaced with a ``<<ccr:HASH>>`` stub.  Zero when no
+            :class:`~traject.compression.ccr.CCRStore` was provided.
     """
 
     original_tokens: int
@@ -281,6 +284,7 @@ class CompressionResult(BaseModel):
     cache_hits: int = 0
     cache_hit_rate: float = 0.0
     segments_soft_protected: int = 0
+    segments_ccr_stubbed: int = 0
 
     @field_validator("compression_ratio", mode="after")
     @classmethod

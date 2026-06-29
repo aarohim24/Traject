@@ -23,8 +23,14 @@ from typing import Any, Literal
 import structlog
 
 from traject.classifier.artifact_type import ArtifactType, classify_sequence
+from traject.compression import (
+    json_columnarizer,
+    prose_filter,
+    tool_result_classifier,
+)
 from traject.compression.adapters.base import FrameworkAdapter
 from traject.compression.adapters.raw_openai import RawOpenAIAdapter
+from traject.compression.ccr import CCRStore
 from traject.compression.relevance_scorer import (
     CompressionCache,
     compute_semantic_reference_scores,
@@ -82,124 +88,42 @@ def _has_high_information_content(content: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Structured tool result summarization helpers
+# Message preprocessing — prose filter + JSON columnarizer
 # ---------------------------------------------------------------------------
 
 
-def _contains_file_paths(content: str) -> bool:
-    """Return True if *content* appears to contain file-system paths.
+def _preprocess_messages(
+    messages: list[dict[str, Any]],
+    artifact_types: list[ArtifactType],
+) -> list[dict[str, Any]]:
+    """Apply content-aware preprocessing to messages before token counting.
+
+    - ASSISTANT_MESSAGE segments: prose filler is stripped.
+    - TOOL_RESULT segments: JSON arrays are columnarized when doing so is
+      strictly shorter.
 
     Args:
-        content: Raw segment text.
+        messages: Normalized message list.
+        artifact_types: Parallel artifact classifications (same length).
 
     Returns:
-        ``True`` when a path separator coexists with a recognised code extension.
+        A new list with preprocessed content for eligible segments.
+        Original messages are never mutated.
     """
-    has_sep = "/" in content or "\\" in content
-    if not has_sep:
-        return False
-    return any(ext in content for ext in _CODE_EXTENSIONS)
-
-
-def _contains_error_text(content: str) -> bool:
-    """Return True if *content* contains exception or error markers.
-
-    Args:
-        content: Raw segment text.
-
-    Returns:
-        ``True`` when ``Error:``, ``Exception:``, or ``Traceback`` appear.
-    """
-    return "Error:" in content or "Exception:" in content or "Traceback" in content
-
-
-def _contains_code_blocks(content: str) -> bool:
-    """Return True if *content* contains fenced code blocks or indented code.
-
-    Args:
-        content: Raw segment text.
-
-    Returns:
-        ``True`` when triple backticks or 4-space indentation are present.
-    """
-    if "```" in content:
-        return True
-    return any(line.startswith("    ") for line in content.splitlines())
-
-
-def _summarize_tool_result(content: str) -> str:
-    """Produce a structured summary of a tool result segment.
-
-    Extracts the most informative portion of *content* based on detected type:
-    file paths, error text, code blocks, or prose (first + last sentence).
-    The summary body is capped at 300 characters; a removal count suffix is
-    always appended.
-
-    Args:
-        content: Full text of the tool result segment.
-
-    Returns:
-        A shortened string ending with
-        ``" [summarized by Traject, N chars removed]"``.
-    """
-    summary_body: str
-
-    if _contains_file_paths(content):
-        path_lines: list[str] = []
-        for line in content.splitlines():
-            stripped = line.strip()
-            if ("/" in stripped or "\\" in stripped) and any(
-                ext in stripped for ext in _CODE_EXTENSIONS
-            ):
-                path_lines.append(stripped)
-                if len(path_lines) >= 5:
-                    break
-        joined = "\n".join(path_lines)
-        summary_body = (joined + "\n...") if path_lines else content[:100]
-
-    elif _contains_error_text(content):
-        lines = content.splitlines()
-        error_idx: int | None = None
-        for idx, line in enumerate(lines):
-            if "Error:" in line or "Exception:" in line or "Traceback" in line:
-                error_idx = idx
-                break
-        if error_idx is not None:
-            summary_body = "\n".join(lines[error_idx : error_idx + 3])
-        else:
-            summary_body = content[:100]
-
-    elif _contains_code_blocks(content):
-        if "```" in content:
-            block_lines: list[str] = []
-            inside = False
-            for line in content.splitlines():
-                if line.strip().startswith("```"):
-                    inside = not inside
-                    continue
-                if inside:
-                    block_lines.append(line)
-                    if len(block_lines) >= 3:
-                        break
-            summary_body = "\n".join(block_lines) if block_lines else content[:100]
-        else:
-            indented = [ln for ln in content.splitlines() if ln.startswith("    ")]
-            summary_body = "\n".join(indented[:3]) if indented else content[:100]
-
-    else:
-        sentences = [
-            s.strip() for s in re.split(r"(?<=[.!?])\s+", content.strip()) if s.strip()
-        ]
-        if len(sentences) <= 1:
-            summary_body = sentences[0] if sentences else content[:100]
-        else:
-            summary_body = sentences[0] + " " + sentences[-1]
-
-    if len(summary_body) > 300:
-        summary_body = summary_body[:300]
-
-    chars_removed = len(content) - len(summary_body)
-    return f"{summary_body} [summarized by Traject, {chars_removed} chars removed]"
+    result: list[dict[str, Any]] = []
+    for msg, art in zip(messages, artifact_types, strict=False):
+        content = msg.get("content", "")
+        if isinstance(content, str):
+            if art == ArtifactType.ASSISTANT_MESSAGE:
+                filtered = prose_filter.strip_filler(content)
+                if filtered != content:
+                    msg = {**msg, "content": filtered}
+            elif art == ArtifactType.TOOL_RESULT:
+                columnarized = json_columnarizer.columnarize(content)
+                if columnarized != content:
+                    msg = {**msg, "content": columnarized}
+        result.append(msg)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -533,6 +457,7 @@ def compress(
     task_hint: str | None = None,
     adapter: FrameworkAdapter | None = None,
     model: str | None = None,
+    ccr_store: CCRStore | None = None,
 ) -> CompressionResult:
     """Run the full 8-step Traject compression pipeline on *messages*.
 
@@ -548,6 +473,11 @@ def compress(
             the resulting token counts are APPROXIMATE — tiktoken does not
             implement those providers' tokenizers, so the counts must not be
             presented as exact.
+        ccr_store: Optional :class:`~traject.compression.ccr.CCRStore` for
+            reversible compression.  When provided, segments that would
+            otherwise be dropped are stored in Redis and replaced with a
+            short ``<<ccr:HASH>>`` stub.  The agent can recover the original
+            content via the ``traject_retrieve`` MCP tool.
 
     Returns:
         A :class:`~traject.models.CompressionResult` with token counts,
@@ -568,8 +498,13 @@ def compress(
     # Step 2: CLASSIFY
     artifact_types: list[ArtifactType] = classify_sequence(normalized)
 
-    # Step 3: PARSE
-    segments: list[Segment] = parse(normalized, artifact_types, model=model)
+    # Step 2a: PREPROCESS — prose filter (ASSISTANT) + JSON columnarizer (TOOL_RESULT)
+    preprocessed: list[dict[str, Any]] = _preprocess_messages(
+        normalized, artifact_types
+    )
+
+    # Step 3: PARSE (token counts reflect preprocessed content)
+    segments: list[Segment] = parse(preprocessed, artifact_types, model=model)
     original_tokens: int = sum(s.token_count for s in segments)
 
     # Step 4: PROTECT — last N turns
@@ -632,12 +567,13 @@ def compress(
     summarized: list[Segment] = []
     dropped: list[Segment] = []
     compressed_messages: list[dict[str, Any]] = []
+    ccr_stubbed_count: int = 0
 
     enc = _encoding_for_model(model)
 
     # Lossless dedup runs first: it applies even to otherwise-protected duplicate
     # tool results because the information is preserved in the retained later copy.
-    dedup_stub_indices, dedup_keep_verbatim = _compute_dedup(segments, normalized)
+    dedup_stub_indices, dedup_keep_verbatim = _compute_dedup(segments, preprocessed)
 
     for seg, score in zip(segments, scores, strict=False):
         # Earlier exact-duplicate tool output → replace with a short reference.
@@ -650,7 +586,7 @@ def compress(
         # no information is lost.
         if seg.protected or seg.index in dedup_keep_verbatim:
             retained.append(seg)
-            compressed_messages.append(normalized[seg.index])
+            compressed_messages.append(preprocessed[seg.index])
             continue
 
         if seg.soft_protected:
@@ -661,9 +597,10 @@ def compress(
 
         if decision == "RETAIN":
             retained.append(seg)
-            compressed_messages.append(normalized[seg.index])
+            compressed_messages.append(preprocessed[seg.index])
         elif decision == "SUMMARIZE":
-            summary = _summarize_tool_result(seg.content)
+            # Command-aware domain compressor replaces the old generic summarizer.
+            summary = tool_result_classifier.summarize(seg.content)
             # Inflation guard: never substitute a replacement that is not
             # strictly smaller than the original (short content can summarize
             # to something larger once the marker suffix is appended).
@@ -672,9 +609,16 @@ def compress(
                 compressed_messages.append({"role": seg.role, "content": summary})
             else:
                 retained.append(seg)
-                compressed_messages.append(normalized[seg.index])
+                compressed_messages.append(preprocessed[seg.index])
         else:  # DROP
-            dropped.append(seg)
+            if ccr_store is not None and seg.content.strip():
+                # CCR: store full content in Redis, inject a retrieval stub.
+                stub = ccr_store.store(seg.content)
+                summarized.append(seg)
+                compressed_messages.append({"role": seg.role, "content": stub})
+                ccr_stubbed_count += 1
+            else:
+                dropped.append(seg)
 
     compressed_tokens: int = sum(
         len(
@@ -694,7 +638,7 @@ def compress(
     # Step 7: VALIDATE
     try:
         _validate_compression_result(
-            normalized, compressed_messages, artifact_types, config
+            preprocessed, compressed_messages, artifact_types, config
         )
     except TrajectCompressionError as exc:
         logger.warning("traject.compression.validation_failed", error=str(exc))
@@ -716,6 +660,7 @@ def compress(
             cache_hits=cache.hits,
             cache_hit_rate=cache.hit_rate,
             segments_soft_protected=segments_soft_protected_count,
+            segments_ccr_stubbed=0,
         )
 
     # Step 8: SHADOW MODE
@@ -745,6 +690,7 @@ def compress(
         cache_hits=cache.hits,
         cache_hit_rate=round(cache.hit_rate, 4),
         segments_soft_protected=segments_soft_protected_count,
+        segments_ccr_stubbed=ccr_stubbed_count,
     )
 
     return CompressionResult(
@@ -763,4 +709,5 @@ def compress(
         cache_hits=cache.hits,
         cache_hit_rate=cache.hit_rate,
         segments_soft_protected=segments_soft_protected_count,
+        segments_ccr_stubbed=ccr_stubbed_count,
     )
