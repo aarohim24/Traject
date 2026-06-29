@@ -18,10 +18,59 @@ from traject.classifier.artifact_type import ArtifactType
 from traject.exceptions import TrajectCompressionError
 from traject.models import Segment
 
+# Default encoding preserved for backward compatibility (older OpenAI models and
+# all callers that do not pass an explicit model).
+_DEFAULT_ENCODING = "cl100k_base"
+
+
+def _encoding_for_model(model: str | None) -> tiktoken.Encoding:
+    """Return the tiktoken encoding appropriate for *model*.
+
+    Selection rules:
+
+    * ``None`` -> ``cl100k_base`` (preserves prior behaviour exactly).
+    * gpt-4o / gpt-4o-mini / o-series (o1, o3, ...) -> ``o200k_base``.
+    * Older OpenAI models (gpt-4, gpt-3.5-turbo, ...) -> ``cl100k_base``.
+    * Non-OpenAI providers (Anthropic ``claude-*``, Google ``gemini-*``) ->
+      ``cl100k_base`` as an APPROXIMATION only. These providers use entirely
+      different tokenizers, so the resulting token counts are estimates and
+      must NOT be presented as exact.
+
+    The function never raises: any lookup failure falls back to the default
+    encoding.
+
+    Args:
+        model: Model identifier, or ``None`` for the legacy default.
+
+    Returns:
+        A ``tiktoken.Encoding`` instance (cached internally by tiktoken).
+    """
+    if model is None:
+        return tiktoken.get_encoding(_DEFAULT_ENCODING)
+
+    name = model.lower()
+
+    # Non-OpenAI providers: tiktoken has no matching tokenizer. Fall back to
+    # cl100k_base as a rough APPROXIMATION (counts are estimates, not exact).
+    if name.startswith(("claude", "anthropic", "gemini", "models/gemini")):
+        return tiktoken.get_encoding(_DEFAULT_ENCODING)
+
+    # gpt-4o family and o-series reasoning models use o200k_base.
+    if name.startswith(("gpt-4o", "o1", "o3", "o4")) or name.startswith("chatgpt-4o"):
+        return tiktoken.get_encoding("o200k_base")
+
+    # Prefer tiktoken's own model mapping for known OpenAI models, with a safe
+    # fallback to the legacy default for anything unrecognised.
+    try:
+        return tiktoken.encoding_for_model(model)
+    except KeyError:
+        return tiktoken.get_encoding(_DEFAULT_ENCODING)
+
 
 def parse(
     messages: list[dict[str, Any]],
     artifact_types: list[ArtifactType],
+    model: str | None = None,
 ) -> list[Segment]:
     """Parse a message list into enriched Segment objects.
 
@@ -38,6 +87,11 @@ def parse(
             values, one per message.  Must be produced by calling
             :func:`~traject.classifier.artifact_type.classify_sequence` on the
             *same* ``messages`` list to guarantee index alignment.
+        model: Optional model identifier used to select the tiktoken encoding.
+            Defaults to ``None``, which preserves the legacy ``cl100k_base``
+            behaviour exactly.  For Anthropic (``claude-*``) and Gemini models
+            the token counts are APPROXIMATE — tiktoken does not implement
+            those providers' tokenizers.
 
     Returns:
         List of :class:`~traject.models.Segment` objects of the same length as
@@ -57,7 +111,7 @@ def parse(
             f"the same messages array."
         )
 
-    enc = tiktoken.get_encoding("cl100k_base")  # tiktoken caches internally
+    enc = _encoding_for_model(model)  # tiktoken caches encodings internally
     segments: list[Segment] = []
     turn_index = 0
     last_role: str | None = None

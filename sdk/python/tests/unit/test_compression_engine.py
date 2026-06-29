@@ -376,8 +376,14 @@ class TestLiveCompression:
 
     def test_live_mode_summarize_produces_traject_marker(self) -> None:
         """SUMMARIZE decision appends '[summarized by Traject]' to truncated content."""
-        # TOOL_RESULT with turns_ago > 3 and score < 0.30 → SUMMARIZE (CONSERVATIVE)
-        tool_content = "Tool output data: " + "x" * 200  # content > 100 chars
+        # TOOL_RESULT with turns_ago > 3 and score < 0.30 → SUMMARIZE (CONSERVATIVE).
+        # Multi-sentence prose so the first+last-sentence summary is strictly
+        # smaller than the original (otherwise the inflation guard retains it).
+        tool_content = (
+            "First informative sentence about the result. "
+            + "Filler middle sentence with redundant detail. " * 40
+            + "Final concluding sentence."
+        )
         msgs = [
             {"role": "system", "content": "System."},
             {"role": "tool", "content": tool_content},
@@ -709,8 +715,18 @@ class TestDecisionBranchesViaCompress:
         # Build a long enough conversation so tool message is at turn 0,
         # max_turn is high enough that turns_ago > 3
         msgs: list[dict[str, Any]] = [{"role": "system", "content": "System."}]
-        # Tool message at the beginning (turn_index will be 0)
-        msgs.append({"role": "tool", "content": "Tool output: " + "data " * 50})
+        # Tool message at the beginning (turn_index will be 0). Multi-sentence so
+        # the summary is strictly smaller than the original (inflation guard).
+        msgs.append(
+            {
+                "role": "tool",
+                "content": (
+                    "Result header sentence. "
+                    + "Redundant detail sentence. " * 40
+                    + "Trailing summary sentence."
+                ),
+            }
+        )
         # Add 5 user/assistant pairs so max_turn reaches 5 (turns_ago = 5 > 3)
         for i in range(5):
             msgs.append({"role": "user", "content": f"Question {i}"})
@@ -1190,3 +1206,48 @@ class TestDynamicProtection:
         assert any(tool_content in str(c) for c in result_contents), (
             "Dynamically protected segment was incorrectly compressed."
         )
+
+
+class TestEncodingForModel:
+    """Tests for FIX H4 — model-aware tokenizer selection."""
+
+    def test_gpt4o_differs_from_gpt35(self) -> None:
+        """gpt-4o uses o200k_base; gpt-3.5-turbo uses cl100k_base."""
+        from traject.compression.segment_parser import _encoding_for_model
+
+        enc_4o = _encoding_for_model("gpt-4o")
+        enc_35 = _encoding_for_model("gpt-3.5-turbo")
+        assert enc_4o.name != enc_35.name
+        assert enc_4o.name == "o200k_base"
+        assert enc_35.name == "cl100k_base"
+
+    def test_none_preserves_legacy_cl100k(self) -> None:
+        """model=None must yield the historical cl100k_base encoding."""
+        from traject.compression.segment_parser import _encoding_for_model
+
+        assert _encoding_for_model(None).name == "cl100k_base"
+
+    def test_anthropic_falls_back_to_cl100k_approximation(self) -> None:
+        """Anthropic has no tiktoken tokenizer; approximate with cl100k_base."""
+        from traject.compression.segment_parser import _encoding_for_model
+
+        assert (
+            _encoding_for_model("claude-3-5-sonnet-20241022").name == "cl100k_base"
+        )
+
+    def test_gemini_falls_back_to_cl100k_approximation(self) -> None:
+        from traject.compression.segment_parser import _encoding_for_model
+
+        assert _encoding_for_model("gemini-1.5-pro").name == "cl100k_base"
+
+    def test_compress_model_none_matches_prior_token_counts(self) -> None:
+        """Passing model=None must produce identical token counts to default."""
+        msgs = _msgs(
+            ("system", "You are a helpful assistant."),
+            ("user", "Hello, can you help me with my code?"),
+            ("assistant", "Of course! What do you need help with?"),
+        )
+        config = _shadow_config()
+        baseline = compress(msgs, config)
+        with_none = compress(msgs, config, model=None)
+        assert with_none.original_tokens == baseline.original_tokens

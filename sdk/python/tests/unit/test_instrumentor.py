@@ -125,6 +125,27 @@ class TestInstrumentDecorator:
             result = call(messages=[{"role": "user", "content": "hi"}])
         assert result is resp
 
+    def test_generic_compress_exception_fails_open(self) -> None:
+        """A NON-TrajectError from compress() must NOT break the user's call.
+
+        Regression for the fail-closed bug: tiktoken's first-use download,
+        KeyError/ValueError in parsing/scoring, etc. previously escaped the
+        TrajectError-only guard and aborted the request before it was made.
+        """
+        resp = _mock_response()
+
+        @traject.instrument(feature_tag="fail-open-test", shadow_mode=False)
+        def call(messages: list) -> Any:
+            return resp
+
+        for exc in (RuntimeError("network"), ValueError("bad"), KeyError("k")):
+            with (
+                patch("traject.core.instrumentor.compress", side_effect=exc),
+                patch("traject.core.instrumentor.emit_span"),
+            ):
+                result = call(messages=[{"role": "user", "content": "hi"}])
+            assert result is resp, f"call broke on {type(exc).__name__}"
+
     def test_emits_span_after_call(self) -> None:
         spans: list[Any] = []
         resp = _mock_response()
@@ -216,3 +237,124 @@ class TestPatch:
             )
         assert result is resp
         assert len(spans) == 1
+
+
+class TestRouterApplication:
+    """Tests for FIX H1 — router decisions must be applied to the outbound call."""
+
+    @staticmethod
+    def _decision(selected: str, original: str) -> Any:
+        from traject.router.routing_table import (
+            ComplexityTier,
+            ModelTier,
+            RoutingDecision,
+        )
+        from traject.router.task_classifier import TaskType
+
+        return RoutingDecision(
+            original_model=original,
+            selected_model=selected,
+            task_type=TaskType.SUMMARIZATION,
+            complexity_score=0.1,
+            complexity_tier=ComplexityTier.LOW,
+            model_tier=ModelTier.TIER_1,
+            routing_rule="summarization.low → tier_1",
+            cost_delta_pct=-50.0,
+            ab_test_group=None,
+        )
+
+    def test_selected_model_substituted_into_kwargs(self) -> None:
+        """When the router picks a different model, fn must receive it in kwargs."""
+        received: dict[str, Any] = {}
+        resp = _mock_response()
+
+        @traject.instrument(feature_tag="router-test", shadow_mode=True)
+        def call(messages: list, model: str) -> Any:
+            received["model"] = model
+            return resp
+
+        fake_router = SimpleNamespace(
+            route=lambda messages, requested: self._decision(
+                "gpt-4o-mini", requested
+            )
+        )
+        with (
+            patch("traject.core.instrumentor._router", fake_router),
+            patch("traject.core.instrumentor.emit_span"),
+        ):
+            call(messages=[{"role": "user", "content": "hi"}], model="gpt-4o")
+
+        assert received["model"] == "gpt-4o-mini"
+
+    @pytest.mark.asyncio
+    async def test_selected_model_substituted_async(self) -> None:
+        received: dict[str, Any] = {}
+        resp = _mock_response()
+
+        @traject.instrument(feature_tag="router-async", shadow_mode=True)
+        async def call_async(messages: list, model: str) -> Any:
+            received["model"] = model
+            return resp
+
+        fake_router = SimpleNamespace(
+            route=lambda messages, requested: self._decision(
+                "gpt-4o-mini", requested
+            )
+        )
+        with (
+            patch("traject.core.instrumentor._router", fake_router),
+            patch("traject.core.instrumentor.emit_span"),
+        ):
+            await call_async(
+                messages=[{"role": "user", "content": "hi"}], model="gpt-4o"
+            )
+
+        assert received["model"] == "gpt-4o-mini"
+
+    def test_router_error_does_not_break_call(self) -> None:
+        """A router that raises must fail OPEN — original model is used."""
+        received: dict[str, Any] = {}
+        resp = _mock_response()
+
+        @traject.instrument(feature_tag="router-fail", shadow_mode=True)
+        def call(messages: list, model: str) -> Any:
+            received["model"] = model
+            return resp
+
+        def boom(messages: Any, requested: Any) -> Any:
+            raise RuntimeError("router exploded")
+
+        fake_router = SimpleNamespace(route=boom)
+        with (
+            patch("traject.core.instrumentor._router", fake_router),
+            patch("traject.core.instrumentor.emit_span"),
+        ):
+            result = call(
+                messages=[{"role": "user", "content": "hi"}], model="gpt-4o"
+            )
+
+        assert result is resp
+        assert received["model"] == "gpt-4o"
+
+    def test_positional_model_not_substituted(self) -> None:
+        """Model passed positionally must not be overridden (no position guessing)."""
+        received: dict[str, Any] = {}
+        resp = _mock_response()
+
+        @traject.instrument(feature_tag="router-positional", shadow_mode=True)
+        def call(messages: list, model: str) -> Any:
+            received["model"] = model
+            return resp
+
+        fake_router = SimpleNamespace(
+            route=lambda messages, requested: self._decision(
+                "gpt-4o-mini", requested
+            )
+        )
+        with (
+            patch("traject.core.instrumentor._router", fake_router),
+            patch("traject.core.instrumentor.emit_span"),
+        ):
+            call([{"role": "user", "content": "hi"}], "gpt-4o")
+
+        assert received["model"] == "gpt-4o"

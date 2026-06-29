@@ -298,24 +298,51 @@ def instrument(
                 if messages:
                     try:
                         compression_result = compress(messages, config)
-                    except TrajectError as exc:
+                    except Exception as exc:  # noqa: BLE001 — must fail OPEN
+                        # A cost optimizer must never break the call it optimizes.
+                        # tiktoken's first-use download, parsing/scoring edge cases,
+                        # etc. can raise non-TrajectError; swallow everything and
+                        # fall through to the original request unmodified.
                         _logger.warning("traject.compression.failed", error=str(exc))
+                        compression_result = None
 
-                # Apply router if configured — logs and records routing decision
+                # Apply router if configured — computes, logs, and substitutes
+                # the selected model into the outbound call. Must FAIL OPEN: any
+                # error here falls through to the original, unmodified kwargs.
                 if _router is not None and messages is not None:
-                    requested_model: str = kwargs.get("model", "unknown") or "unknown"
-                    routing_decision = _router.route(messages, requested_model)
-                    _logger.info(
-                        "traject.router.decision",
-                        selected_model=routing_decision.selected_model,
-                        original_model=routing_decision.original_model,
-                        task_type=routing_decision.task_type,
-                        complexity_tier=routing_decision.complexity_tier,
-                        routing_rule=routing_decision.routing_rule,
-                        cost_delta_pct=routing_decision.cost_delta_pct,
-                    )
+                    try:
+                        requested_model: str = (
+                            kwargs.get("model", "unknown") or "unknown"
+                        )
+                        routing_decision = _router.route(messages, requested_model)
+                        applied = False
+                        if routing_decision.selected_model != requested_model:
+                            if "model" in kwargs:
+                                kwargs["model"] = routing_decision.selected_model
+                                applied = True
+                            else:
+                                # Model was passed positionally — we will not
+                                # guess argument positions, so routing is skipped.
+                                _logger.info(
+                                    "traject.router.not_applied_positional_model",
+                                    selected_model=routing_decision.selected_model,
+                                    original_model=routing_decision.original_model,
+                                )
+                        _logger.info(
+                            "traject.router.decision",
+                            selected_model=routing_decision.selected_model,
+                            original_model=routing_decision.original_model,
+                            task_type=routing_decision.task_type,
+                            complexity_tier=routing_decision.complexity_tier,
+                            routing_rule=routing_decision.routing_rule,
+                            cost_delta_pct=routing_decision.cost_delta_pct,
+                            applied=applied,
+                        )
+                    except Exception as exc:  # noqa: BLE001 — must fail OPEN
+                        # A cost optimizer must never break the call it optimizes.
+                        _logger.warning("traject.router.failed", error=str(exc))
 
-                # Call original function with original arguments
+                # Call original function (with substituted model if routing applied)
                 response = await fn(*args, **kwargs)
 
                 # Run post-call pipeline (never raises)
@@ -347,28 +374,57 @@ def instrument(
                 if messages:
                     try:
                         compression_result = compress(messages, config)
-                    except TrajectError as exc:
+                    except Exception as exc:  # noqa: BLE001 — must fail OPEN
+                        # A cost optimizer must never break the call it optimizes.
+                        # tiktoken's first-use download, parsing/scoring edge cases,
+                        # etc. can raise non-TrajectError; swallow everything and
+                        # fall through to the original request unmodified.
                         _logger.warning("traject.compression.failed", error=str(exc))
+                        compression_result = None
 
-                # Apply router if configured — logs and records routing decision
+                # Apply router if configured — computes, logs, and substitutes
+                # the selected model into the outbound call. Must FAIL OPEN: any
+                # error here falls through to the original, unmodified kwargs.
                 if _router is not None and messages is not None:
-                    requested_model_sync: str = (
-                        kwargs.get("model", "unknown") or "unknown"
-                    )
-                    routing_decision_sync = _router.route(
-                        messages, requested_model_sync
-                    )
-                    _logger.info(
-                        "traject.router.decision",
-                        selected_model=routing_decision_sync.selected_model,
-                        original_model=routing_decision_sync.original_model,
-                        task_type=routing_decision_sync.task_type,
-                        complexity_tier=routing_decision_sync.complexity_tier,
-                        routing_rule=routing_decision_sync.routing_rule,
-                        cost_delta_pct=routing_decision_sync.cost_delta_pct,
-                    )
+                    try:
+                        requested_model_sync: str = (
+                            kwargs.get("model", "unknown") or "unknown"
+                        )
+                        routing_decision_sync = _router.route(
+                            messages, requested_model_sync
+                        )
+                        applied_sync = False
+                        if routing_decision_sync.selected_model != requested_model_sync:
+                            if "model" in kwargs:
+                                kwargs["model"] = routing_decision_sync.selected_model
+                                applied_sync = True
+                            else:
+                                # Model was passed positionally — we will not
+                                # guess argument positions, so routing is skipped.
+                                _logger.info(
+                                    "traject.router.not_applied_positional_model",
+                                    selected_model=(
+                                        routing_decision_sync.selected_model
+                                    ),
+                                    original_model=(
+                                        routing_decision_sync.original_model
+                                    ),
+                                )
+                        _logger.info(
+                            "traject.router.decision",
+                            selected_model=routing_decision_sync.selected_model,
+                            original_model=routing_decision_sync.original_model,
+                            task_type=routing_decision_sync.task_type,
+                            complexity_tier=routing_decision_sync.complexity_tier,
+                            routing_rule=routing_decision_sync.routing_rule,
+                            cost_delta_pct=routing_decision_sync.cost_delta_pct,
+                            applied=applied_sync,
+                        )
+                    except Exception as exc:  # noqa: BLE001 — must fail OPEN
+                        # A cost optimizer must never break the call it optimizes.
+                        _logger.warning("traject.router.failed", error=str(exc))
 
-                # Call original function
+                # Call original function (with substituted model if routing applied)
                 response = fn(*args, **kwargs)
 
                 # Run post-call pipeline

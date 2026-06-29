@@ -21,7 +21,6 @@ import re
 from typing import Any, Literal
 
 import structlog
-import tiktoken
 
 from traject.classifier.artifact_type import ArtifactType, classify_sequence
 from traject.compression.adapters.base import FrameworkAdapter
@@ -31,7 +30,7 @@ from traject.compression.relevance_scorer import (
     compute_semantic_reference_scores,
     score_segments,
 )
-from traject.compression.segment_parser import parse
+from traject.compression.segment_parser import _encoding_for_model, parse
 from traject.compression.strategies import (
     CompressionConfig,
     CompressionStrategy,
@@ -350,6 +349,59 @@ def _compute_substring_protection(
     return protected_indices
 
 
+# ---------------------------------------------------------------------------
+# Lossless redundant tool-result deduplication
+# ---------------------------------------------------------------------------
+
+_DEDUP_STUB: str = (
+    "[Traject: identical tool output appears again later in the context; "
+    "this earlier copy was removed to save tokens.]"
+)
+
+
+def _compute_dedup(
+    segments: list[Segment],
+    normalized: list[dict[str, Any]],
+) -> tuple[set[int], set[int]]:
+    """Identify exact-duplicate tool results that can be removed losslessly.
+
+    In agent loops the model frequently re-reads the same file or re-runs the
+    same command, producing byte-identical TOOL_RESULT segments. Every copy but
+    the last carries no unique information — the last occurrence is kept verbatim
+    and earlier copies are replaced with a short reference. This is lossless: any
+    fact in an earlier copy still appears verbatim in the retained later copy.
+
+    Segments explicitly marked ``traject_preserve`` are never deduplicated.
+
+    Args:
+        segments: Parsed segments.
+        normalized: The normalized messages (parallel to ``segments`` by index),
+            used to honor the ``traject_preserve`` opt-out.
+
+    Returns:
+        ``(stub_indices, keep_verbatim_indices)`` — earlier duplicate segment
+        indices to replace with a stub, and the last-occurrence indices that
+        must be retained verbatim to guarantee losslessness.
+    """
+    last_occurrence: dict[str, int] = {}
+    for seg in segments:
+        if seg.artifact_type == ArtifactType.TOOL_RESULT and seg.content.strip():
+            last_occurrence[seg.content] = seg.index
+
+    stub_indices: set[int] = set()
+    keep_verbatim: set[int] = set()
+    for seg in segments:
+        if seg.artifact_type != ArtifactType.TOOL_RESULT or not seg.content.strip():
+            continue
+        if normalized[seg.index].get("traject_preserve") is True:
+            continue
+        final_idx = last_occurrence[seg.content]
+        if final_idx != seg.index:
+            stub_indices.add(seg.index)
+            keep_verbatim.add(final_idx)
+    return stub_indices, keep_verbatim
+
+
 def _detect_adapter(messages: Any) -> FrameworkAdapter:  # noqa: ANN401
     """Return the first adapter that accepts *messages*, or raise TrajectCompressionError.
 
@@ -480,6 +532,7 @@ def compress(
     config: CompressionConfig,
     task_hint: str | None = None,
     adapter: FrameworkAdapter | None = None,
+    model: str | None = None,
 ) -> CompressionResult:
     """Run the full 8-step Traject compression pipeline on *messages*.
 
@@ -488,6 +541,13 @@ def compress(
         config: Immutable compression configuration.
         task_hint: Optional natural-language description of the active task.
         adapter: Optional pre-constructed framework adapter.
+        model: Optional model identifier used to pick the tiktoken encoding
+            for token counting (e.g. ``"gpt-4o"`` -> ``o200k_base``).
+            Defaults to ``None``, which preserves the legacy ``cl100k_base``
+            behaviour exactly. For Anthropic (``claude-*``) and Gemini models
+            the resulting token counts are APPROXIMATE — tiktoken does not
+            implement those providers' tokenizers, so the counts must not be
+            presented as exact.
 
     Returns:
         A :class:`~traject.models.CompressionResult` with token counts,
@@ -509,7 +569,7 @@ def compress(
     artifact_types: list[ArtifactType] = classify_sequence(normalized)
 
     # Step 3: PARSE
-    segments: list[Segment] = parse(normalized, artifact_types)
+    segments: list[Segment] = parse(normalized, artifact_types, model=model)
     original_tokens: int = sum(s.token_count for s in segments)
 
     # Step 4: PROTECT — last N turns
@@ -573,10 +633,22 @@ def compress(
     dropped: list[Segment] = []
     compressed_messages: list[dict[str, Any]] = []
 
-    enc = tiktoken.get_encoding("cl100k_base")
+    enc = _encoding_for_model(model)
+
+    # Lossless dedup runs first: it applies even to otherwise-protected duplicate
+    # tool results because the information is preserved in the retained later copy.
+    dedup_stub_indices, dedup_keep_verbatim = _compute_dedup(segments, normalized)
 
     for seg, score in zip(segments, scores, strict=False):
-        if seg.protected:
+        # Earlier exact-duplicate tool output → replace with a short reference.
+        if seg.index in dedup_stub_indices:
+            summarized.append(seg)
+            compressed_messages.append({"role": seg.role, "content": _DEDUP_STUB})
+            continue
+
+        # The final occurrence of a deduplicated output must be kept verbatim so
+        # no information is lost.
+        if seg.protected or seg.index in dedup_keep_verbatim:
             retained.append(seg)
             compressed_messages.append(normalized[seg.index])
             continue
@@ -591,9 +663,16 @@ def compress(
             retained.append(seg)
             compressed_messages.append(normalized[seg.index])
         elif decision == "SUMMARIZE":
-            summarized.append(seg)
             summary = _summarize_tool_result(seg.content)
-            compressed_messages.append({"role": seg.role, "content": summary})
+            # Inflation guard: never substitute a replacement that is not
+            # strictly smaller than the original (short content can summarize
+            # to something larger once the marker suffix is appended).
+            if len(enc.encode(summary)) < seg.token_count:
+                summarized.append(seg)
+                compressed_messages.append({"role": seg.role, "content": summary})
+            else:
+                retained.append(seg)
+                compressed_messages.append(normalized[seg.index])
         else:  # DROP
             dropped.append(seg)
 
