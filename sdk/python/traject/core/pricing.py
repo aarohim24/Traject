@@ -142,6 +142,72 @@ PROVIDER_PRICING: dict[str, ModelPricing] = {
         pricing_url="https://www.anthropic.com/pricing",
         last_verified=date(2025, 1, 1),
     ),
+    # ---- Current Claude generation (verified 2026-06-27) ------------------
+    # Input/output prices are the published per-MTok rates. Cache tiers are
+    # derived from Anthropic's documented caching economics — reads ~0.1x and
+    # 5-minute writes ~1.25x of the input rate — not separately published
+    # per-model figures; re-verify against the pricing page when exact cache
+    # rates are published.
+    "claude-opus-4-8": ModelPricing(
+        provider="anthropic",
+        model="claude-opus-4-8",
+        input_cost_per_1m_tokens=Decimal("5.00"),
+        output_cost_per_1m_tokens=Decimal("25.00"),
+        cache_read_cost_per_1m_tokens=Decimal("0.50"),
+        cache_write_cost_per_1m_tokens=Decimal("6.25"),
+        pricing_url="https://www.anthropic.com/pricing",
+        last_verified=date(2026, 6, 27),
+    ),
+    "claude-opus-4-7": ModelPricing(
+        provider="anthropic",
+        model="claude-opus-4-7",
+        input_cost_per_1m_tokens=Decimal("5.00"),
+        output_cost_per_1m_tokens=Decimal("25.00"),
+        cache_read_cost_per_1m_tokens=Decimal("0.50"),
+        cache_write_cost_per_1m_tokens=Decimal("6.25"),
+        pricing_url="https://www.anthropic.com/pricing",
+        last_verified=date(2026, 6, 27),
+    ),
+    "claude-opus-4-6": ModelPricing(
+        provider="anthropic",
+        model="claude-opus-4-6",
+        input_cost_per_1m_tokens=Decimal("5.00"),
+        output_cost_per_1m_tokens=Decimal("25.00"),
+        cache_read_cost_per_1m_tokens=Decimal("0.50"),
+        cache_write_cost_per_1m_tokens=Decimal("6.25"),
+        pricing_url="https://www.anthropic.com/pricing",
+        last_verified=date(2026, 6, 27),
+    ),
+    "claude-sonnet-4-6": ModelPricing(
+        provider="anthropic",
+        model="claude-sonnet-4-6",
+        input_cost_per_1m_tokens=Decimal("3.00"),
+        output_cost_per_1m_tokens=Decimal("15.00"),
+        cache_read_cost_per_1m_tokens=Decimal("0.30"),
+        cache_write_cost_per_1m_tokens=Decimal("3.75"),
+        pricing_url="https://www.anthropic.com/pricing",
+        last_verified=date(2026, 6, 27),
+    ),
+    "claude-haiku-4-5": ModelPricing(
+        provider="anthropic",
+        model="claude-haiku-4-5",
+        input_cost_per_1m_tokens=Decimal("1.00"),
+        output_cost_per_1m_tokens=Decimal("5.00"),
+        cache_read_cost_per_1m_tokens=Decimal("0.10"),
+        cache_write_cost_per_1m_tokens=Decimal("1.25"),
+        pricing_url="https://www.anthropic.com/pricing",
+        last_verified=date(2026, 6, 27),
+    ),
+    "claude-fable-5": ModelPricing(
+        provider="anthropic",
+        model="claude-fable-5",
+        input_cost_per_1m_tokens=Decimal("10.00"),
+        output_cost_per_1m_tokens=Decimal("50.00"),
+        cache_read_cost_per_1m_tokens=Decimal("1.00"),
+        cache_write_cost_per_1m_tokens=Decimal("12.50"),
+        pricing_url="https://www.anthropic.com/pricing",
+        last_verified=date(2026, 6, 27),
+    ),
     # Source: https://ai.google.dev/pricing
     "gemini-1.5-pro": ModelPricing(
         provider="google",
@@ -164,3 +230,56 @@ PROVIDER_PRICING: dict[str, ModelPricing] = {
         last_verified=date(2025, 1, 1),
     ),
 }
+
+
+# ---------------------------------------------------------------------------
+# Freshness contract
+# ---------------------------------------------------------------------------
+# For a cost product, stale prices are a correctness bug: every savings figure
+# and every routing decision reads from this table. ``MAX_PRICE_AGE_DAYS`` is
+# the contract enforced by ``tests/unit/test_pricing_freshness.py`` — any model
+# whose ``last_verified`` is older than this (and not in the explicit
+# verification-pending allowlist below) fails CI, forcing a periodic re-check.
+MAX_PRICE_AGE_DAYS: int = 120
+
+# Models whose prices have not yet been re-verified in this pass. This is
+# explicit, visible technical debt — not a silent exemption. Each entry should
+# be re-verified against its provider's pricing page and removed from this set.
+# (OpenAI and Google pricing could not be verified in the 2026-06-27 refresh.)
+VERIFICATION_PENDING: frozenset[str] = frozenset(
+    {
+        "gpt-4o",
+        "gpt-4o-mini",
+        "gpt-4-turbo",
+        "gpt-3.5-turbo",
+        "claude-3-5-sonnet-20241022",
+        "claude-3-5-haiku-20241022",
+        "claude-3-opus-20240229",
+        "gemini-1.5-pro",
+        "gemini-1.5-flash",
+    }
+)
+
+
+def stale_models(as_of: date, max_age_days: int = MAX_PRICE_AGE_DAYS) -> list[str]:
+    """Return models whose pricing is older than *max_age_days* as of *as_of*.
+
+    Excludes models in :data:`VERIFICATION_PENDING`. Used by the freshness test
+    so that a price left un-reverified past the contract window fails CI.
+
+    Args:
+        as_of: The reference date to measure staleness against (pass the
+            current date; not defaulted so the function stays deterministic
+            and testable).
+        max_age_days: Maximum allowed age in days before a price is stale.
+
+    Returns:
+        Sorted list of model identifiers with stale pricing.
+    """
+    stale: list[str] = []
+    for model, pricing in PROVIDER_PRICING.items():
+        if model in VERIFICATION_PENDING:
+            continue
+        if (as_of - pricing.last_verified).days > max_age_days:
+            stale.append(model)
+    return sorted(stale)
