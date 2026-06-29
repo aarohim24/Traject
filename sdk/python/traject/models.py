@@ -180,6 +180,12 @@ class Segment(BaseModel):
             score to be compressed (score < 0.15 instead of < 0.30 for
             CONSERVATIVE). Set by the semantic reference dependency pass
             in the compression engine.
+        semantically_referenced: ``True`` when this segment was soft-protected
+            specifically because a later message semantically references it
+            (high reference score), as opposed to merely containing high-
+            information content. Segments soft-protected only by their content
+            (not actively referenced) remain eligible for command-aware
+            tool-result summarization, which preserves load-bearing facts.
         embedding: 384-dimensional unit-norm float embedding produced by
             ``all-MiniLM-L6-v2``, or ``None`` before the scorer runs.
     """
@@ -192,6 +198,7 @@ class Segment(BaseModel):
     turn_index: int
     protected: bool
     soft_protected: bool = False
+    semantically_referenced: bool = False
     embedding: list[float] | None = None
 
     @field_validator("token_count", mode="after")
@@ -264,6 +271,9 @@ class CompressionResult(BaseModel):
             soft-protect tier by the semantic reference dependency pass.
             These segments require a lower composite score (< 0.15) to be
             compressed versus the default threshold.
+        segments_ccr_stubbed: Number of segments stored in the CCR Redis
+            store and replaced with a ``<<ccr:HASH>>`` stub.  Zero when no
+            :class:`~traject.compression.ccr.CCRStore` was provided.
     """
 
     original_tokens: int
@@ -281,6 +291,7 @@ class CompressionResult(BaseModel):
     cache_hits: int = 0
     cache_hit_rate: float = 0.0
     segments_soft_protected: int = 0
+    segments_ccr_stubbed: int = 0
 
     @field_validator("compression_ratio", mode="after")
     @classmethod
