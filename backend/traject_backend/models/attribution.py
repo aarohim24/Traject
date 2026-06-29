@@ -11,10 +11,11 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Index, Numeric, String, UniqueConstraint, text
+from sqlalchemy import Index, Numeric, String, UniqueConstraint, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from traject_backend.models.base import Base
+from traject_backend.models.tenant import DEFAULT_TENANT_ID
 
 
 class CostAttributionRecord(Base):
@@ -50,6 +51,12 @@ class CostAttributionRecord(Base):
         primary_key=True,
         server_default=text("gen_random_uuid()"),
     )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        nullable=False,
+        default=DEFAULT_TENANT_ID,
+        server_default=text("'00000000-0000-0000-0000-000000000000'"),
+    )
     feature_tag: Mapped[str] = mapped_column(String, nullable=False)
     hour_bucket: Mapped[datetime] = mapped_column(nullable=False)
     provider: Mapped[str] = mapped_column(String, nullable=False)
@@ -77,6 +84,7 @@ class CostAttributionRecord(Base):
 
     __table_args__ = (
         UniqueConstraint(
+            "tenant_id",
             "feature_tag",
             "hour_bucket",
             "provider",
@@ -85,4 +93,5 @@ class CostAttributionRecord(Base):
         ),
         Index("ix_attribution_hour_bucket", "hour_bucket"),
         Index("ix_attribution_feature_tag", "feature_tag"),
+        Index("ix_attribution_tenant_hour", "tenant_id", "hour_bucket"),
     )

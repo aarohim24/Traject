@@ -11,10 +11,11 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Numeric, String, text
+from sqlalchemy import Index, Numeric, String, UniqueConstraint, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from traject_backend.models.base import Base
+from traject_backend.models.tenant import DEFAULT_TENANT_ID
 
 
 class BudgetControlRecord(Base):
@@ -42,7 +43,13 @@ class BudgetControlRecord(Base):
         primary_key=True,
         server_default=text("gen_random_uuid()"),
     )
-    feature_tag: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        nullable=False,
+        default=DEFAULT_TENANT_ID,
+        server_default=text("'00000000-0000-0000-0000-000000000000'"),
+    )
+    feature_tag: Mapped[str] = mapped_column(String, nullable=False)
     period: Mapped[str] = mapped_column(String, nullable=False)
     budget_usd: Mapped[Decimal] = mapped_column(Numeric(10, 4), nullable=False)
     alert_threshold_pct: Mapped[float] = mapped_column(nullable=False, server_default=text("0.8"))
@@ -53,4 +60,10 @@ class BudgetControlRecord(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         nullable=False, server_default=text("now()")
+    )
+
+    __table_args__ = (
+        # Budgets are unique per (tenant, feature_tag), not globally by tag.
+        UniqueConstraint("tenant_id", "feature_tag", name="uq_budget_tenant_feature"),
+        Index("ix_budget_tenant_id", "tenant_id"),
     )

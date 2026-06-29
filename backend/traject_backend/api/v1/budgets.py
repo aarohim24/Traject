@@ -17,7 +17,9 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from traject_backend.api.v1.spans import verify_api_key
+import uuid as _uuid
+
+from traject_backend.core.auth import CurrentTenant
 from traject_backend.core.database import get_db
 from traject_backend.core.redis_client import get_redis
 from traject_backend.models.budget import BudgetControlRecord
@@ -69,19 +71,20 @@ class BudgetStatusResponse(BaseModel):
 
 
 async def _build_status_response(
-    db: AsyncSession, record: BudgetControlRecord
+    db: AsyncSession, record: BudgetControlRecord, tenant_id: _uuid.UUID
 ) -> BudgetStatusResponse:
     """Build a live BudgetStatusResponse for a budget record.
 
     Args:
         db: An active async SQLAlchemy session.
         record: The BudgetControlRecord to build status for.
+        tenant_id: The owning tenant (scopes the spend computation).
 
     Returns:
         A BudgetStatusResponse with live spend data.
     """
     redis = get_redis()
-    status = await check_budget(record.feature_tag, db, redis)
+    status = await check_budget(record.feature_tag, db, redis, tenant_id=tenant_id)
 
     # Get actual spend from Redis cache or compute
     redis_key = f"traject:budget:{record.feature_tag}"
@@ -106,11 +109,11 @@ async def _build_status_response(
 @router.put(
     "/budgets/{feature_tag}",
     response_model=BudgetControlPayload,
-    dependencies=[Depends(verify_api_key)],
 )
 async def upsert_budget(
     feature_tag: str,
     payload: BudgetControlPayload,
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
 ) -> BudgetControlPayload:
     """Create or update a budget for a feature tag.
@@ -126,6 +129,7 @@ async def upsert_budget(
     now = datetime.utcnow()
     stmt = pg_insert(BudgetControlRecord).values(
         id=uuid.uuid4(),
+        tenant_id=tenant_id,
         feature_tag=feature_tag,
         period=payload.period,
         budget_usd=payload.budget_usd,
@@ -136,7 +140,7 @@ async def upsert_budget(
         updated_at=now,
     )
     stmt = stmt.on_conflict_do_update(
-        index_elements=["feature_tag"],
+        index_elements=["tenant_id", "feature_tag"],
         set_={
             "period": payload.period,
             "budget_usd": payload.budget_usd,
@@ -154,10 +158,10 @@ async def upsert_budget(
 @router.get(
     "/budgets/{feature_tag}",
     response_model=BudgetStatusResponse,
-    dependencies=[Depends(verify_api_key)],
 )
 async def get_budget_status(
     feature_tag: str,
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
 ) -> BudgetStatusResponse:
     """Return live budget status for a feature tag.
@@ -174,7 +178,8 @@ async def get_budget_status(
     """
     result = await db.execute(
         select(BudgetControlRecord).where(
-            BudgetControlRecord.feature_tag == feature_tag
+            BudgetControlRecord.tenant_id == tenant_id,
+            BudgetControlRecord.feature_tag == feature_tag,
         )
     )
     record = result.scalar_one_or_none()
@@ -183,37 +188,42 @@ async def get_budget_status(
             status_code=404,
             detail=f"No budget configured for feature_tag '{feature_tag}'",
         )
-    return await _build_status_response(db, record)
+    return await _build_status_response(db, record, tenant_id)
 
 
 @router.get(
     "/budgets",
     response_model=list[BudgetStatusResponse],
-    dependencies=[Depends(verify_api_key)],
 )
 async def list_budgets(
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
 ) -> list[BudgetStatusResponse]:
     """Return live status for all configured budgets.
 
     Args:
+        tenant_id: The authenticated caller's tenant.
         db: Injected async database session.
 
     Returns:
         List of BudgetStatusResponse, one per configured feature tag.
     """
-    result = await db.execute(select(BudgetControlRecord))
+    result = await db.execute(
+        select(BudgetControlRecord).where(
+            BudgetControlRecord.tenant_id == tenant_id
+        )
+    )
     records = result.scalars().all()
-    return [await _build_status_response(db, r) for r in records]
+    return [await _build_status_response(db, r, tenant_id) for r in records]
 
 
 @router.delete(
     "/budgets/{feature_tag}",
     status_code=204,
-    dependencies=[Depends(verify_api_key)],
 )
 async def delete_budget(
     feature_tag: str,
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """Delete the budget configuration for a feature tag.
@@ -229,7 +239,8 @@ async def delete_budget(
     """
     result = await db.execute(
         select(BudgetControlRecord).where(
-            BudgetControlRecord.feature_tag == feature_tag
+            BudgetControlRecord.tenant_id == tenant_id,
+            BudgetControlRecord.feature_tag == feature_tag,
         )
     )
     record = result.scalar_one_or_none()

@@ -11,10 +11,11 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Index, Numeric, String, text
+from sqlalchemy import Index, Numeric, String, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from traject_backend.models.base import Base
+from traject_backend.models.tenant import DEFAULT_TENANT_ID
 
 
 class InferenceSpanRecord(Base):
@@ -60,6 +61,12 @@ class InferenceSpanRecord(Base):
         primary_key=True,
         server_default=text("gen_random_uuid()"),
     )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        nullable=False,
+        default=DEFAULT_TENANT_ID,
+        server_default=text("'00000000-0000-0000-0000-000000000000'"),
+    )
     trace_id: Mapped[str] = mapped_column(String, nullable=False)
     parent_span_id: Mapped[str | None] = mapped_column(String, nullable=True)
     span_name: Mapped[str] = mapped_column(String, nullable=False)
@@ -87,6 +94,9 @@ class InferenceSpanRecord(Base):
     )
 
     __table_args__ = (
+        Index("ix_spans_tenant_id", "tenant_id"),
+        Index("ix_spans_tenant_timestamp", "tenant_id", "timestamp"),
+        Index("ix_spans_tenant_feature_tag", "tenant_id", "feature_tag"),
         Index("ix_spans_trace_id", "trace_id"),
         Index("ix_spans_timestamp", "timestamp"),
         Index("ix_spans_provider", "provider"),

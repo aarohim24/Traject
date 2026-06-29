@@ -7,6 +7,7 @@ All monetary arithmetic uses ``Decimal`` exclusively (ADR-006).
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -15,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from traject_backend.models.span import InferenceSpanRecord
+from traject_backend.models.tenant import DEFAULT_TENANT_ID
 
 _log = structlog.get_logger(__name__)
 
@@ -82,6 +84,7 @@ class CostPredictor:
         point_estimate: Decimal,
         estimated_input_tokens: int,
         estimated_output_tokens: int,
+        tenant_id: uuid.UUID = DEFAULT_TENANT_ID,
     ) -> tuple[Decimal, Decimal, int]:
         """Compute a 90% prediction interval around the point estimate.
 
@@ -115,9 +118,13 @@ class CostPredictor:
         stmt = (
             select(InferenceSpanRecord.cost_usd)
             .where(
+                InferenceSpanRecord.tenant_id == tenant_id,
                 InferenceSpanRecord.model == model,
                 InferenceSpanRecord.timestamp >= cutoff,
+                InferenceSpanRecord.cost_usd.is_not(None),
             )
+            # Most-recent sample, not an arbitrary page (audit L2).
+            .order_by(InferenceSpanRecord.timestamp.desc())
             .limit(_MAX_SAMPLES)
         )
         result = await db.execute(stmt)
@@ -153,7 +160,7 @@ class CostPredictor:
         # Enforce post-condition: lower_bound <= point_estimate <= upper_bound
         if not (lower_bound <= point_estimate <= upper_bound):
             _log.warning(
-                ""traject.cost_predictor.bounds_violated",
+                "traject.cost_predictor.bounds_violated",
                 lower_bound=str(lower_bound),
                 point_estimate=str(point_estimate),
                 upper_bound=str(upper_bound),

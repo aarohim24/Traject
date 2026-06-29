@@ -50,13 +50,13 @@ async def ping_redis() -> None:
     """Ping Redis to verify connectivity.
 
     Calls ``PING`` on the shared Redis client.  Logs success at info level
-    using the event key ``""traject.redis.ping.ok"``.  Any exception is caught
+    using the event key ``"traject.redis.ping.ok"``.  Any exception is caught
     and logged at error level using the event key
-    ``""traject.redis.ping.failed"``; the exception is never re-raised so that
+    ``"traject.redis.ping.failed"``; the exception is never re-raised so that
     a Redis outage at startup does not prevent the application from booting.
     """
     try:
         await get_redis().ping()
-        _log.info(""traject.redis.ping.ok")
+        _log.info("traject.redis.ping.ok")
     except Exception as exc:  # noqa: BLE001
-        _log.error(""traject.redis.ping.failed", error=str(exc))
+        _log.error("traject.redis.ping.failed", error=str(exc))

@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from traject_backend.core.config import settings
 from traject_backend.models.cache_entry import CacheEntryRecord
+from traject_backend.models.tenant import DEFAULT_TENANT_ID
 
 _log = structlog.get_logger(__name__)
 
@@ -64,6 +65,7 @@ async def lookup(
     embedding: list[float],
     db: AsyncSession,
     threshold: float,
+    tenant_id: uuid.UUID = DEFAULT_TENANT_ID,
 ) -> CacheLookupResponse:
     """Look up a prompt in the semantic cache.
 
@@ -91,7 +93,8 @@ async def lookup(
         # ------------------------------------------------------------------
         exact_result = await db.execute(
             select(CacheEntryRecord).where(
-                CacheEntryRecord.prompt_hash == prompt_hash
+                CacheEntryRecord.tenant_id == tenant_id,
+                CacheEntryRecord.prompt_hash == prompt_hash,
             )
         )
         exact_row = exact_result.scalar_one_or_none()
@@ -100,9 +103,10 @@ async def lookup(
             await db.execute(
                 text(
                     "UPDATE cache_entries SET hit_count = hit_count + 1, "
-                    "last_hit_at = now() WHERE prompt_hash = :hash"
+                    "last_hit_at = now() WHERE prompt_hash = :hash "
+                    "AND tenant_id = :tenant_id"
                 ),
-                {"hash": prompt_hash},
+                {"hash": prompt_hash, "tenant_id": str(tenant_id)},
             )
             await db.commit()
             return CacheLookupResponse(
@@ -115,15 +119,19 @@ async def lookup(
         # Slow path: pgvector cosine similarity search
         # ------------------------------------------------------------------
         embedding_str = "[" + ",".join(str(v) for v in embedding) + "]"
+        # Scope the ANN search to the tenant — without this filter a lookup
+        # could return another tenant's cached response (and the HNSW index is
+        # tenant-agnostic, so the filter also prevents cross-tenant matches).
         sim_result = await db.execute(
             text(
                 "SELECT id, response_preview, "
                 "1 - (embedding <=> :query_embedding::vector) AS similarity "
                 "FROM cache_entries "
+                "WHERE tenant_id = :tenant_id "
                 "ORDER BY embedding <=> :query_embedding::vector "
                 "LIMIT 1"
             ),
-            {"query_embedding": embedding_str},
+            {"query_embedding": embedding_str, "tenant_id": str(tenant_id)},
         )
         row = sim_result.fetchone()
 
@@ -140,13 +148,14 @@ async def lookup(
         return CacheLookupResponse(hit=False, similarity=similarity)
 
     except Exception as exc:  # noqa: BLE001
-        _log.warning(""traject.cache.lookup.error", error=str(exc))
+        _log.warning("traject.cache.lookup.error", error=str(exc))
         return CacheLookupResponse(hit=False)
 
 
 async def store(
     request: CacheStoreRequest,
     db: AsyncSession,
+    tenant_id: uuid.UUID = DEFAULT_TENANT_ID,
 ) -> None:
     """Insert a new cache entry or update an existing one on hash collision.
 
@@ -165,6 +174,7 @@ async def store(
 
         stmt = pg_insert(CacheEntryRecord).values(
             id=uuid.uuid4(),
+            tenant_id=tenant_id,
             prompt_hash=request.prompt_hash,
             embedding=request.prompt_embedding,
             response_preview=request.response_preview[:200],
@@ -178,18 +188,19 @@ async def store(
             cost_saved_usd=Decimal("0"),
         )
         stmt = stmt.on_conflict_do_update(
-            index_elements=["prompt_hash"],
+            index_elements=["tenant_id", "prompt_hash"],
             set_={
                 "hit_count": text("cache_entries.hit_count + 1"),
                 "last_hit_at": now,
+                # Bound parameter — never interpolate a value into raw SQL.
                 "cost_saved_usd": text(
-                    f"cache_entries.cost_saved_usd + {request.cost_usd!r}"
-                ),
+                    "cache_entries.cost_saved_usd + :cost_delta"
+                ).bindparams(cost_delta=request.cost_usd or Decimal("0")),
             },
         )
         await db.execute(stmt)
         await db.commit()
-        _log.debug(""traject.cache.stored", prompt_hash=request.prompt_hash)
+        _log.debug("traject.cache.stored", prompt_hash=request.prompt_hash)
 
     except Exception as exc:  # noqa: BLE001
-        _log.warning(""traject.cache.store.error", error=str(exc))
+        _log.warning("traject.cache.store.error", error=str(exc))

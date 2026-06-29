@@ -8,6 +8,7 @@ checks for every unique feature tag in the accepted batch.
 from __future__ import annotations
 
 import uuid
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import StrEnum
@@ -17,7 +18,9 @@ import structlog
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from traject_backend.core.config import settings
 from traject_backend.models.span import InferenceSpanRecord
+from traject_backend.models.tenant import DEFAULT_TENANT_ID
 
 _log = structlog.get_logger(__name__)
 
@@ -100,6 +103,7 @@ async def ingest_spans(
     spans: list[InferenceSpanPayload],
     db: AsyncSession,
     redis: Any,  # noqa: ANN401 — redis.asyncio.Redis; Any avoids runtime import
+    tenant_id: uuid.UUID = DEFAULT_TENANT_ID,
 ) -> SpanIngestResponse:
     """Validate, persist, and post-process a batch of inference spans.
 
@@ -131,7 +135,7 @@ async def ingest_spans(
             ts = ts.replace(tzinfo=timezone.utc)
         if ts > cutoff:
             rejected_count += 1
-            _log.debug(""traject.ingest.rejected_future_timestamp", timestamp=str(ts))
+            _log.debug("traject.ingest.rejected_future_timestamp", timestamp=str(ts))
         else:
             valid.append(span)
 
@@ -139,6 +143,7 @@ async def ingest_spans(
         rows = [
             {
                 "id": s.id or uuid.uuid4(),
+                "tenant_id": tenant_id,
                 "trace_id": s.trace_id,
                 "parent_span_id": s.parent_span_id,
                 "span_name": s.span_name,
@@ -172,16 +177,23 @@ async def ingest_spans(
         await db.execute(stmt)
         await db.commit()
 
-        # Trigger budget checks for unique feature tags
-        unique_tags = {s.feature_tag for s in valid}
-        for tag in unique_tags:
+        # H9: keep budget enforcement OFF the ingest hot path. Instead of N
+        # per-tag check_budget() calls (up to 3 DB round-trips each, scaling with
+        # tag cardinality), incrementally bump a cheap Redis spend counter per
+        # feature tag. The scheduler's recompute job reconciles the authoritative
+        # value from the rollup table, and the budgets API recomputes on read.
+        spend_by_tag: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
+        for s in valid:
+            if s.cost_usd is not None:
+                spend_by_tag[s.feature_tag] += s.cost_usd
+        for tag, amount in spend_by_tag.items():
             try:
-                # Lazy import to avoid circular dependency with budget_enforcer
-                from traject_backend.services.budget_enforcer import check_budget  # noqa: PLC0415
-
-                status = await check_budget(tag, db, redis)
-                _log.debug(""traject.budget.check", feature_tag=tag, status=status)
-            except Exception as exc:  # noqa: BLE001
-                _log.warning(""traject.budget.check.failed", feature_tag=tag, error=str(exc))
+                key = f"traject:budget:{tag}"
+                await redis.incrbyfloat(key, float(amount))
+                await redis.expire(key, settings.redis_cache_ttl_seconds)
+            except Exception as exc:  # noqa: BLE001 — counter is best-effort
+                _log.warning(
+                    "traject.budget.counter.failed", feature_tag=tag, error=str(exc)
+                )
 
     return SpanIngestResponse(accepted=len(valid), rejected=rejected_count)

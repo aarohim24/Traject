@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from traject_backend.api.v1.spans import verify_api_key
+from traject_backend.core.auth import CurrentTenant
 from traject_backend.core.database import get_db
 from traject_backend.models.attribution import CostAttributionRecord
 from traject_backend.services.cost_attribution import (
@@ -47,9 +47,9 @@ def _now_naive() -> datetime:
 @router.get(
     "/attribution",
     response_model=AttributionResponse,
-    dependencies=[Depends(verify_api_key)],
 )
 async def query_attribution(
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
     feature_tag: str | None = Query(default=None),
     from_ts: datetime | None = Query(default=None),
@@ -77,14 +77,16 @@ async def query_attribution(
     )
     effective_to = to_ts.replace(tzinfo=None) if to_ts is not None else now
 
-    return await get_attribution(db, feature_tag, effective_from, effective_to, group_by)
+    return await get_attribution(
+        db, feature_tag, effective_from, effective_to, group_by, tenant_id=tenant_id
+    )
 
 
 @router.get(
     "/attribution/summary",
-    dependencies=[Depends(verify_api_key)],
 )
 async def attribution_summary(
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
     period: Literal["daily", "weekly", "monthly"] = Query(default="daily"),
 ) -> dict[str, object]:
@@ -110,6 +112,7 @@ async def attribution_summary(
             func.sum(CostAttributionRecord.call_count).label("call_count"),
         )
         .where(
+            CostAttributionRecord.tenant_id == tenant_id,
             CostAttributionRecord.hour_bucket >= from_ts_naive,
             CostAttributionRecord.hour_bucket < now,
         )

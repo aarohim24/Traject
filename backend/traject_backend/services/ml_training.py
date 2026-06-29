@@ -145,7 +145,7 @@ class MLTrainingService:
         )
 
         _log.info(
-            ""traject.ml_training.complete",
+            "traject.ml_training.complete",
             sample_count=len(X),
             classes=list(lr.classes_),
         )
@@ -168,7 +168,7 @@ class MLTrainingService:
         with open(self._artifact_path, "w") as fh:
             json.dump(payload, fh)
 
-        _log.info(""traject.ml_training.artifact_saved", path=self._artifact_path)
+        _log.info("traject.ml_training.artifact_saved", path=self._artifact_path)
 
     async def run_weekly_training_job(self, db: AsyncSession) -> None:
         """Run training, persist artifact, log result. Never re-raises.
@@ -184,13 +184,13 @@ class MLTrainingService:
             artifact = await self.train(db)
             self._save_artifact(artifact)
             _log.info(
-                ""traject.ml_training.weekly_job.success",
+                "traject.ml_training.weekly_job.success",
                 sample_count=artifact.training_sample_count,
                 trained_at=artifact.trained_at.isoformat(),
             )
         except Exception as exc:  # noqa: BLE001 — scheduled job must never re-raise
             _log.error(
-                ""traject.ml_training.weekly_job.failed",
+                "traject.ml_training.weekly_job.failed",
                 error=str(exc),
                 exc_info=True,
             )

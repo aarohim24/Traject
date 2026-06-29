@@ -7,6 +7,7 @@ attribution API endpoints.
 
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Literal
@@ -20,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from traject_backend.models.attribution import CostAttributionRecord
 from traject_backend.models.span import InferenceSpanRecord
+from traject_backend.models.tenant import DEFAULT_TENANT_ID
 
 _log = structlog.get_logger(__name__)
 
@@ -91,6 +93,7 @@ async def materialize_hourly(db: AsyncSession, hour: datetime) -> int:
     # Aggregate spans for the target hour
     agg = (
         select(
+            InferenceSpanRecord.tenant_id,
             InferenceSpanRecord.feature_tag,
             InferenceSpanRecord.provider,
             InferenceSpanRecord.model,
@@ -119,6 +122,7 @@ async def materialize_hourly(db: AsyncSession, hour: datetime) -> int:
             InferenceSpanRecord.timestamp < hour_end_naive,
         )
         .group_by(
+            InferenceSpanRecord.tenant_id,
             InferenceSpanRecord.feature_tag,
             InferenceSpanRecord.provider,
             InferenceSpanRecord.model,
@@ -133,6 +137,7 @@ async def materialize_hourly(db: AsyncSession, hour: datetime) -> int:
 
     upsert_rows = [
         {
+            "tenant_id": r.tenant_id,
             "feature_tag": r.feature_tag,
             "hour_bucket": hour_start_naive,
             "provider": r.provider,
@@ -171,7 +176,7 @@ async def materialize_hourly(db: AsyncSession, hour: datetime) -> int:
     await db.commit()
 
     _log.info(
-        ""traject.attribution.materialized",
+        "traject.attribution.materialized",
         hour=str(hour_start),
         rows=len(upsert_rows),
     )
@@ -184,6 +189,7 @@ async def get_attribution(
     from_ts: datetime,
     to_ts: datetime,
     group_by: GroupByType,
+    tenant_id: uuid.UUID = DEFAULT_TENANT_ID,
 ) -> AttributionResponse:
     """Query the cost_attribution table with optional filters.
 
@@ -224,6 +230,7 @@ async def get_attribution(
             func.sum(CostAttributionRecord.cache_hit_count).label("cache_hit_count"),
         )
         .where(
+            CostAttributionRecord.tenant_id == tenant_id,
             CostAttributionRecord.hour_bucket >= from_ts_naive,
             CostAttributionRecord.hour_bucket < to_ts_naive,
         )

@@ -14,10 +14,11 @@ from decimal import Decimal
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Index, Numeric, String, text
+from sqlalchemy import Index, Numeric, String, UniqueConstraint, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from traject_backend.models.base import Base
+from traject_backend.models.tenant import DEFAULT_TENANT_ID
 
 
 class CacheEntryRecord(Base):
@@ -46,7 +47,13 @@ class CacheEntryRecord(Base):
         primary_key=True,
         server_default=text("gen_random_uuid()"),
     )
-    prompt_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        nullable=False,
+        default=DEFAULT_TENANT_ID,
+        server_default=text("'00000000-0000-0000-0000-000000000000'"),
+    )
+    prompt_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     embedding: Mapped[Any] = mapped_column(Vector(384), nullable=False)  # noqa: ANN401
     response_preview: Mapped[str] = mapped_column(String(200), nullable=False)
     model: Mapped[str] = mapped_column(String, nullable=False)
@@ -67,7 +74,22 @@ class CacheEntryRecord(Base):
     )
 
     __table_args__ = (
+        # Cache entries are unique per (tenant, prompt_hash).
+        UniqueConstraint(
+            "tenant_id", "prompt_hash", name="uq_cache_tenant_prompt_hash"
+        ),
         Index("ix_cache_entries_prompt_hash", "prompt_hash"),
         Index("ix_cache_entries_feature_tag", "feature_tag"),
         Index("ix_cache_entries_expires_at", "expires_at"),
+        Index("ix_cache_entries_tenant_id", "tenant_id"),
+        # HNSW ANN index for cosine similarity — without this every lookup is a
+        # full sequential scan (the audit's C4-backend finding). Scoped vector
+        # search filters by tenant_id first, then ranks by distance.
+        Index(
+            "ix_cache_entries_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )

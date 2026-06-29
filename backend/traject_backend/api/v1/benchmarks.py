@@ -130,7 +130,7 @@ async def submit_benchmark(
     await db.refresh(record)
 
     _log.info(
-        ""traject.benchmarks.submitted",
+        "traject.benchmarks.submitted",
         id=str(record.id),
         sdk_version=record.sdk_version,
         sample_count=record.sample_count,

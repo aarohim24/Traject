@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from traject_backend.api.v1.spans import verify_api_key
+from traject_backend.core.auth import CurrentTenant
 from traject_backend.core.database import get_db
 from traject_backend.services.cost_predictor import CostPredictor
 
@@ -67,10 +67,10 @@ class CostPredictionResponse(BaseModel):
 @predictions_router.post(
     "/cost",
     response_model=CostPredictionResponse,
-    dependencies=[Depends(verify_api_key)],
 )
 async def predict_cost(
     request: CostPredictionRequest,
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
 ) -> CostPredictionResponse:
     """Compute a point estimate and 90% prediction interval for a planned LLM call.
@@ -116,10 +116,11 @@ async def predict_cost(
         point_estimate=point_estimate,
         estimated_input_tokens=request.estimated_input_tokens,
         estimated_output_tokens=request.estimated_output_tokens,
+        tenant_id=tenant_id,
     )
 
     _log.info(
-        ""traject.predictions.cost",
+        "traject.predictions.cost",
         model=request.model,
         feature_tag=request.feature_tag,
         point_estimate=str(point_estimate),

@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     # Security
     api_key_header: str = "X-Traject-API-Key"
     api_key: str = "dev-key-change-in-production"
+    # When False (default), the backend refuses to start if api_key is still the
+    # well-known default. Set ALLOW_INSECURE_API_KEY=true for local dev / tests.
+    allow_insecure_api_key: bool = False
 
     # Semantic cache
     cache_similarity_threshold: float = 0.92
@@ -57,6 +60,14 @@ class Settings(BaseSettings):
 
     # Budget alerts
     budget_alert_webhook_timeout_seconds: int = 10
+
+    # Background scheduler. Set RUN_SCHEDULER=false on web workers and run a
+    # single dedicated scheduler process to avoid every Uvicorn worker firing
+    # every job (audit H11). Jobs additionally take a Redis lock as a backstop.
+    run_scheduler: bool = True
+    # Retention: inference_spans older than this are pruned by the retention job
+    # (audit H10). History is preserved in the cost_attribution rollup.
+    span_retention_days: int = 90
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

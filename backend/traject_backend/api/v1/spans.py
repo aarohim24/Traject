@@ -15,6 +15,9 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import hmac
+
+from traject_backend.core.auth import CurrentTenant
 from traject_backend.core.config import settings
 from traject_backend.core.database import get_db
 from traject_backend.core.redis_client import get_redis
@@ -42,7 +45,9 @@ async def verify_api_key(
     Raises:
         HTTPException: 401 when the header is missing or the key is invalid.
     """
-    if x_axon_api_key is None or x_axon_api_key != settings.api_key:
+    if x_axon_api_key is None or not hmac.compare_digest(
+        x_axon_api_key, settings.api_key
+    ):
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 
@@ -50,10 +55,10 @@ async def verify_api_key(
     "/spans",
     status_code=202,
     response_model=SpanIngestResponse,
-    dependencies=[Depends(verify_api_key)],
 )
 async def create_spans(
     request: SpanIngestRequest,
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
 ) -> SpanIngestResponse:
     """Ingest a batch of LLM inference spans.
@@ -70,15 +75,15 @@ async def create_spans(
         SpanIngestResponse with accepted and rejected counts.
     """
     redis = get_redis()
-    return await ingest_spans(request.spans, db, redis)
+    return await ingest_spans(request.spans, db, redis, tenant_id=tenant_id)
 
 
 @router.get(
     "/spans",
     response_model=list[InferenceSpanPayload],
-    dependencies=[Depends(verify_api_key)],
 )
 async def list_spans(
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
     feature_tag: str | None = Query(default=None),
     from_ts: datetime | None = Query(default=None),
@@ -97,9 +102,12 @@ async def list_spans(
     Returns:
         List of matching span payloads.
     """
-    stmt = select(InferenceSpanRecord).order_by(
-        InferenceSpanRecord.timestamp.desc()
-    ).limit(limit)
+    stmt = (
+        select(InferenceSpanRecord)
+        .where(InferenceSpanRecord.tenant_id == tenant_id)
+        .order_by(InferenceSpanRecord.timestamp.desc())
+        .limit(limit)
+    )
 
     if feature_tag is not None:
         stmt = stmt.where(InferenceSpanRecord.feature_tag == feature_tag)

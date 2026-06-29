@@ -56,7 +56,7 @@ class TestCheckBudget:
         await db_session.flush()
 
         # Pre-populate Redis with a low spend value
-        await redis_mock.set("axon:budget:cached-tag", "1.00")
+        await redis_mock.set("traject:budget:cached-tag", "1.00")
 
         status = await check_budget("cached-tag", db_session, redis_mock)
         assert status == BudgetStatus.OK
@@ -83,7 +83,7 @@ class TestCheckBudget:
         await db_session.flush()
 
         # Spend equals the budget
-        await redis_mock.set("axon:budget:exhausted-tag", "5.00")
+        await redis_mock.set("traject:budget:exhausted-tag", "5.00")
 
         status = await check_budget("exhausted-tag", db_session, redis_mock)
         assert status == BudgetStatus.EXHAUSTED
@@ -112,7 +112,7 @@ class TestCheckBudget:
         await db_session.flush()
 
         # 85% of budget — above 80% threshold, below 100%
-        await redis_mock.set("axon:budget:warning-tag", "8.50")
+        await redis_mock.set("traject:budget:warning-tag", "8.50")
 
         status = await check_budget("warning-tag", db_session, redis_mock)
         assert status == BudgetStatus.WARNING

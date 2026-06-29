@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from traject_backend.api.v1.spans import verify_api_key
+from traject_backend.core.auth import CurrentTenant
 from traject_backend.core.config import settings
 from traject_backend.core.database import get_db
 from traject_backend.models.cache_entry import CacheEntryRecord
@@ -60,10 +60,10 @@ class CacheInvalidateRequest(BaseModel):
 @router.post(
     "/cache/lookup",
     response_model=CacheLookupResponse,
-    dependencies=[Depends(verify_api_key)],
 )
 async def cache_lookup(
     request: CacheLookupRequest,
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
 ) -> CacheLookupResponse:
     """Look up a prompt in the semantic cache.
@@ -80,16 +80,17 @@ async def cache_lookup(
         request.prompt_embedding,
         db,
         settings.cache_similarity_threshold,
+        tenant_id=tenant_id,
     )
 
 
 @router.post(
     "/cache/store",
     status_code=201,
-    dependencies=[Depends(verify_api_key)],
 )
 async def cache_store(
     request: CacheStoreRequest,
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Store a new cache entry.
@@ -101,16 +102,16 @@ async def cache_store(
     Returns:
         Confirmation dict.
     """
-    await store(request, db)
+    await store(request, db, tenant_id=tenant_id)
     return {"status": "stored"}
 
 
 @router.post(
     "/cache/invalidate",
-    dependencies=[Depends(verify_api_key)],
 )
 async def cache_invalidate(
     request: CacheInvalidateRequest,
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, int]:
     """Invalidate cache entries by feature tag or prompt hash.
@@ -127,17 +128,19 @@ async def cache_invalidate(
     if request.prompt_hash is not None:
         result = await db.execute(
             text(
-                "DELETE FROM cache_entries WHERE prompt_hash = :hash"
+                "DELETE FROM cache_entries WHERE prompt_hash = :hash "
+                "AND tenant_id = :tenant_id"
             ),
-            {"hash": request.prompt_hash},
+            {"hash": request.prompt_hash, "tenant_id": str(tenant_id)},
         )
         invalidated = result.rowcount  # type: ignore[attr-defined]
     elif request.feature_tag is not None:
         result = await db.execute(
             text(
-                "DELETE FROM cache_entries WHERE feature_tag = :tag"
+                "DELETE FROM cache_entries WHERE feature_tag = :tag "
+                "AND tenant_id = :tenant_id"
             ),
-            {"tag": request.feature_tag},
+            {"tag": request.feature_tag, "tenant_id": str(tenant_id)},
         )
         invalidated = result.rowcount  # type: ignore[attr-defined]
 
@@ -147,9 +150,9 @@ async def cache_invalidate(
 
 @router.get(
     "/cache/stats",
-    dependencies=[Depends(verify_api_key)],
 )
 async def cache_stats(
+    tenant_id: CurrentTenant,
     db: AsyncSession = Depends(get_db),
     feature_tag: str | None = Query(default=None),
 ) -> dict[str, Any]:
@@ -170,6 +173,7 @@ async def cache_stats(
             func.sum(CacheEntryRecord.cost_saved_usd), Decimal("0")
         ).label("total_cost_saved_usd"),
     )
+    stmt = stmt.where(CacheEntryRecord.tenant_id == tenant_id)
     if feature_tag is not None:
         stmt = stmt.where(CacheEntryRecord.feature_tag == feature_tag)
 

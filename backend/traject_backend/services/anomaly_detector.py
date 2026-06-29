@@ -92,7 +92,7 @@ class AnomalyDetector:
         try:
             return await self._do_scan(db)
         except Exception as exc:  # noqa: BLE001
-            _log.error(""traject.anomaly_detector.scan_error", error=str(exc))
+            _log.error("traject.anomaly_detector.scan_error", error=str(exc))
             return []
 
     async def _do_scan(self, db: AsyncSession) -> list[AnomalyAlert]:
