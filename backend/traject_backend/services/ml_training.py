@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 _log = structlog.get_logger(__name__)
 
-_DEFAULT_ARTIFACT_PATH = os.environ.get("TRAJECT_ML_MODEL_PATH", "/tmp/axon_ml_model.json")
+_DEFAULT_ARTIFACT_PATH = os.environ.get("TRAJECT_ML_MODEL_PATH", "/tmp/axon_ml_model.json")  # nosec B108
 
 
 class MLTrainingService:

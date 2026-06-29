@@ -274,9 +274,7 @@ class TestRouterApplication:
             return resp
 
         fake_router = SimpleNamespace(
-            route=lambda messages, requested: self._decision(
-                "gpt-4o-mini", requested
-            )
+            route=lambda messages, requested: self._decision("gpt-4o-mini", requested)
         )
         with (
             patch("traject.core.instrumentor._router", fake_router),
@@ -297,9 +295,7 @@ class TestRouterApplication:
             return resp
 
         fake_router = SimpleNamespace(
-            route=lambda messages, requested: self._decision(
-                "gpt-4o-mini", requested
-            )
+            route=lambda messages, requested: self._decision("gpt-4o-mini", requested)
         )
         with (
             patch("traject.core.instrumentor._router", fake_router),
@@ -329,9 +325,7 @@ class TestRouterApplication:
             patch("traject.core.instrumentor._router", fake_router),
             patch("traject.core.instrumentor.emit_span"),
         ):
-            result = call(
-                messages=[{"role": "user", "content": "hi"}], model="gpt-4o"
-            )
+            result = call(messages=[{"role": "user", "content": "hi"}], model="gpt-4o")
 
         assert result is resp
         assert received["model"] == "gpt-4o"
@@ -347,9 +341,7 @@ class TestRouterApplication:
             return resp
 
         fake_router = SimpleNamespace(
-            route=lambda messages, requested: self._decision(
-                "gpt-4o-mini", requested
-            )
+            route=lambda messages, requested: self._decision("gpt-4o-mini", requested)
         )
         with (
             patch("traject.core.instrumentor._router", fake_router),
