@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     redis_cache_ttl_seconds: int = 86400  # 24 hours
 
     # API server
-    api_host: str = "0.0.0.0"
+    api_host: str = "0.0.0.0"  # nosec B104 — intentional bind-all default for containerised deploys
     api_port: int = 8000
     api_workers: int = 2
     cors_origins: list[str] = ["http://localhost:3000"]
