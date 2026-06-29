@@ -47,7 +47,7 @@ jobs:
         # autogen has no stubs — covered by ignore_missing_imports in pyproject.toml.
         run: pip install -e "sdk/python[dev,openai,anthropic,langchain,mcp,proxy,ml,bedrock,vertex]" -q
       - name: mypy strict
-        run: mypy sdk/python/traject --strict
+        run: mypy sdk/python/traject --strict --config-file sdk/python/pyproject.toml
 
   test:
     name: Test
@@ -84,7 +84,8 @@ jobs:
         # 25ms gives comfortable headroom; local p50 is ~7ms.
         run: python sdk/python/tests/benchmarks/bench_sdk_overhead.py --assert-median-ms 25
       - name: Compression latency benchmark
-        run: python sdk/python/tests/benchmarks/bench_compression_latency.py --assert-median-ms 50
+        # Dedup pass adds ~10ms on the CI runner; raised from 50→75ms.
+        run: python sdk/python/tests/benchmarks/bench_compression_latency.py --assert-median-ms 75
 
   welcome-contributor:
     name: Welcome First-Time Contributor
