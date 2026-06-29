@@ -370,6 +370,17 @@ def proxy_server(
         int,
         typer.Option("--port", "-p", help="Port to listen on."),
     ] = 8080,
+    host: Annotated[
+        str,
+        typer.Option(
+            "--host",
+            help=(
+                "Interface to bind. Defaults to 127.0.0.1 (localhost only). "
+                "Use 0.0.0.0 ONLY if you understand it exposes this "
+                "credential-bearing proxy on all network interfaces."
+            ),
+        ),
+    ] = "127.0.0.1",
     backend: Annotated[
         str,
         typer.Option("--backend", "-b", help="Upstream API base URL."),
@@ -396,6 +407,8 @@ def proxy_server(
 
     Args:
         port: TCP port to listen on.
+        host: Interface to bind. Defaults to 127.0.0.1 (localhost only);
+            0.0.0.0 exposes the credential-bearing proxy on all interfaces.
         backend: Upstream OpenAI-compatible provider base URL.
         strategy: Compression strategy (``"conservative"``, ``"moderate"``,
             or ``"aggressive"``).
@@ -424,8 +437,11 @@ def proxy_server(
     console.print(f"\n  Set in your agent: OPENAI_BASE_URL=http://localhost:{port}")
 
     strategy_enum = CompressionStrategy(strategy)
+    # Bind to 127.0.0.1 by default — this proxy injects the server's own API
+    # credential into every upstream request, so 0.0.0.0 would expose a
+    # credential-bearing endpoint on all interfaces. Override only deliberately.
     run(
-        host="0.0.0.0",
+        host=host,
         port=port,
         backend_url=backend,
         strategy=strategy_enum,

@@ -14,9 +14,12 @@ additional response headers are injected:
 
 from __future__ import annotations
 
+import ipaddress
 import os
+import socket
 from collections.abc import AsyncGenerator
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 import structlog
@@ -35,6 +38,125 @@ from traject.exceptions import TrajectError
 _log = structlog.get_logger(__name__)
 
 _PROXY_VERSION = "0.1.0"
+
+# ---------------------------------------------------------------------------
+# Header forwarding allowlist
+# ---------------------------------------------------------------------------
+# Only these inbound request headers are forwarded upstream. Everything else
+# (notably the client's own Authorization/Cookie/api-key) is dropped so the
+# client can never inject credentials or smuggle headers to the backend. The
+# proxy re-adds its OWN credential afterwards.
+_FORWARDED_REQUEST_HEADERS: frozenset[str] = frozenset(
+    {
+        "content-type",
+        "accept",
+        # OpenAI provider-specific headers.
+        "openai-organization",
+        "openai-project",
+        "openai-beta",
+        # Anthropic provider-specific headers.
+        "anthropic-version",
+        "anthropic-beta",
+    }
+)
+
+# Inbound auth-bearing headers that must ALWAYS be stripped, even if somehow
+# present in the allowlist. Defence in depth against leaking client credentials.
+_STRIPPED_REQUEST_HEADERS: frozenset[str] = frozenset(
+    {"authorization", "cookie", "x-api-key", "api-key"}
+)
+
+
+def _filtered_forward_headers(inbound: Any) -> dict[str, str]:
+    """Build the upstream header set from inbound request headers.
+
+    Uses an explicit ALLOWLIST: only headers in
+    ``_FORWARDED_REQUEST_HEADERS`` survive, and any header in
+    ``_STRIPPED_REQUEST_HEADERS`` (the client's own Authorization, Cookie,
+    x-api-key, api-key) is always removed. The proxy's own credential is
+    added by the caller after this function returns.
+
+    Args:
+        inbound: The incoming request's headers (a mapping of name -> value).
+
+    Returns:
+        A new dict of headers safe to forward upstream.
+    """
+    out: dict[str, str] = {}
+    for k, v in inbound.items():
+        lk = k.lower()
+        if lk in _STRIPPED_REQUEST_HEADERS:
+            continue
+        if lk in _FORWARDED_REQUEST_HEADERS:
+            out[k] = v
+    return out
+
+
+def validate_backend_url(url: str) -> None:
+    """Validate a proxy backend URL, guarding against SSRF.
+
+    Rules:
+
+    * Scheme must be ``https``. Plain ``http`` is allowed ONLY when the host
+      is an explicit localhost/loopback name (the documented Ollama / LM
+      Studio dev case, e.g. ``http://localhost:11434``).
+    * The host is resolved and any address that is private, loopback,
+      link-local, or otherwise reserved is REJECTED — unless the host was
+      explicitly given as a loopback name (``localhost``/``127.0.0.1``/``::1``).
+    * The cloud metadata address ``169.254.169.254`` is rejected ALWAYS.
+
+    Args:
+        url: The backend base URL to validate.
+
+    Raises:
+        ValueError: If the URL is malformed or points at a disallowed target.
+    """
+    parsed = urlparse(url)
+    scheme = (parsed.scheme or "").lower()
+    host = parsed.hostname
+
+    if not host:
+        raise ValueError(f"Backend URL has no host: {url!r}")
+
+    loopback_names = {"localhost", "127.0.0.1", "::1"}
+    is_loopback_name = host.lower() in loopback_names
+
+    if scheme not in {"http", "https"}:
+        raise ValueError(
+            f"Backend URL scheme must be http or https, got {scheme!r}: {url!r}"
+        )
+
+    if scheme == "http" and not is_loopback_name:
+        raise ValueError(
+            "Plain http is only allowed for localhost/loopback backends "
+            f"(e.g. http://localhost:11434); got: {url!r}"
+        )
+
+    # Resolve the host to IP addresses and check every result.
+    try:
+        infos = socket.getaddrinfo(host, parsed.port, proto=socket.IPPROTO_TCP)
+    except socket.gaierror as exc:
+        raise ValueError(f"Backend host could not be resolved: {host!r}") from exc
+
+    for info in infos:
+        addr = info[4][0]
+        ip = ipaddress.ip_address(addr)
+
+        # Cloud metadata endpoint is rejected unconditionally.
+        if str(ip) == "169.254.169.254":
+            raise ValueError(
+                "Backend resolves to the cloud metadata IP 169.254.169.254; "
+                f"refusing: {url!r}"
+            )
+
+        if ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_reserved:
+            if is_loopback_name and ip.is_loopback:
+                # Explicitly allowed local dev backend (Ollama/LM Studio).
+                continue
+            raise ValueError(
+                f"Backend resolves to a disallowed non-public address {ip}: {url!r}"
+            )
+
 
 # ---------------------------------------------------------------------------
 # Pydantic request models
@@ -104,6 +226,10 @@ def create_app(
         Configured :class:`~fastapi.FastAPI` application instance ready
         to be served with uvicorn.
     """
+    # Validate the configured backend before serving any traffic. A misconfigured
+    # or malicious backend (SSRF, metadata endpoint, private range) must never
+    # receive the proxy's credential.
+    validate_backend_url(backend_url)
     _backend_url = backend_url.rstrip("/")
 
     app = FastAPI(
@@ -166,11 +292,7 @@ def create_app(
             HTTPException: If the upstream request fails.
         """
         api_key = os.environ.get(api_key_env, "")
-        headers: dict[str, str] = {
-            k: v
-            for k, v in request.headers.items()
-            if k.lower() not in {"host", "content-length"}
-        }
+        headers: dict[str, str] = _filtered_forward_headers(request.headers)
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
 
@@ -270,13 +392,11 @@ def create_app(
         # 4. Build forwarding request body.
         forward_body: dict[str, Any] = {**raw_body, "messages": messages_to_forward}
 
-        # Build headers — strip hop-by-hop and Host; inject Authorization.
+        # Build headers from an explicit allowlist; the client's own
+        # Authorization/Cookie/api-key are always stripped before we inject
+        # the proxy's own credential.
         api_key = os.environ.get(api_key_env, "")
-        forward_headers: dict[str, str] = {
-            k: v
-            for k, v in request.headers.items()
-            if k.lower() not in {"host", "content-length", "transfer-encoding"}
-        }
+        forward_headers: dict[str, str] = _filtered_forward_headers(request.headers)
         forward_headers["Content-Type"] = "application/json"
         if api_key:
             forward_headers["Authorization"] = f"Bearer {api_key}"

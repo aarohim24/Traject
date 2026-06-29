@@ -46,7 +46,7 @@ class _SessionStats:
         total_tokens_saved: Sum of tokens eliminated across all calls.
         total_cost_usd: Placeholder cost accumulator (always zero in Phase 3;
             kept as Decimal for ADR-006 compliance).
-        budget_limit_tokens: Optional session-level token budget set via
+        budget_limit_tokens: Optional session-level token budget Coset via
             ``traject_budget``.
     """
 
