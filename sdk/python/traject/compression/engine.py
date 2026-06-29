@@ -92,6 +92,34 @@ def _has_high_information_content(content: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _sum_message_tokens(messages: list[dict[str, Any]], enc: Any) -> int:  # noqa: ANN401
+    """Sum tiktoken token counts over a message list.
+
+    Mirrors the per-message counting logic in the segment parser: string
+    content is encoded directly, list content sums its text parts, and any
+    other content type contributes zero.
+
+    Args:
+        messages: Message dicts to count.
+        enc: A tiktoken encoding (from ``_encoding_for_model``).
+
+    Returns:
+        Total token count across all messages.
+    """
+    total = 0
+    for m in messages:
+        content = m.get("content", "")
+        if isinstance(content, str):
+            total += len(enc.encode(content))
+        elif isinstance(content, list):
+            total += sum(
+                len(enc.encode(part.get("text", "")))
+                for part in content
+                if isinstance(part, dict) and part.get("type") == "text"
+            )
+    return total
+
+
 def _preprocess_messages(
     messages: list[dict[str, Any]],
     artifact_types: list[ArtifactType],
@@ -498,6 +526,16 @@ def compress(
     # Step 2: CLASSIFY
     artifact_types: list[ArtifactType] = classify_sequence(normalized)
 
+    # Encoding is needed both for the raw baseline and for compressed counting.
+    enc = _encoding_for_model(model)
+
+    # The reported baseline is the RAW token count of what the caller sent,
+    # measured BEFORE preprocessing. This ensures the lossless preprocessing
+    # savings (prose filter, JSON columnarization) are reflected in the
+    # reported compression_ratio and tokens_saved rather than silently
+    # shrinking the baseline.
+    original_tokens: int = _sum_message_tokens(normalized, enc)
+
     # Step 2a: PREPROCESS — prose filter (ASSISTANT) + JSON columnarizer (TOOL_RESULT)
     preprocessed: list[dict[str, Any]] = _preprocess_messages(
         normalized, artifact_types
@@ -505,7 +543,9 @@ def compress(
 
     # Step 3: PARSE (token counts reflect preprocessed content)
     segments: list[Segment] = parse(preprocessed, artifact_types, model=model)
-    original_tokens: int = sum(s.token_count for s in segments)
+    # Post-preprocessing total drives the greedy candidate-selection target so
+    # the target math operates on the segments the engine can still act on.
+    parse_total_tokens: int = sum(s.token_count for s in segments)
 
     # Step 4: PROTECT — last N turns
     max_turn: int = max((s.turn_index for s in segments), default=0)
@@ -559,7 +599,7 @@ def compress(
         strategy=config.strategy,
         max_turn=max_turn,
         target_reduction_pct=config.target_reduction_pct,
-        original_tokens=original_tokens,
+        original_tokens=parse_total_tokens,
         score_ceiling=config.score_ceiling,
     )
 
@@ -568,8 +608,6 @@ def compress(
     dropped: list[Segment] = []
     compressed_messages: list[dict[str, Any]] = []
     ccr_stubbed_count: int = 0
-
-    enc = _encoding_for_model(model)
 
     # Lossless dedup runs first: it applies even to otherwise-protected duplicate
     # tool results because the information is preserved in the retained later copy.
