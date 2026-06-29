@@ -2,22 +2,44 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 from traject_backend.core.ssrf import SSRFValidationError, validate_external_url
 
+# A public, non-reserved IP (example.com's address) for mocking DNS resolution
+# so tests do not depend on live network access in CI.
+_PUBLIC_ADDRINFO = [(2, 1, 6, "", ("93.184.216.34", 443))]
+
 
 class TestValidateExternalUrl:
     def test_valid_https_url(self) -> None:
-        # Should not raise for a real public HTTPS endpoint.
-        validate_external_url("https://hooks.example.com/webhook/abc123")
+        # Should not raise when the host resolves to a public address.
+        with patch(
+            "traject_backend.core.ssrf.socket.getaddrinfo",
+            return_value=_PUBLIC_ADDRINFO,
+        ):
+            validate_external_url("https://hooks.example.com/webhook/abc123")
+
+    def test_valid_https_url_non_default_port(self) -> None:
+        # Explicit port path resolves to a public address and is allowed.
+        with patch(
+            "traject_backend.core.ssrf.socket.getaddrinfo",
+            return_value=_PUBLIC_ADDRINFO,
+        ):
+            validate_external_url("https://hooks.example.com:8443/webhook")
 
     def test_rejects_http_when_https_required(self) -> None:
         with pytest.raises(SSRFValidationError, match="https"):
             validate_external_url("http://hooks.example.com/webhook")
 
     def test_allows_http_when_not_required(self) -> None:
-        validate_external_url("http://hooks.example.com/webhook", require_https=False)
+        with patch(
+            "traject_backend.core.ssrf.socket.getaddrinfo",
+            return_value=_PUBLIC_ADDRINFO,
+        ):
+            validate_external_url("http://hooks.example.com/webhook", require_https=False)
 
     def test_rejects_non_http_scheme(self) -> None:
         with pytest.raises(SSRFValidationError, match="scheme"):
