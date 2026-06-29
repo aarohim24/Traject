@@ -56,7 +56,9 @@ class TestPricingFreshness:
     def test_verification_pending_entries_exist(self) -> None:
         """Allowlist entries must be real models (no dangling exemptions)."""
         for model in VERIFICATION_PENDING:
-            assert model in PROVIDER_PRICING, f"VERIFICATION_PENDING has unknown model: {model}"
+            assert model in PROVIDER_PRICING, (
+                f"VERIFICATION_PENDING has unknown model: {model}"
+            )
 
 
 class TestCurrentClaudePricing:
@@ -75,7 +77,9 @@ class TestCurrentClaudePricing:
     def test_cache_read_is_tenth_of_input(self, model: str) -> None:
         """Cache-read tier follows the documented ~0.1x-input economics."""
         p = PROVIDER_PRICING[model]
-        assert p.cache_read_cost_per_1m_tokens == p.input_cost_per_1m_tokens / Decimal(10)
+        assert p.cache_read_cost_per_1m_tokens == p.input_cost_per_1m_tokens / Decimal(
+            10
+        )
 
     @pytest.mark.parametrize("model", sorted(_CURRENT_CLAUDE))
     def test_not_pending(self, model: str) -> None:
