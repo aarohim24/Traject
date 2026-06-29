@@ -64,7 +64,7 @@ jobs:
       - name: Run tests
         run: pytest sdk/python/tests/unit/ sdk/python/tests/integration/ --cov=traject --cov-fail-under=80 --cov-report=xml
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage.xml
           fail_ci_if_error: false
