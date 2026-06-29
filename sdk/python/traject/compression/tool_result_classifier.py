@@ -191,42 +191,59 @@ def _summarize_git_log(content: str) -> str:
 
 
 def _summarize_pytest(content: str) -> str:
-    """Keep FAILED lines, the short-summary section, and the final result line."""
+    """Compress pytest output while preserving all fact-bearing failure detail.
+
+    The verbose, low-value part of a pytest run is the per-test PASSED line
+    listing during collection. The load-bearing parts — which carry file:line
+    references, error/exception types, and failing test names — live in the
+    FAILURES section, the short-summary section, and the final result line.
+    This keeps all three verbatim and drops only the collection noise.
+    """
     lines = content.splitlines()
-    failures: list[str] = []
-    final_line: str | None = None
-    in_summary_section = False
+    kept: list[str] = []
+    in_failures = False
+    in_summary = False
 
     for line in lines:
-        if re.match(r"=+ short test summary", line, re.IGNORECASE):
-            in_summary_section = True
-            failures.append(line)
+        low = line.lower()
+        # Section toggles.
+        if re.match(r"=+ FAILURES =+", line):
+            in_failures = True
+            in_summary = False
+            kept.append(line)
             continue
-        if in_summary_section:
-            if line.startswith("=") and "short test summary" not in line.lower():
-                in_summary_section = False
-            else:
-                failures.append(line)
-                continue
-        if re.match(r"FAILED ", line):
-            failures.append(line)
-        # Final summary: "X passed, Y failed in Zs"
-        if re.search(r"\d+ (?:passed|failed|error)", line, re.IGNORECASE) and (
-            line.startswith("=") or re.match(r"\d+", line.strip())
-        ):
-            final_line = line
+        if re.match(r"=+ short test summary", line, re.IGNORECASE):
+            in_failures = False
+            in_summary = True
+            kept.append(line)
+            continue
+        # A new banner line ends the current detail section.
+        if line.startswith("=") and (in_failures or in_summary):
+            # The final "N passed, M failed in Xs" banner is itself valuable.
+            if re.search(r"\d+ (?:passed|failed|error)", low):
+                kept.append(line)
+            in_failures = False
+            in_summary = False
+            continue
+        if in_failures or in_summary:
+            kept.append(line)
+            continue
+        # Outside detail sections: keep explicit FAILED/ERROR lines and the
+        # final result banner; drop PASSED collection noise.
+        is_failed_line = re.match(r"(?:FAILED|ERROR) ", line) is not None
+        is_result_banner = line.startswith("=") and bool(
+            re.search(r"\d+ (?:passed|failed|error)", low)
+        )
+        if is_failed_line or is_result_banner:
+            kept.append(line)
 
-    result_parts: list[str] = list(failures)
-    if final_line and (not result_parts or result_parts[-1] != final_line):
-        result_parts.append(final_line)
-
-    if not result_parts:
+    if not kept:
         non_empty = [ln for ln in lines if ln.strip()]
         head = non_empty[:5]
         tail = non_empty[-3:] if len(non_empty) > 8 else []
-        result_parts = head + (["..."] if tail else []) + tail
+        kept = head + (["..."] if tail else []) + tail
 
-    return "\n".join(result_parts)
+    return "\n".join(kept)
 
 
 def _summarize_file_tree(content: str) -> str:

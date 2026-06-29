@@ -412,6 +412,19 @@ def _apply_strategy(
     turns_ago = max_turn - segment.turn_index
 
     if segment.soft_protected:
+        # A TOOL_RESULT soft-protected only by its high-information content
+        # (not actively referenced by a later turn) is eligible for command-
+        # aware summarization once it is several turns old. The command-aware
+        # summarizer preserves load-bearing facts (errors, failed tests, file
+        # headers) while trimming bulk, and the engine's inflation guard
+        # ensures the substitution is only made when strictly smaller.
+        if (
+            art == ArtifactType.TOOL_RESULT
+            and not segment.semantically_referenced
+            and turns_ago > 3
+        ):
+            return "SUMMARIZE"
+        # Actively-referenced tool results keep the strict, conservative gate.
         if art == ArtifactType.TOOL_RESULT and turns_ago > 3 and score < 0.15:
             return "SUMMARIZE"
         if art == ArtifactType.REASONING_BLOCK and score < 0.15:
@@ -572,20 +585,38 @@ def compress(
             ]
 
     # Step 4b: SOFT-PROTECT — semantic reference + content-aware pass
+    #
+    # Two independent signals soft-protect a segment:
+    #   1. semantic reference — a later message actively refers back to it, so
+    #      the agent is reasoning about its content. These MUST stay verbatim.
+    #   2. high-information content — it contains errors/hashes/paths/URLs.
+    #      These need protection from the LOSSY generic summarizer, but the
+    #      command-aware tool-result summarizer is designed to preserve exactly
+    #      this load-bearing information. So a TOOL_RESULT soft-protected ONLY
+    #      by signal 2 (not actively referenced) stays eligible for command-
+    #      aware summarization. The ``semantically_referenced`` flag records
+    #      signal 1 so _apply_strategy can tell the two apart.
     ref_scores: list[float] = compute_semantic_reference_scores(segments, window=5)
     _SOFT_PROTECT_THRESHOLD: float = 0.75
-    segments = [
-        s.model_copy(update={"soft_protected": True})
-        if (
-            not s.protected
-            and (
-                ref_score >= _SOFT_PROTECT_THRESHOLD
-                or _has_high_information_content(s.content)
+    new_segments: list[Segment] = []
+    for s, ref_score in zip(segments, ref_scores, strict=False):
+        if s.protected:
+            new_segments.append(s)
+            continue
+        referenced = ref_score >= _SOFT_PROTECT_THRESHOLD
+        soft = referenced or _has_high_information_content(s.content)
+        if soft:
+            new_segments.append(
+                s.model_copy(
+                    update={
+                        "soft_protected": True,
+                        "semantically_referenced": referenced,
+                    }
+                )
             )
-        )
-        else s
-        for s, ref_score in zip(segments, ref_scores, strict=False)
-    ]
+        else:
+            new_segments.append(s)
+    segments = new_segments
     segments_soft_protected_count: int = sum(1 for s in segments if s.soft_protected)
 
     # Step 5: SCORE

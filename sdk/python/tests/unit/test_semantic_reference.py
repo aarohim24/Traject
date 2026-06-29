@@ -41,6 +41,7 @@ def _seg(
     art: ArtifactType = ArtifactType.USER_MESSAGE,
     protected: bool = False,
     soft_protected: bool = False,
+    semantically_referenced: bool = False,
 ) -> Segment:
     """Build a minimal Segment for testing."""
     return Segment(
@@ -52,6 +53,7 @@ def _seg(
         turn_index=turn_index,
         protected=protected,
         soft_protected=soft_protected,
+        semantically_referenced=semantically_referenced,
     )
 
 
@@ -163,11 +165,12 @@ class TestComputeSemanticReferenceScores:
 class TestApplyStrategyWithSoftProtect:
     """Tests for _apply_strategy soft_protected tier behaviour."""
 
-    def test_soft_protected_tool_result_retained_at_score_0_20(self) -> None:
-        """P-REF-5: soft_protected TOOL_RESULT with score 0.20 is RETAINED.
+    def test_referenced_soft_protected_tool_result_retained_at_score_0_20(self) -> None:
+        """P-REF-5: a *semantically referenced* soft_protected TOOL_RESULT with
+        score 0.20 is RETAINED.
 
-        Without soft_protected, CONSERVATIVE would SUMMARIZE at score < 0.30.
-        With soft_protected, the threshold drops to < 0.15, so 0.20 → RETAIN.
+        A tool result that a later turn actively references keeps the strict
+        gate: the threshold drops to < 0.15, so 0.20 → RETAIN.
         """
         seg = _seg(
             0,
@@ -175,6 +178,43 @@ class TestApplyStrategyWithSoftProtect:
             0,
             art=ArtifactType.TOOL_RESULT,
             soft_protected=True,
+            semantically_referenced=True,
+        )
+        decision = _apply_strategy(
+            seg, score=0.20, strategy=CompressionStrategy.CONSERVATIVE, max_turn=5
+        )
+        assert decision == "RETAIN"
+
+    def test_unreferenced_soft_protected_tool_result_summarized_when_aged(self) -> None:
+        """Gate split: a soft_protected TOOL_RESULT protected ONLY by its
+        high-information content (not actively referenced) becomes eligible for
+        command-aware summarization once it is several turns old, regardless of
+        score. The command-aware summarizer preserves load-bearing facts.
+        """
+        seg = _seg(
+            0,
+            "Tool output",
+            0,
+            art=ArtifactType.TOOL_RESULT,
+            soft_protected=True,
+            semantically_referenced=False,
+        )
+        decision = _apply_strategy(
+            seg, score=0.20, strategy=CompressionStrategy.CONSERVATIVE, max_turn=5
+        )
+        assert decision == "SUMMARIZE"
+
+    def test_unreferenced_soft_protected_recent_tool_result_retained(self) -> None:
+        """A recent (turns_ago <= 3) unreferenced soft_protected TOOL_RESULT is
+        still RETAINED — the gate split only applies to aged segments.
+        """
+        seg = _seg(
+            0,
+            "Tool output",
+            5,
+            art=ArtifactType.TOOL_RESULT,
+            soft_protected=True,
+            semantically_referenced=False,
         )
         decision = _apply_strategy(
             seg, score=0.20, strategy=CompressionStrategy.CONSERVATIVE, max_turn=5
@@ -223,13 +263,24 @@ class TestApplyStrategyWithSoftProtect:
         )
         assert decision == "RETAIN"
 
-    def test_soft_protected_takes_precedence_over_all_strategies(self) -> None:
-        """Soft_protected threshold (0.15) applies regardless of strategy."""
-        seg = _seg(0, "content", 0, art=ArtifactType.TOOL_RESULT, soft_protected=True)
+    def test_referenced_soft_protected_takes_precedence_over_all_strategies(
+        self,
+    ) -> None:
+        """A semantically-referenced soft_protected TOOL_RESULT keeps the strict
+        0.15 threshold regardless of strategy (score 0.20 → RETAIN everywhere).
+        """
+        seg = _seg(
+            0,
+            "content",
+            0,
+            art=ArtifactType.TOOL_RESULT,
+            soft_protected=True,
+            semantically_referenced=True,
+        )
         for strategy in CompressionStrategy:
             decision = _apply_strategy(seg, score=0.20, strategy=strategy, max_turn=5)
             assert decision == "RETAIN", (
-                f"Expected RETAIN for soft_protected with score=0.20, "
+                f"Expected RETAIN for referenced soft_protected with score=0.20, "
                 f"strategy={strategy}, got {decision}"
             )
 

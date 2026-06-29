@@ -165,6 +165,34 @@ class TestSummarize:
         result = summarize(_PYTEST_OUTPUT)
         assert "passed" in result or "failed" in result
 
+    def test_pytest_preserves_traceback_file_line_facts(self) -> None:
+        """The FAILURES section carries file:line + error facts that the
+        retention metric checks; the summarizer must keep them verbatim.
+        """
+        content = (
+            "============================= test session starts ==============================\n"
+            "collected 30 items\n\n"
+            + "\n".join(f"tests/test_mod.py::test_{i} PASSED" for i in range(28))
+            + "\ntests/test_mod.py::test_boom FAILED\n\n"
+            "=================================== FAILURES ===================================\n"
+            "________ test_boom ________\n"
+            ">       assert compute() == 42\n"
+            "E       ValueError: boom in handler\n"
+            "tests/test_mod.py:137: ValueError\n"
+            "========================= short test summary info ==========================\n"
+            "FAILED tests/test_mod.py::test_boom\n"
+            "======================== 28 passed, 1 failed in 1.20s =========================\n"
+        )
+        result = summarize(content)
+        # Fact-bearing detail preserved verbatim.
+        assert "tests/test_mod.py:137" in result
+        assert "ValueError" in result
+        assert "test_boom" in result
+        # Verbose PASSED collection noise dropped.
+        assert "test_0 PASSED" not in result
+        # And it must actually be shorter.
+        assert len(result) < len(content)
+
     def test_file_tree_limits_entries(self) -> None:
         # Build a large listing
         big_tree = "\n".join(
