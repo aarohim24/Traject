@@ -1,6 +1,6 @@
-# Axon Kubernetes Deployment
+# Traject Kubernetes Deployment
 
-Deploy the Axon platform on Kubernetes using the included Helm chart.
+Deploy the Traject platform on Kubernetes using the included Helm chart.
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ Deploy the Axon platform on Kubernetes using the included Helm chart.
 ## Quick Install
 
 ```bash
-helm install axon ./deploy/kubernetes/helm/axon
+helm install traject ./deploy/kubernetes/helm/axon
 ```
 
 This deploys with default values: 2 backend replicas, 1 dashboard replica, PostgreSQL and Redis PVCs enabled, ingress disabled.
@@ -23,17 +23,17 @@ Override any value with `--set` or a custom `values.yaml`:
 
 ```bash
 # Override image tags for a specific release
-helm install axon ./deploy/kubernetes/helm/axon \
-  --set backend.image=ghcr.io/aarohim24/axon-backend:0.4.1 \
-  --set dashboard.image=ghcr.io/aarohim24/axon-dashboard:0.4.1
+helm install traject ./deploy/kubernetes/helm/axon \
+  --set backend.image=ghcr.io/aarohim24/traject-backend:0.4.1 \
+  --set dashboard.image=ghcr.io/aarohim24/traject-dashboard:0.4.1
 
 # Enable ingress with a hostname
-helm install axon ./deploy/kubernetes/helm/axon \
+helm install traject ./deploy/kubernetes/helm/axon \
   --set ingress.enabled=true \
-  --set ingress.host=axon.example.com
+  --set ingress.host=traject.example.com
 
 # Use a custom values file
-helm install axon ./deploy/kubernetes/helm/axon -f my-values.yaml
+helm install traject ./deploy/kubernetes/helm/axon -f my-values.yaml
 ```
 
 ### Key values
@@ -41,17 +41,17 @@ helm install axon ./deploy/kubernetes/helm/axon -f my-values.yaml
 | Key | Default | Description |
 |---|---|---|
 | `backend.replicaCount` | `2` | Number of backend pod replicas |
-| `backend.image` | `ghcr.io/aarohim24/axon-backend:latest` | Backend container image |
+| `backend.image` | `ghcr.io/aarohim24/traject-backend:latest` | Backend container image |
 | `dashboard.replicaCount` | `1` | Number of dashboard pod replicas |
-| `dashboard.image` | `ghcr.io/aarohim24/axon-dashboard:latest` | Dashboard container image |
+| `dashboard.image` | `ghcr.io/aarohim24/traject-dashboard:latest` | Dashboard container image |
 | `postgres.enabled` | `true` | Create a PostgreSQL PVC |
 | `postgres.storageSize` | `20Gi` | PostgreSQL PVC size |
 | `redis.enabled` | `true` | Create a Redis PVC |
 | `redis.storageSize` | `2Gi` | Redis PVC size |
 | `ingress.enabled` | `false` | Enable the Ingress resource |
 | `ingress.host` | `""` | Hostname for the Ingress rule |
-| `config.API_KEY` | `change-me-in-production` | Axon API key (change before deploying) |
-| `config.DATABASE_URL` | `postgresql+asyncpg://axon:axon@postgres:5432/axon` | Database connection string |
+| `config.API_KEY` | `change-me-in-production` | Traject API key (change before deploying) |
+| `config.DATABASE_URL` | `postgresql+asyncpg://traject:traject@postgres:5432/traject` | Database connection string |
 | `config.REDIS_URL` | `redis://redis:6379/0` | Redis connection string |
 
 **Important:** Always override `config.API_KEY` with a strong secret before deploying to any non-local environment.
@@ -59,34 +59,34 @@ helm install axon ./deploy/kubernetes/helm/axon -f my-values.yaml
 ## Upgrade Procedure
 
 ```bash
-helm upgrade axon ./deploy/kubernetes/helm/axon
+helm upgrade traject ./deploy/kubernetes/helm/axon
 ```
 
 To upgrade with new image tags:
 
 ```bash
-helm upgrade axon ./deploy/kubernetes/helm/axon \
-  --set backend.image=ghcr.io/aarohim24/axon-backend:0.4.2 \
-  --set dashboard.image=ghcr.io/aarohim24/axon-dashboard:0.4.2
+helm upgrade traject ./deploy/kubernetes/helm/axon \
+  --set backend.image=ghcr.io/aarohim24/traject-backend:0.4.2 \
+  --set dashboard.image=ghcr.io/aarohim24/traject-dashboard:0.4.2
 ```
 
 Check rollout status after upgrading:
 
 ```bash
-kubectl rollout status deployment/axon-backend
-kubectl rollout status deployment/axon-dashboard
+kubectl rollout status deployment/traject-backend
+kubectl rollout status deployment/traject-dashboard
 ```
 
 ## Uninstall
 
 ```bash
-helm uninstall axon
+helm uninstall traject
 ```
 
 Note: PVCs are not deleted automatically. Remove them manually if needed:
 
 ```bash
-kubectl delete pvc axon-postgres-pvc axon-redis-pvc
+kubectl delete pvc traject-postgres-pvc traject-redis-pvc
 ```
 
 ## Resource Requirements

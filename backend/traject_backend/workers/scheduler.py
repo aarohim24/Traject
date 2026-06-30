@@ -145,8 +145,7 @@ async def _run_expire_cache_entries() -> None:
         async with AsyncSessionLocal() as db:
             await db.execute(
                 text(
-                    "DELETE FROM cache_entries "
-                    "WHERE expires_at IS NOT NULL AND expires_at < now()"
+                    "DELETE FROM cache_entries WHERE expires_at IS NOT NULL AND expires_at < now()"
                 )
             )
             await db.commit()
@@ -182,11 +181,7 @@ async def _run_recompute_budget_counters() -> None:
             for budget in budgets:
                 period_start = _period_start(budget.period)
                 spend_result = await db.execute(
-                    select(
-                        func.coalesce(
-                            func.sum(InferenceSpanRecord.cost_usd), 0
-                        )
-                    ).where(
+                    select(func.coalesce(func.sum(InferenceSpanRecord.cost_usd), 0)).where(
                         InferenceSpanRecord.feature_tag == budget.feature_tag,
                         InferenceSpanRecord.timestamp >= period_start,
                     )
@@ -267,6 +262,7 @@ def register_jobs() -> None:
     Should be called once before :meth:`~apscheduler.schedulers.asyncio.AsyncIOScheduler.start`.
     Calling it more than once is safe — the scheduler deduplicates jobs by ID.
     """
+
     def _locked(job_id: str, fn: Callable[[], Awaitable[None]]) -> Callable[[], Awaitable[None]]:
         async def _wrapped() -> None:
             await _run_locked(job_id, fn)

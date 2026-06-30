@@ -78,9 +78,7 @@ class CostAttributionRecord(Base):
     cache_hit_count: Mapped[int] = mapped_column(nullable=False, server_default=text("0"))
     p50_latency_ms: Mapped[int] = mapped_column(nullable=False, server_default=text("0"))
     p95_latency_ms: Mapped[int] = mapped_column(nullable=False, server_default=text("0"))
-    created_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("now()")
-    )
+    created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("now()"))
 
     __table_args__ = (
         UniqueConstraint(

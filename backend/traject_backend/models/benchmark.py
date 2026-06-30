@@ -58,6 +58,4 @@ class BenchmarkSubmissionRecord(Base):
         server_default=text("now()"),
     )
 
-    __table_args__ = (
-        Index("ix_benchmarks_submitted_at", "submitted_at"),
-    )
+    __table_args__ = (Index("ix_benchmarks_submitted_at", "submitted_at"),)

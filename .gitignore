@@ -26,7 +26,10 @@ dashboard/dist/
 *.orig
 *.bak
 *.tmp
-/tmp/axon_ml_model.json
+/tmp/traject_ml_model.json
 swebench_trajectories.jsonl
 swebench_results.json
+swe_trajectories.jsonl
 trajectories
+scratchpad/
+sdk/typescript/coverage/

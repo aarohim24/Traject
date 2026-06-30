@@ -1,4 +1,4 @@
-"""Initial database schema for Axon backend Phase 2.
+"""Initial database schema for Traject backend.
 
 Creates the pgvector extension and all four tables:
 - inference_spans

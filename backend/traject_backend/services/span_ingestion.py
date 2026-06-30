@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import uuid
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import StrEnum
 from typing import Any
@@ -122,7 +122,7 @@ async def ingest_spans(
         Budget enforcement is triggered asynchronously for each unique
         ``feature_tag`` in the accepted batch.
     """
-    now_utc = datetime.now(tz=timezone.utc)
+    now_utc = datetime.now(tz=UTC)
     cutoff = now_utc + timedelta(seconds=_FUTURE_TOLERANCE_SECONDS)
 
     valid: list[InferenceSpanPayload] = []
@@ -132,7 +132,7 @@ async def ingest_spans(
         # Normalise to UTC-aware if naive
         ts = span.timestamp
         if ts.tzinfo is None:
-            ts = ts.replace(tzinfo=timezone.utc)
+            ts = ts.replace(tzinfo=UTC)
         if ts > cutoff:
             rejected_count += 1
             _log.debug("traject.ingest.rejected_future_timestamp", timestamp=str(ts))
@@ -192,8 +192,6 @@ async def ingest_spans(
                 await redis.incrbyfloat(key, float(amount))
                 await redis.expire(key, settings.redis_cache_ttl_seconds)
             except Exception as exc:  # noqa: BLE001 — counter is best-effort
-                _log.warning(
-                    "traject.budget.counter.failed", feature_tag=tag, error=str(exc)
-                )
+                _log.warning("traject.budget.counter.failed", feature_tag=tag, error=str(exc))
 
     return SpanIngestResponse(accepted=len(valid), rejected=rejected_count)

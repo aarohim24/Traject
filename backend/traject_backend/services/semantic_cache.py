@@ -167,9 +167,7 @@ async def store(
         db: An active async SQLAlchemy session.
     """
     try:
-        expires_at = datetime.utcnow() + timedelta(
-            seconds=settings.redis_cache_ttl_seconds
-        )
+        expires_at = datetime.utcnow() + timedelta(seconds=settings.redis_cache_ttl_seconds)
         now = datetime.utcnow()
 
         stmt = pg_insert(CacheEntryRecord).values(
@@ -193,9 +191,9 @@ async def store(
                 "hit_count": text("cache_entries.hit_count + 1"),
                 "last_hit_at": now,
                 # Bound parameter — never interpolate a value into raw SQL.
-                "cost_saved_usd": text(
-                    "cache_entries.cost_saved_usd + :cost_delta"
-                ).bindparams(cost_delta=request.cost_usd or Decimal("0")),
+                "cost_saved_usd": text("cache_entries.cost_saved_usd + :cost_delta").bindparams(
+                    cost_delta=request.cost_usd or Decimal("0")
+                ),
             },
         )
         await db.execute(stmt)

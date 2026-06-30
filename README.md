@@ -1,17 +1,38 @@
 # Traject
-AI inference optimization middleware for production agent systems.
 
-In multi-step agents, each LLM call re-transmits the full accumulated context — tool results, reasoning traces, prior messages — compounding cost at every step. Traject intercepts calls to existing OpenAI and Anthropic clients, compresses redundant context before it reaches the provider, routes requests to the cheapest qualifying model, and emits structured OpenTelemetry spans for cost attribution. Three lines of code. Existing call sites unchanged.
+[![CI](https://github.com/aarohim24/Traject/actions/workflows/ci.yml/badge.svg)](https://github.com/aarohim24/Traject/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
+
+**Self-hosted LLM cost observability and trajectory compression for production agent systems.**
+
+---
+
+## About
+
+Multi-step AI agents re-transmit their full accumulated context on every LLM call — tool results, reasoning traces, prior messages — compounding cost at every step. At step 10, the agent re-pays for 9 steps of history. Traject intercepts those calls, compresses the redundant parts before they reach the provider, routes requests to the cheapest model that can handle the task, and emits structured OpenTelemetry spans so your team can see exactly where the money is going.
+
+Three lines of code. Existing call sites unchanged.
 
 ```python
 traject.configure(export_to_stdout=True)
 traject.patch(client, feature_tag="my_agent", shadow_mode=True)
 ```
 
+**What makes Traject different from other compression tools:**
+
+- **Verified numbers.** Benchmarked on 49 real coding-agent trajectories: 43–45% aggregate token reduction with a verbatim fact-preservation check independent of the compression scorer.
+- **Enterprise observability.** Cost attribution by feature tag, budget enforcement with webhook alerts, anomaly detection, multi-tenant backend — not just compression.
+- **Fully self-hosted.** Python SDK + FastAPI backend + Grafana dashboards. Your data never leaves your infrastructure.
+- **Reversible compression (CCR).** Dropped segments are stored in Redis and recoverable on demand via the `traject_retrieve` MCP tool — no information is permanently lost.
+
+**Who it's for:** Engineering teams building and running LLM agents or services that pay their own API bill. Not for individual engineers using managed subscriptions (Copilot, Claude Team) — those don't expose the API spend Traject reduces.
+
 ---
 
 ## Contents
 
+- [About](#about)
 - [Installation](#installation)
 - [Quickstart](#quickstart)
 - [How it works](#how-it-works)
@@ -25,6 +46,8 @@ traject.patch(client, feature_tag="my_agent", shadow_mode=True)
 - [Requirements](#requirements)
 - [Architecture](#architecture)
 - [Contributing](#contributing)
+
+→ **Full documentation index:** [docs/INDEX.md](docs/INDEX.md)
 
 ---
 

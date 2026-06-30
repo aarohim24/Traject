@@ -64,6 +64,4 @@ def validate_external_url(url: str, *, require_https: bool = True) -> None:
             or ip.is_multicast
             or ip.is_unspecified
         ):
-            raise SSRFValidationError(
-                f"URL host {host!r} resolves to disallowed address {ip_str}"
-            )
+            raise SSRFValidationError(f"URL host {host!r} resolves to disallowed address {ip_str}")

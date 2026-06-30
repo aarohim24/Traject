@@ -1,9 +1,9 @@
-"""LangChain agent example for Axon SDK.
+"""LangChain agent example for Traject SDK.
 
 Demonstrates traject.patch() applied to a LangChain ChatOpenAI model.
 
 Prerequisites:
-    pip install axon-sdk[openai,langchain] langchain-openai
+    pip install traject-sdk[openai,langchain] langchain-openai
     export OPENAI_API_KEY=your-key-here
 """
 from __future__ import annotations
@@ -15,7 +15,7 @@ try:
     from langchain_openai import ChatOpenAI
 except ImportError as exc:
     raise SystemExit(
-        "Missing dependencies. Run: pip install axon-sdk[openai,langchain] langchain-openai"
+        "Missing dependencies. Run: pip install traject-sdk[openai,langchain] langchain-openai"
     ) from exc
 
 

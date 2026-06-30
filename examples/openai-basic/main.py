@@ -1,11 +1,11 @@
-"""OpenAI basic example for Axon SDK.
+"""OpenAI basic example for Traject SDK.
 
-Demonstrates @axon.instrument() wrapping an OpenAI chat completion call.
+Demonstrates @traject.instrument() wrapping an OpenAI chat completion call.
 An OTEL span with token counts, cost, and compression analysis is printed
 to stdout after each call.
 
 Prerequisites:
-    pip install axon-sdk[openai]
+    pip install traject-sdk[openai]
     export OPENAI_API_KEY=your-key-here
 """
 from __future__ import annotations
@@ -14,9 +14,9 @@ import traject
 import openai
 
 
-@axon.instrument(feature_tag="demo-basic", shadow_mode=True)
+@traject.instrument(feature_tag="demo-basic", shadow_mode=True)
 def call_llm(messages: list[dict]) -> openai.types.chat.ChatCompletion:
-    """Call the OpenAI API with Axon instrumentation."""
+    """Call the OpenAI API with Traject instrumentation."""
     client = openai.OpenAI()
     return client.chat.completions.create(
         model="gpt-4o-mini",

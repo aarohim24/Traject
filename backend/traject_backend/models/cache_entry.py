@@ -58,16 +58,10 @@ class CacheEntryRecord(Base):
     response_preview: Mapped[str] = mapped_column(String(200), nullable=False)
     model: Mapped[str] = mapped_column(String, nullable=False)
     feature_tag: Mapped[str] = mapped_column(String, nullable=False)
-    similarity_threshold: Mapped[float] = mapped_column(
-        nullable=False, server_default=text("0.92")
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("now()")
-    )
+    similarity_threshold: Mapped[float] = mapped_column(nullable=False, server_default=text("0.92"))
+    created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("now()"))
     expires_at: Mapped[datetime | None] = mapped_column(nullable=True)
-    last_hit_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("now()")
-    )
+    last_hit_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("now()"))
     hit_count: Mapped[int] = mapped_column(nullable=False, server_default=text("0"))
     cost_saved_usd: Mapped[Decimal] = mapped_column(
         Numeric(10, 6), nullable=False, server_default=text("0")
@@ -75,9 +69,7 @@ class CacheEntryRecord(Base):
 
     __table_args__ = (
         # Cache entries are unique per (tenant, prompt_hash).
-        UniqueConstraint(
-            "tenant_id", "prompt_hash", name="uq_cache_tenant_prompt_hash"
-        ),
+        UniqueConstraint("tenant_id", "prompt_hash", name="uq_cache_tenant_prompt_hash"),
         Index("ix_cache_entries_prompt_hash", "prompt_hash"),
         Index("ix_cache_entries_feature_tag", "feature_tag"),
         Index("ix_cache_entries_expires_at", "expires_at"),

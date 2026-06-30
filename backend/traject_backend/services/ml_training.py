@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 _log = structlog.get_logger(__name__)
 
-_DEFAULT_ARTIFACT_PATH = os.environ.get("TRAJECT_ML_MODEL_PATH", "/tmp/axon_ml_model.json")  # nosec B108
+_DEFAULT_ARTIFACT_PATH = os.environ.get("TRAJECT_ML_MODEL_PATH", "/tmp/traject_ml_model.json")  # nosec B108
 
 
 class MLTrainingService:
@@ -41,7 +41,7 @@ class MLTrainingService:
     Args:
         artifact_path: Filesystem path where the trained artifact is saved.
             Defaults to ``settings.ml_model_path`` or
-            ``/tmp/axon_ml_model.json``.
+            ``/tmp/traject_ml_model.json``.
     """
 
     def __init__(
@@ -67,7 +67,11 @@ class MLTrainingService:
                 ``routing_decision`` are found in the database.
         """
         from traject.exceptions import InsufficientDataError  # noqa: PLC0415
-        from traject.router.ml_router import FEATURE_NAMES, MLModelArtifact, _extract_features  # noqa: PLC0415
+        from traject.router.ml_router import (  # noqa: PLC0415
+            FEATURE_NAMES,
+            MLModelArtifact,
+            _extract_features,
+        )
         from traject.router.routing_table import ModelTier  # noqa: PLC0415
 
         try:
@@ -76,14 +80,11 @@ class MLTrainingService:
             )
         except ImportError as exc:
             raise ImportError(
-                "ML training requires scikit-learn. "
-                "Install it with: pip install scikit-learn"
+                "ML training requires scikit-learn. Install it with: pip install scikit-learn"
             ) from exc
 
         result = await db.execute(
-            select(InferenceSpanRecord).where(
-                InferenceSpanRecord.routing_decision.isnot(None)
-            )
+            select(InferenceSpanRecord).where(InferenceSpanRecord.routing_decision.isnot(None))
         )
         rows: list[InferenceSpanRecord] = list(result.scalars().all())
 

@@ -7,6 +7,7 @@ authentication.
 
 from __future__ import annotations
 
+import hmac
 from datetime import datetime
 from typing import Annotated
 
@@ -14,8 +15,6 @@ import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-import hmac
 
 from traject_backend.core.auth import CurrentTenant
 from traject_backend.core.config import settings
@@ -35,19 +34,17 @@ router = APIRouter(tags=["spans"])
 
 
 async def verify_api_key(
-    x_axon_api_key: Annotated[str | None, Header(alias="X-Traject-API-Key")] = None,
+    x_traject_api_key: Annotated[str | None, Header(alias="X-Traject-API-Key")] = None,
 ) -> None:
     """FastAPI dependency that enforces API key authentication.
 
     Args:
-        x_axon_api_key: Value of the ``X-Traject-API-Key`` request header.
+        x_traject_api_key: Value of the ``X-Traject-API-Key`` request header.
 
     Raises:
         HTTPException: 401 when the header is missing or the key is invalid.
     """
-    if x_axon_api_key is None or not hmac.compare_digest(
-        x_axon_api_key, settings.api_key
-    ):
+    if x_traject_api_key is None or not hmac.compare_digest(x_traject_api_key, settings.api_key):
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 

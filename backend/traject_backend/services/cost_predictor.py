@@ -131,9 +131,7 @@ class CostPredictor:
         raw_rows = result.scalars().all()
 
         # Filter out NULL cost_usd values
-        historical_costs: list[Decimal] = [
-            c for c in raw_rows if c is not None
-        ]
+        historical_costs: list[Decimal] = [c for c in raw_rows if c is not None]
         sample_count = len(historical_costs)
 
         if sample_count < _MIN_SAMPLES:

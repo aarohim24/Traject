@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Axon Quickstart — No API Key Required
+Traject Quickstart — No API Key Required
 ======================================
 
-This demo instruments a simulated 6-step agent trajectory, runs Axon's
+This demo instruments a simulated 6-step agent trajectory, runs Traject's
 compression engine in shadow mode, and shows exactly what would be saved
 on a real LLM workload.
 
@@ -27,8 +27,8 @@ try:
     from traject.core.cost_calculator import calculate_cost
 except ImportError:
     sys.exit(
-        "axon-sdk not found.\n"
-        "Run: pip install axon-sdk\n"
+        "traject-sdk not found.\n"
+        "Run: pip install traject-sdk\n"
         "Or from the repo: pip install -e sdk/python"
     )
 
@@ -183,7 +183,7 @@ def count_messages_tokens(messages: list[dict]) -> int:
 def print_span_header() -> None:
     print()
     print("━" * 58)
-    print("  Axon SDK — Shadow Mode Demo")
+    print("  Traject SDK — Shadow Mode Demo")
     print("  Compression engine running on simulated agent trajectory")
     print("━" * 58)
 
@@ -213,7 +213,7 @@ def print_span(
 def main() -> None:
     print_span_header()
 
-    print("\n  Configuring Axon (shadow_mode=True, CONSERVATIVE strategy)...")
+    print("\n  Configuring Traject (shadow_mode=True, CONSERVATIVE strategy)...")
     traject.configure(export_to_stdout=False)
 
     config = CompressionConfig(
@@ -280,7 +280,7 @@ def main() -> None:
     print("  Next steps:")
     print("  1. Instrument your own agent:")
     print("     traject.patch(client, feature_tag='my_agent', shadow_mode=True)")
-    print("  2. Validate savings with: axon analyze --input spans.jsonl")
+    print("  2. Validate savings with: traject analyze --input spans.jsonl")
     print("  3. Enable live compression when satisfied:")
     print("     traject.patch(client, shadow_mode=False)")
     print()

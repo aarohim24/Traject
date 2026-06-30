@@ -20,8 +20,8 @@ Thank you for taking the time to contribute. This document covers everything you
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/aarohimathur/axon.git
-cd axon
+git clone https://github.com/aarohim24/Traject.git
+cd Traject
 ```
 
 ### 2. Create and activate a virtual environment
@@ -50,13 +50,13 @@ pytest sdk/python/tests/
 To run with coverage:
 
 ```bash
-pytest sdk/python/tests/ --cov=axon --cov-report=term-missing
+pytest sdk/python/tests/ --cov=traject --cov-report=term-missing
 ```
 
 ### 5. Run type checking and linting
 
 ```bash
-mypy --strict sdk/python/axon/
+mypy --strict sdk/python/traject/
 ruff check sdk/python/
 ruff format --check sdk/python/
 ```
@@ -147,7 +147,7 @@ Before marking a PR ready for review, confirm all of the following:
 ## Good First Issues
 
 Looking for a place to start? Browse issues labelled
-[`good-first-issue`](https://github.com/aarohimathur/axon/issues?q=is%3Aopen+is%3Aissue+label%3Agood-first-issue)
+[`good-first-issue`](https://github.com/aarohim24/Traject/issues?q=is%3Aopen+is%3Aissue+label%3Agood-first-issue)
 on GitHub.
 
 These are scoped to be self-contained and well-defined, with enough context to get started without deep knowledge of the whole codebase.
@@ -176,6 +176,6 @@ cli  →  telemetry  →  core  →  compression  →  classifier
 - `compression` never imports from `core` or `telemetry`.
 - `core` never imports from `telemetry` or `cli`.
 - Framework adapters live in `compression/adapters/` and guard framework imports with `try/except ImportError`.
-- The backend (`backend/axon_backend/`) is a separate package and does not import from the SDK at runtime.
+- The backend (`backend/traject_backend/`) is a separate package and does not import from the SDK at runtime.
 
 Circular imports are a hard failure in CI (`ruff` import cycle checks are enabled).

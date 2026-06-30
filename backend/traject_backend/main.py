@@ -112,9 +112,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     Uses structlog exclusively — no ``print()`` statements.
     """
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """Process a request, measure latency, and emit a structured log.
 
         Args:
@@ -164,7 +162,9 @@ app.add_middleware(RequestLoggingMiddleware)
 # Prometheus /metrics — the platform must observe itself. Guarded import so the
 # app still runs if the optional dependency isn't installed.
 try:
-    from prometheus_fastapi_instrumentator import Instrumentator  # type: ignore[import-not-found]  # noqa: PLC0415,E501
+    from prometheus_fastapi_instrumentator import (
+        Instrumentator,  # type: ignore[import-not-found]  # noqa: PLC0415,E501
+    )
 
     Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 except Exception as exc:  # noqa: BLE001

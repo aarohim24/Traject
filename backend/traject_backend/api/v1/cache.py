@@ -127,19 +127,13 @@ async def cache_invalidate(
 
     if request.prompt_hash is not None:
         result = await db.execute(
-            text(
-                "DELETE FROM cache_entries WHERE prompt_hash = :hash "
-                "AND tenant_id = :tenant_id"
-            ),
+            text("DELETE FROM cache_entries WHERE prompt_hash = :hash AND tenant_id = :tenant_id"),
             {"hash": request.prompt_hash, "tenant_id": str(tenant_id)},
         )
         invalidated = result.rowcount  # type: ignore[attr-defined]
     elif request.feature_tag is not None:
         result = await db.execute(
-            text(
-                "DELETE FROM cache_entries WHERE feature_tag = :tag "
-                "AND tenant_id = :tenant_id"
-            ),
+            text("DELETE FROM cache_entries WHERE feature_tag = :tag AND tenant_id = :tenant_id"),
             {"tag": request.feature_tag, "tenant_id": str(tenant_id)},
         )
         invalidated = result.rowcount  # type: ignore[attr-defined]
@@ -169,9 +163,9 @@ async def cache_stats(
     stmt = select(
         func.count().label("entry_count"),
         func.coalesce(func.sum(CacheEntryRecord.hit_count), 0).label("hit_count"),
-        func.coalesce(
-            func.sum(CacheEntryRecord.cost_saved_usd), Decimal("0")
-        ).label("total_cost_saved_usd"),
+        func.coalesce(func.sum(CacheEntryRecord.cost_saved_usd), Decimal("0")).label(
+            "total_cost_saved_usd"
+        ),
     )
     stmt = stmt.where(CacheEntryRecord.tenant_id == tenant_id)
     if feature_tag is not None:

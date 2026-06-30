@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "traject-backend"
 version = "0.5.0"
-description = "Axon self-hosted backend service — span ingestion, cost attribution, semantic cache, budget controls."
+description = "Traject self-hosted backend service — span ingestion, cost attribution, semantic cache, budget controls."
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [

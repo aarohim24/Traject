@@ -89,9 +89,7 @@ class InferenceSpanRecord(Base):
     cache_hit: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
     environment: Mapped[str] = mapped_column(String, nullable=False)
     routing_decision: Mapped[str | None] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("now()")
-    )
+    created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("now()"))
 
     __table_args__ = (
         Index("ix_spans_tenant_id", "tenant_id"),

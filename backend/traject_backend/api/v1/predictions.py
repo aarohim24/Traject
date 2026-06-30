@@ -91,8 +91,7 @@ async def predict_cost(
         raise HTTPException(
             status_code=422,
             detail=(
-                "estimated_input_tokens and estimated_output_tokens "
-                "must be non-negative integers"
+                "estimated_input_tokens and estimated_output_tokens must be non-negative integers"
             ),
         )
 

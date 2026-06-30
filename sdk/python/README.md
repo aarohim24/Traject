@@ -1,45 +1,46 @@
-# Axon
+# traject-sdk
 
-[![PyPI](https://img.shields.io/pypi/v/axon-sdk)](https://pypi.org/project/axon-sdk/)
-[![CI](https://github.com/aarohimathur/axon/actions/workflows/ci.yml/badge.svg)](https://github.com/aarohimathur/axon/actions)
+[![CI](https://github.com/aarohim24/Traject/actions/workflows/ci.yml/badge.svg)](https://github.com/aarohim24/Traject/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**AI inference observability and trajectory optimization middleware.**
+**AI inference observability and trajectory compression middleware.**
 
-Axon is a Python SDK that instruments LLM API calls to emit structured OpenTelemetry spans with exact cost attribution, artifact classification, and trajectory compression analysis. It wraps your existing OpenAI or Anthropic client with a single decorator — no behavioral changes required.
+Traject is a Python SDK that instruments LLM API calls to emit structured OpenTelemetry spans with exact cost attribution, artifact classification, and trajectory compression. It wraps your existing OpenAI or Anthropic client with a single decorator — no behavioral changes required.
 
 The mental model is DataDog APM applied to AI inference, not a browser plugin or prompt coaching tool.
 
 ---
 
-## What Axon Is
+## What Traject Is
 
 - Infrastructure middleware for LLM observability
 - Exact token counts and USD cost per call (Decimal precision, no float drift)
 - OpenTelemetry span emission — compatible with DataDog, Grafana, Honeycomb, Jaeger
-- Trajectory compression analysis in shadow mode: see what *would* be compressed without touching live context
+- Trajectory compression in shadow mode: see what *would* be saved without touching live context
 - Artifact classification: SYSTEM_PROMPT, TOOL_RESULT, RAG_CHUNK, REASONING_BLOCK, and more
 
-## What Axon Is Not
+## What Traject Is Not
 
 - Not a prompt coaching tool
 - Not a VS Code extension
 - Not a chatbot or LLM wrapper
-- Not a cloud service (Phase 1 is self-contained library + CLI)
+- Not a cloud service — fully self-hosted, no data leaves your infra
 
 ---
 
 ## Quickstart
 
 ```bash
-pip install axon-sdk[openai]
+pip install -e ".[openai]"
 ```
 
 ```python
-import axon
+import traject
 import openai
 
-@axon.instrument(feature_tag="support-bot")
+traject.configure(export_to_stdout=True)
+
+@traject.instrument(feature_tag="support-bot", shadow_mode=True)
 def call_llm(messages):
     client = openai.OpenAI()
     return client.chat.completions.create(
@@ -53,16 +54,16 @@ response = call_llm([
 ])
 ```
 
-On the first call you'll see an OTEL span printed to stdout showing token counts, cost in USD, and compression analysis.
+On the first call you'll see a span printed to stdout showing token counts, cost in USD, and compression analysis.
 
 ### Patch an existing client
 
 ```python
-import axon
+import traject
 import openai
 
 client = openai.OpenAI()
-axon.patch(client, feature_tag="my-agent")
+traject.patch(client, feature_tag="my-agent", shadow_mode=True)
 
 # All subsequent calls are automatically instrumented
 response = client.chat.completions.create(model="gpt-4o", messages=[...])
@@ -73,12 +74,12 @@ response = client.chat.completions.create(model="gpt-4o", messages=[...])
 ## Architecture
 
 ```
-axon/
+traject/
 ├── core/          # Instrumentor, provider adapters, cost calculator
 ├── compression/   # Compression engine, segment parser, relevance scorer
 ├── classifier/    # Heuristic artifact type classification
 ├── telemetry/     # OpenTelemetry span exporter
-└── cli/           # axon analyze / version / doctor
+└── cli/           # traject analyze / version / doctor
 ```
 
 Dependency direction is strictly enforced (no circular imports):
@@ -90,13 +91,13 @@ Dependency direction is strictly enforced (no circular imports):
 
 ```bash
 # Check dependencies
-axon doctor
+traject doctor
 
 # Print version
-axon version
+traject version
 
 # Analyze a local span log
-axon analyze --input spans.jsonl
+traject analyze --input spans.jsonl
 ```
 
 ---

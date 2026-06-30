@@ -1,4 +1,4 @@
-"""Alembic environment configuration for axon-backend.
+"""Alembic environment configuration for traject-backend.
 
 Provides both offline (generate SQL) and online (apply to DB) migration modes.
 The online mode reads the database URL directly from Settings so that the

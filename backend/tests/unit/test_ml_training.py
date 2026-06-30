@@ -54,7 +54,7 @@ class TestMLTrainingServiceTrain:
         from traject.exceptions import InsufficientDataError  # noqa: PLC0415
 
         db = _make_mock_db_empty()
-        service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")
+        service = MLTrainingService(artifact_path="/tmp/test_traject_artifact.json")
 
         with pytest.raises(InsufficientDataError):
             await service.train(db)
@@ -68,7 +68,7 @@ class TestMLTrainingServiceTrain:
         from traject.exceptions import InsufficientDataError  # noqa: PLC0415
 
         db = _make_mock_db_empty()
-        service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")
+        service = MLTrainingService(artifact_path="/tmp/test_traject_artifact.json")
 
         with pytest.raises(InsufficientDataError):
             await service.train(db)
@@ -87,7 +87,7 @@ class TestMLTrainingServiceTrain:
         from traject.exceptions import InsufficientDataError  # noqa: PLC0415
 
         db = _make_mock_db_empty()
-        service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")
+        service = MLTrainingService(artifact_path="/tmp/test_traject_artifact.json")
 
         with pytest.raises(InsufficientDataError) as exc_info:
             await service.train(db)
@@ -116,7 +116,7 @@ class TestMLTrainingServiceWeeklyJob:
         **Validates: Requirements 5.6**
         """
         db = _make_mock_db_empty()
-        service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")
+        service = MLTrainingService(artifact_path="/tmp/test_traject_artifact.json")
 
         # Must NOT raise — this is the key assertion
         await service.run_weekly_training_job(db)
@@ -128,7 +128,7 @@ class TestMLTrainingServiceWeeklyJob:
         **Validates: Requirements 5.6**
         """
         db = AsyncMock()
-        service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")
+        service = MLTrainingService(artifact_path="/tmp/test_traject_artifact.json")
 
         # Patch train() to raise an arbitrary unexpected error
         with patch.object(
@@ -149,7 +149,7 @@ class TestMLTrainingServiceWeeklyJob:
         **Validates: Requirements 5.6**
         """
         db = AsyncMock()
-        service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")
+        service = MLTrainingService(artifact_path="/tmp/test_traject_artifact.json")
 
         with patch.object(
             service,
@@ -172,7 +172,7 @@ class TestMLTrainingServiceWeeklyJob:
         from traject.exceptions import InsufficientDataError  # noqa: PLC0415
 
         db = _make_mock_db_empty()
-        service = MLTrainingService(artifact_path="/tmp/test_axon_artifact.json")
+        service = MLTrainingService(artifact_path="/tmp/test_traject_artifact.json")
 
         with patch.object(
             service,

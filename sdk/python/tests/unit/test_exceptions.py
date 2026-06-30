@@ -14,19 +14,19 @@ from traject.exceptions import (
 
 
 class TestTrajectErrorHierarchy:
-    def test_axon_error_is_exception(self) -> None:
+    def test_traject_error_is_exception(self) -> None:
         assert issubclass(TrajectError, Exception)
 
-    def test_config_error_is_axon_error(self) -> None:
+    def test_config_error_is_traject_error(self) -> None:
         assert issubclass(TrajectConfigError, TrajectError)
 
-    def test_dependency_error_is_axon_error(self) -> None:
+    def test_dependency_error_is_traject_error(self) -> None:
         assert issubclass(TrajectDependencyError, TrajectError)
 
-    def test_compression_error_is_axon_error(self) -> None:
+    def test_compression_error_is_traject_error(self) -> None:
         assert issubclass(TrajectCompressionError, TrajectError)
 
-    def test_provider_error_is_axon_error(self) -> None:
+    def test_provider_error_is_traject_error(self) -> None:
         assert issubclass(TrajectProviderError, TrajectError)
 
     @pytest.mark.parametrize(
@@ -43,7 +43,7 @@ class TestTrajectErrorHierarchy:
         exc = cls("test message")
         assert str(exc) == "test message"
 
-    def test_caught_as_axon_error(self) -> None:
+    def test_caught_as_traject_error(self) -> None:
         with pytest.raises(TrajectError):
             raise TrajectConfigError("bad config")
 
@@ -52,6 +52,6 @@ class TestTrajectErrorHierarchy:
             raise TrajectProviderError("unknown provider")
 
     def test_dependency_error_message_preserved(self) -> None:
-        msg = "pip install axon-sdk[langchain]"
+        msg = "pip install traject-sdk[langchain]"
         exc = TrajectDependencyError(msg)
         assert msg in str(exc)

@@ -7,6 +7,7 @@ plus live spend-status queries against the Redis/DB budget enforcer.
 from __future__ import annotations
 
 import uuid
+import uuid as _uuid
 from datetime import datetime
 from decimal import Decimal
 
@@ -16,8 +17,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
-
-import uuid as _uuid
 
 from traject_backend.core.auth import CurrentTenant
 from traject_backend.core.database import get_db
@@ -209,9 +208,7 @@ async def list_budgets(
         List of BudgetStatusResponse, one per configured feature tag.
     """
     result = await db.execute(
-        select(BudgetControlRecord).where(
-            BudgetControlRecord.tenant_id == tenant_id
-        )
+        select(BudgetControlRecord).where(BudgetControlRecord.tenant_id == tenant_id)
     )
     records = result.scalars().all()
     return [await _build_status_response(db, r, tenant_id) for r in records]

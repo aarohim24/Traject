@@ -55,12 +55,8 @@ class BudgetControlRecord(Base):
     alert_threshold_pct: Mapped[float] = mapped_column(nullable=False, server_default=text("0.8"))
     hard_stop: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
     alert_webhook_url: Mapped[str | None] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("now()")
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("now()")
-    )
+    created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("now()"))
+    updated_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("now()"))
 
     __table_args__ = (
         # Budgets are unique per (tenant, feature_tag), not globally by tag.

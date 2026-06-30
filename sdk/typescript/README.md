@@ -1,19 +1,19 @@
-# @axon-sdk/typescript
+# @traject-sdk/typescript
 
-TypeScript SDK for [Axon](https://github.com/axon-sdk/axon) — LLM inference observability, cost attribution, and span emission for Node.js applications.
+TypeScript SDK for [Traject](https://github.com/aarohim24/Traject) — LLM inference observability, cost attribution, and span emission for Node.js applications.
 
 ## What it does
 
 - Instruments OpenAI and Anthropic clients with a single `patch()` call
 - Emits structured `InferenceSpan` records for every LLM call
 - Calculates inference cost using the same pricing table as the Python SDK
-- Exports spans to stdout (console) or to the Axon backend service
+- Exports spans to stdout (console) or to the Traject backend service
 - Zero changes to your existing code required
 
 ## Install
 
 ```bash
-npm install @axon-sdk/typescript
+npm install @traject-sdk/typescript
 ```
 
 Peer dependencies (install the ones you use):
@@ -29,7 +29,7 @@ npm install @anthropic-ai/sdk    # if using Anthropic
 
 ```typescript
 import OpenAI from "openai";
-import { patch, configure } from "@axon-sdk/typescript";
+import { patch, configure } from "@traject-sdk/typescript";
 
 // Optional: configure export settings
 configure({
@@ -51,11 +51,11 @@ const response = await client.chat.completions.create({
 
 ```typescript
 import Anthropic from "@anthropic-ai/sdk";
-import { patch, configure } from "@axon-sdk/typescript";
+import { patch, configure } from "@traject-sdk/typescript";
 
 configure({
   backendUrl: "http://localhost:8000",
-  apiKey: "axon-your-key-here",
+  apiKey: "your-traject-api-key",
   featureTag: "my-feature",
 });
 
@@ -72,7 +72,7 @@ const response = await client.messages.create({
 ### Calculate cost manually
 
 ```typescript
-import { calculateCost } from "@axon-sdk/typescript";
+import { calculateCost } from "@traject-sdk/typescript";
 
 const cost = calculateCost("gpt-4o-mini", 1000, 500);
 // => "0.00022500"  (string with 8 decimal places)
@@ -84,7 +84,7 @@ const unknown = calculateCost("unknown-model", 1000, 500);
 ### Use the `instrument` decorator
 
 ```typescript
-import { instrument } from "@axon-sdk/typescript";
+import { instrument } from "@traject-sdk/typescript";
 
 class MyAgent {
   @instrument({ featureTag: "agent-run" })
@@ -99,14 +99,14 @@ class MyAgent {
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `apiKey` | `string` | — | Axon backend API key |
-| `backendUrl` | `string` | — | Axon backend base URL |
+| `apiKey` | `string` | — | Traject backend API key |
+| `backendUrl` | `string` | — | Traject backend base URL |
 | `exportToConsole` | `boolean` | `false` | Log spans as JSON to stdout |
 | `featureTag` | `string` | — | Label for cost attribution grouping |
 
 ## Types
 
-See [`src/types.ts`](./src/types.ts) for the full TypeScript type definitions including `InferenceSpan`, `UsageData`, `ArtifactType`, and `AxonConfig`.
+See [`src/types.ts`](./src/types.ts) for the full TypeScript type definitions including `InferenceSpan`, `UsageData`, `ArtifactType`, and `TrajectConfig`.
 
 ## Development
 

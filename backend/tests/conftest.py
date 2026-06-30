@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for axon-backend tests.
+"""Shared pytest fixtures for traject-backend tests.
 
 Provides async database sessions (isolated per test), a fakeredis mock,
 an async FastAPI test client, and span payload factories.

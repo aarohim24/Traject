@@ -100,16 +100,16 @@ async def materialize_hourly(db: AsyncSession, hour: datetime) -> int:
             func.sum(InferenceSpanRecord.input_tokens).label("total_input_tokens"),
             func.sum(InferenceSpanRecord.output_tokens).label("total_output_tokens"),
             func.sum(InferenceSpanRecord.cached_tokens).label("total_cached_tokens"),
-            func.coalesce(
-                func.sum(InferenceSpanRecord.cost_usd), Decimal("0")
-            ).label("total_cost_usd"),
-            func.coalesce(
-                func.sum(InferenceSpanRecord.tokens_saved), 0
-            ).label("total_tokens_saved"),
+            func.coalesce(func.sum(InferenceSpanRecord.cost_usd), Decimal("0")).label(
+                "total_cost_usd"
+            ),
+            func.coalesce(func.sum(InferenceSpanRecord.tokens_saved), 0).label(
+                "total_tokens_saved"
+            ),
             func.count().label("call_count"),
-            func.sum(
-                func.cast(InferenceSpanRecord.cache_hit, sa.Integer())
-            ).label("cache_hit_count"),
+            func.sum(func.cast(InferenceSpanRecord.cache_hit, sa.Integer())).label(
+                "cache_hit_count"
+            ),
             func.percentile_cont(0.5)
             .within_group(InferenceSpanRecord.duration_ms)
             .label("p50_latency_ms"),

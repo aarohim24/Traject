@@ -92,18 +92,14 @@ async def check_budget(
             # Slow path: compute tenant-scoped spend from the DB, then cache.
             period_start = _period_start(budget_row.period)
             result = await db.execute(
-                select(
-                    func.coalesce(func.sum(InferenceSpanRecord.cost_usd), Decimal("0"))
-                ).where(
+                select(func.coalesce(func.sum(InferenceSpanRecord.cost_usd), Decimal("0"))).where(
                     InferenceSpanRecord.tenant_id == tenant_id,
                     InferenceSpanRecord.feature_tag == feature_tag,
                     InferenceSpanRecord.timestamp >= period_start,
                 )
             )
             spent = Decimal(str(result.scalar() or 0))
-            await redis.set(
-                redis_key, str(spent), ex=settings.redis_cache_ttl_seconds
-            )
+            await redis.set(redis_key, str(spent), ex=settings.redis_cache_ttl_seconds)
 
         pct = float(spent) / float(budget_row.budget_usd) if budget_row.budget_usd else 0.0
         if pct >= 1.0:
@@ -177,9 +173,7 @@ async def fire_webhook(
         # redirects (a redirect could otherwise bounce to an internal host).
         validate_external_url(webhook_url, require_https=True)
         timeout = float(settings.budget_alert_webhook_timeout_seconds)
-        async with httpx.AsyncClient(
-            timeout=timeout, follow_redirects=False
-        ) as client:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
             response = await client.post(
                 webhook_url,
                 json=payload.model_dump(),
