@@ -29,3 +29,4 @@ dashboard/dist/
 /tmp/axon_ml_model.json
 swebench_trajectories.jsonl
 swebench_results.json
+trajectories

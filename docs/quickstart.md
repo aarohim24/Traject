@@ -76,6 +76,59 @@ async def main():
 asyncio.run(main())
 ```
 
+## Self-hosted backend (optional)
+
+The self-hosted backend adds cost attribution by feature tag, budget controls,
+anomaly detection, semantic caching, and Grafana dashboards. The SDK works
+standalone without it.
+
+### 1. Bootstrap secrets (one command)
+
+```bash
+bash scripts/setup.sh
+```
+
+This generates `deploy/.env` with strong random passwords and API keys, prints
+your API key, and tells you exactly what to set. Never run docker compose before
+this step — the backend refuses to start with the placeholder key.
+
+### 2. Start the stack
+
+```bash
+docker compose -f deploy/docker-compose.yml up -d
+```
+
+Services: PostgreSQL 16 + pgvector, Redis 7, Traject backend (`:8000`),
+Grafana dashboards (`:3000`), React dashboard (`:5173`).
+
+### 3. Point the SDK at the backend
+
+```python
+import traject
+
+traject.configure(
+    backend_url="http://localhost:8000",
+    backend_api_key="<key printed by setup.sh>",
+)
+```
+
+### Local development without the backend
+
+To develop against the backend directly (without docker), set:
+
+```bash
+ALLOW_INSECURE_API_KEY=true   # skip the "change your key" startup guard
+DATABASE_URL=postgresql+asyncpg://traject:traject@localhost:5432/traject
+REDIS_URL=redis://localhost:6379/0
+```
+
+Or in Python:
+
+```python
+import os
+os.environ["ALLOW_INSECURE_API_KEY"] = "true"
+```
+
 ## Configure OTLP Export
 
 To export spans to a collector (DataDog, Grafana, Jaeger):

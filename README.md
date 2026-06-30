@@ -204,11 +204,13 @@ Custom routing tables and A/B test mode are supported. See [docs/router-guide.md
 ```bash
 git clone https://github.com/aarohim24/Traject
 cd Traject
-cp deploy/.env.example deploy/.env
+bash scripts/setup.sh                            # generates deploy/.env with strong random secrets
 docker compose -f deploy/docker-compose.yml up -d
 ```
 
-Services started: PostgreSQL 16, Redis 7, Traject backend (port 8000), Grafana dashboards (port 3000), React dashboard (port 5173).
+`scripts/setup.sh` generates a `deploy/.env` with cryptographically random passwords for Postgres, Redis, and the API key, then prints the API key so you can configure the SDK. The backend refuses to start with the placeholder key, so run this first.
+
+Services started: PostgreSQL 16 + pgvector, Redis 7, Traject backend (port 8000), Grafana dashboards (port 3000), React dashboard (port 5173).
 
 ```python
 traject.configure(
@@ -304,30 +306,23 @@ Workload: 49 real SWE-bench agent trajectories (OpenHands-SFT, SWE-Gym). Avg 29 
 
 Dataset: [SWE-Gym/OpenHands-SFT-Trajectories](https://huggingface.co/datasets/SWE-Gym/SWE-Gym) (HuggingFace, public)
 
-These figures are from the baseline pipeline (relevance scoring + dedup), before the lossless preprocessing and command-aware summarization passes below:
+49 OpenHands-SFT coding-agent trajectories from SWE-Gym. Token reduction and fact retention measured independently on the same instances.
 
 | Metric | CONSERVATIVE | MODERATE |
 |---|---|---|
-| Aggregate token reduction | 24.0% | 26.3% |
-| Mean reduction | 25.3% | 27.0% |
-| p50 reduction | 25.0% | 30.9% |
-| Fact retention | 94.7% | 93.8% |
+| **Aggregate token reduction** | **43.1%** | **45.1%** |
+| Mean reduction | 40.2% | 41.7% |
+| p50 reduction | 41.5% | 46.6% |
+| p95 reduction | 62.3% | 65.8% |
+| Mean fact preservation | 64.0% | 63.6% |
+| p50 fact preservation | 70.0% | 70.0% |
 | Instances evaluated | 49 | 49 |
 
-CONSERVATIVE is the safe default — validated for new deployments. Switch to MODERATE after confirming retention on your workload.
+CONSERVATIVE is the safe default — validated for new deployments. Switch to MODERATE after confirming on your workload.
 
-Token reduction and fact retention are measured independently. **Retention** is the fraction of concrete, non-reconstructable facts (file:line refs, error/exception types, test names, git SHAs, URLs) extracted from the original context that still appear verbatim in the compressed output — a deliberately strict, non-circular metric independent of the embedding scorer that drives compression.
+**Reduction** is measured against the raw input tokens the caller sends. **Fact preservation** is the fraction of concrete, non-reconstructable facts — file:line references, error/exception types, test names, git SHAs, URLs — that appear verbatim in the compressed output. This is a deliberately strict, non-circular metric independent of the embedding scorer.
 
-### Recent improvements (lossless preprocessing + command-aware summarization)
-
-The prose filter, JSON columnarizer, and command-aware tool-result summarizer are lossless or fact-preserving by design. On a representative coding-agent trajectory (git diffs, pytest runs, file listings, JSON outputs, verbose prose), these passes roughly doubled reduction while preserving every critical fact:
-
-| | Baseline preprocessing only | + command-aware summarization |
-|---|---|---|
-| Token reduction | 18.5% | **30.0%** |
-| Fact retention | 100% | **100%** |
-
-A full re-run of the 49-instance SWE-bench suite with these passes enabled is pending dataset download; the representative-trajectory result above is what the committed test suite measures.
+The 64–70% verbatim fact preservation reflects that the pipeline aggressively compresses bulk tool output (large git diffs, full pytest collection, file listings) while preserving failure lines, error types, and function-level identifiers. Facts in actively-referenced segments are fully protected; facts in old, unreferenced bulk output may be summarized away.
 
 Reproduce:
 ```bash
