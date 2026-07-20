@@ -106,8 +106,14 @@ async def seed(backend_url: str, api_key: str, trajectories_path: Path) -> None:
         spans.append(span)
 
     async with httpx.AsyncClient(
-        base_url=backend_url, headers={"X-Traject-API-Key": api_key}, timeout=30.0
+        base_url=backend_url, headers={"X-Traject-API-Key": api_key}, timeout=120.0
     ) as client:
+        # Render's free tier spins down when idle and can take 30-60s+ to
+        # cold-start on the first request — wake it up before the real POST
+        # so the ingestion call itself isn't the one eating that latency.
+        print("Warming up backend (may take a minute on Render's free tier)...")
+        await client.get("/health")
+
         resp = await client.post("/v1/spans", json={"spans": spans})
         resp.raise_for_status()
         print(f"Ingested {len(spans)} spans: {resp.json()}")
