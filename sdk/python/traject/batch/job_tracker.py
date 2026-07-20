@@ -37,7 +37,7 @@ class _BatchBase(DeclarativeBase):
     """Declarative base for the Traject SDK batch ORM models.
 
     Intentionally scoped to the ``traject.batch`` sub-package so that the SDK
-    does not depend on the backend's ``axon_backend.models.base.Base``.
+    does not depend on the backend's ``traject_backend.models.base.Base``.
     """
 
 

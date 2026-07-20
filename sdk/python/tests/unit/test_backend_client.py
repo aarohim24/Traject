@@ -1,4 +1,4 @@
-"""Unit tests for axon.backend_client.BackendClient.
+"""Unit tests for traject.backend_client.BackendClient.
 
 Uses ``respx`` to mock HTTP transport so the real httpx.AsyncClient is
 exercised without making live network calls.  The module under test is never
@@ -58,7 +58,7 @@ def _make_span(**overrides: object) -> InferenceSpan:
     return InferenceSpan(**defaults)  # type: ignore[arg-type]
 
 
-_BASE_URL = "http://axon-backend.test"
+_BASE_URL = "http://traject-backend.test"
 _API_KEY = "test-api-key"
 
 
@@ -89,7 +89,7 @@ async def test_send_span_posts_to_v1_spans_with_correct_payload() -> None:
     request = route.calls.last.request
 
     # Verify API key header is present
-    assert request.headers.get("x-axon-api-key") == _API_KEY
+    assert request.headers.get("x-traject-api-key") == _API_KEY
 
     # Verify payload structure
     import json

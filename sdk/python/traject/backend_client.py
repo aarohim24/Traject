@@ -46,13 +46,13 @@ class BackendClient:
 
     Args:
         base_url: Base URL of the Traject backend (e.g. ``"http://localhost:8000"``).
-        api_key: API key sent in the ``X-Axon-API-Key`` header.
+        api_key: API key sent in the ``X-Traject-API-Key`` header.
     """
 
     def __init__(self, base_url: str, api_key: str) -> None:
         self._client = httpx.AsyncClient(
             base_url=base_url,
-            headers={"X-Axon-API-Key": api_key},
+            headers={"X-Traject-API-Key": api_key},
             timeout=2.0,
         )
 
