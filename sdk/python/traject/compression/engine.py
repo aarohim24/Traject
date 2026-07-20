@@ -733,20 +733,21 @@ def compress(
         )
 
     # Step 8: SHADOW MODE
+    # Shadow mode only changes which *messages* are returned to the caller
+    # (the original, unmodified context) — it must not hide what the pipeline
+    # actually computed. tokens_saved/compression_ratio always reflect the
+    # real analysis, in both modes, so shadow mode's telemetry honestly
+    # reports what would have been saved (ADR-004, README "Shadow mode").
+    final_tokens: int = compressed_tokens
+    final_saved: int = tokens_saved_raw
+    ratio: float = (
+        max(0.0, 1.0 - (final_tokens / original_tokens)) if original_tokens > 0 else 0.0
+    )
+    final_messages: Any
     if config.shadow_mode:
-        final_messages: Any = list(messages)
-        final_tokens: int = original_tokens
-        final_saved: int = 0
-        ratio: float = 0.0
+        final_messages = list(messages)
     else:
         final_messages = adapter.denormalize(compressed_messages, messages)
-        final_tokens = compressed_tokens
-        final_saved = tokens_saved_raw
-        ratio = (
-            max(0.0, 1.0 - (final_tokens / original_tokens))
-            if original_tokens > 0
-            else 0.0
-        )
 
     logger.info(
         "traject.compression.complete",
