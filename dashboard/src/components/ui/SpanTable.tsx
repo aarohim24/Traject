@@ -6,6 +6,7 @@
  * tokens_saved, batch_eligible.
  */
 
+import { Check } from "lucide-react";
 import { useState } from "react";
 import type { InferenceSpanResponse } from "../../api/types";
 import { DEFAULT_PAGE_SIZE } from "../../lib/constants";
@@ -86,14 +87,20 @@ export default function SpanTable({
                   </td>
                   <td className="py-2 px-3 text-center">
                     {span.compression_applied ? (
-                      <span className="text-teal-400">✓</span>
+                      <Check
+                        className="h-4 w-4 text-teal-400 inline-block"
+                        aria-label="Compression applied"
+                      />
                     ) : (
                       <span className="text-gray-600">—</span>
                     )}
                   </td>
                   <td className="py-2 px-3 text-center">
                     {span.cache_hit ? (
-                      <span className="text-green-400">✓</span>
+                      <Check
+                        className="h-4 w-4 text-green-400 inline-block"
+                        aria-label="Cache hit"
+                      />
                     ) : (
                       <span className="text-gray-600">—</span>
                     )}

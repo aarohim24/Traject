@@ -6,21 +6,31 @@
  * inactive links use gray-400.
  */
 
+import {
+  DollarSign,
+  TrendingDown,
+  Target,
+  Shuffle,
+  Search,
+  Trophy,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 interface NavItem {
   path: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { path: "/", label: "Cost Overview", icon: "💰" },
-  { path: "/compression", label: "Compression ROI", icon: "📉" },
-  { path: "/budgets", label: "Budget Manager", icon: "🎯" },
-  { path: "/router", label: "Router Analytics", icon: "🔀" },
-  { path: "/spans", label: "Span Explorer", icon: "🔍" },
-  { path: "/benchmarks", label: "Benchmarks", icon: "🏆" },
+  { path: "/", label: "Cost Overview", icon: DollarSign },
+  { path: "/compression", label: "Compression ROI", icon: TrendingDown },
+  { path: "/budgets", label: "Budget Manager", icon: Target },
+  { path: "/router", label: "Router Analytics", icon: Shuffle },
+  { path: "/spans", label: "Span Explorer", icon: Search },
+  { path: "/benchmarks", label: "Benchmarks", icon: Trophy },
 ];
 
 export default function Sidebar(): JSX.Element {
@@ -28,12 +38,13 @@ export default function Sidebar(): JSX.Element {
     <aside className="bg-gray-900 border-r border-gray-700 h-screen w-64 flex flex-col flex-shrink-0">
       {/* Logo / brand */}
       <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-700">
-        <span className="text-teal-400 text-xl font-bold tracking-tight">⚡ Traject</span>
+        <Zap className="h-5 w-5 text-teal-400" aria-hidden="true" />
+        <span className="text-teal-400 text-xl font-bold tracking-tight">Traject</span>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map(({ path, label, icon }) => (
+        {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
           <NavLink
             key={path}
             to={path}
@@ -47,7 +58,7 @@ export default function Sidebar(): JSX.Element {
               ].join(" ")
             }
           >
-            <span className="text-base">{icon}</span>
+            <Icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
             <span>{label}</span>
           </NavLink>
         ))}
