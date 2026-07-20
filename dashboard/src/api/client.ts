@@ -144,7 +144,7 @@ export class TrajectAPIClient {
    */
   async upsertBudget(featureTag: string, payload: BudgetPayload): Promise<BudgetStatus> {
     return this.request<BudgetStatus>(`/v1/budgets/${encodeURIComponent(featureTag)}`, {
-      method: "POST",
+      method: "PUT",
       body: JSON.stringify(payload),
     });
   }

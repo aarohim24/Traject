@@ -112,7 +112,7 @@ async def seed(backend_url: str, api_key: str, trajectories_path: Path) -> None:
         resp.raise_for_status()
         print(f"Ingested {len(spans)} spans: {resp.json()}")
 
-        budget_resp = await client.post(
+        budget_resp = await client.put(
             "/v1/budgets/code_review_agent",
             json={"period": "monthly", "budget_usd": "500.00"},
         )
