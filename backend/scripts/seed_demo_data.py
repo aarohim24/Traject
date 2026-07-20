@@ -29,6 +29,7 @@ import hashlib
 import sys
 import uuid
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 
 import httpx
@@ -39,7 +40,6 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO_ROOT / "examples" / "benchmark"))
 
 from swebench_eval import _extract_task_hint, load_trajectories  # noqa: E402
-
 from traject.classifier.artifact_type import ArtifactType  # noqa: E402
 from traject.compression.engine import compress  # noqa: E402
 from traject.compression.strategies import CompressionStrategy, get_config  # noqa: E402
@@ -59,6 +59,14 @@ def _model_provider(model: str) -> str:
     return pricing.provider if pricing is not None else "openai"
 
 
+def _percentile(values: list[Decimal] | list[float], pct: int) -> Decimal | float:
+    """Nearest-rank percentile of *values* (real data in, real percentile out)."""
+    ordered = sorted(values)
+    n = len(ordered)
+    rank = max(1, -(-pct * n // 100))  # ceil(pct/100 * n), at least 1
+    return ordered[min(rank, n) - 1]
+
+
 async def seed(backend_url: str, api_key: str, trajectories_path: Path) -> None:
     instances = load_trajectories(trajectories_path, n_instances=None)
     print(f"Loaded {len(instances)} real trajectories from {trajectories_path}")
@@ -66,6 +74,8 @@ async def seed(backend_url: str, api_key: str, trajectories_path: Path) -> None:
     config = get_config(CompressionStrategy.CONSERVATIVE)
     now = datetime.now(UTC)
     spans: list[dict[str, object]] = []
+    ratios: list[float] = []
+    costs: list[Decimal] = []
 
     for i, (instance_id, messages) in enumerate(instances):
         result = compress(messages, config, task_hint=_extract_task_hint(messages))
@@ -75,6 +85,10 @@ async def seed(backend_url: str, api_key: str, trajectories_path: Path) -> None:
         input_tokens = result.original_tokens - result.tokens_saved
         output_tokens = max(50, input_tokens // 20)  # no real completion in this dataset
         cost = calculate_cost(model, input_tokens, output_tokens)
+        if result.original_tokens > 0:
+            ratios.append(result.tokens_saved / result.original_tokens)
+        if cost is not None:
+            costs.append(cost)
 
         prompt_hash = hashlib.sha256(instance_id.encode()).hexdigest()
         span = {
@@ -125,21 +139,21 @@ async def seed(backend_url: str, api_key: str, trajectories_path: Path) -> None:
         budget_resp.raise_for_status()
         print(f"Seeded demo budget: {budget_resp.json()}")
 
-        avg_ratio = sum(
-            (s["tokens_saved"] / s["pre_compression_tokens"])  # type: ignore[operator]
-            for s in spans
-            if s["pre_compression_tokens"]  # type: ignore[truthy-bool]
-        ) / len(spans)
         benchmark_resp = await client.post(
             "/v1/benchmarks/submit",
             json={
                 "sdk_version": "0.1.0",
                 "python_version": "3.11",
                 "sample_count": len(spans),
-                "p50_cost_usd": "0.01",
-                "p95_cost_usd": "0.05",
-                "p50_compression_ratio": round(avg_ratio, 4),
-                "p95_compression_ratio": round(avg_ratio * 1.4, 4),
+                "p50_cost_usd": str(_percentile(costs, 50)),
+                "p95_cost_usd": str(_percentile(costs, 95)),
+                "p50_compression_ratio": round(_percentile(ratios, 50), 4),
+                "p95_compression_ratio": round(_percentile(ratios, 95), 4),
+                # No routing decisions are made anywhere in this script (the
+                # rule/ML router is never invoked) — there is no real
+                # "routing accuracy" to measure here. This is a disclosed
+                # placeholder, not a measured value, unlike every other
+                # field in this payload.
                 "avg_routing_accuracy": 0.92,
             },
         )
