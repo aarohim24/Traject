@@ -30,6 +30,7 @@ This is the single entry point for all Traject documentation. Start here.
 | Doc | What it covers |
 |---|---|
 | [Dashboard Guide](dashboard-guide.md) | React dashboard: cost overview, budgets, compression ROI |
+| [Demo Deploy](demo-deploy.md) | Stand up a public Render + Vercel demo instance, seeded with real benchmark data |
 | [Enterprise Auth](enterprise-auth.md) | Multi-tenant API keys, RBAC, SSO integration |
 | [Kubernetes Deployment](kubernetes-deployment.md) | Helm chart; values reference; production hardening |
 | [Production Validation](production-validation.md) | Pre-launch checklist; smoke tests; alerting setup |

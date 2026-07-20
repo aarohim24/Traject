@@ -1,0 +1,58 @@
+\
+# Render Blueprint for a live, public Traject backend demo instance.
+#
+# Deploys: the FastAPI backend (Docker, backend/Dockerfile), a managed
+# Postgres database, and a managed Redis instance. Alembic migrations run
+# automatically on container start (see backend/Dockerfile's CMD).
+#
+# Usage: push this repo to GitHub, then in the Render dashboard choose
+# "New +" -> "Blueprint" and point it at the repo. Render reads this file
+# and provisions everything below. You still need to click through the
+# Render UI yourself — this file has not been deployed or tested against a
+# live Render account, only checked against backend/traject_backend/core/config.py's
+# actual env var names.
+#
+# IMPORTANT: Render's free Postgres tier may not include the pgvector
+# extension on older plans — confirm pgvector is available on whatever plan
+# you pick before deploying, since the backend's semantic-cache schema
+# depends on it (see backend/migrations/).
+
+databases:
+  - name: traject-demo-db
+    plan: free
+    postgresMajorVersion: "16"
+
+services:
+  - type: redis
+    name: traject-demo-redis
+    plan: free
+    ipAllowList: []
+
+  - type: web
+    name: traject-demo-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # Render's Postgres connection string uses the `postgresql://` scheme;
+      # SQLAlchemy's async engine here needs `postgresql+asyncpg://`. Render
+      # Blueprints can't rewrite a scheme inline, so this auto-links the raw
+      # value — you MUST edit it once after first deploy (see the runbook)
+      # to swap `postgresql://` for `postgresql+asyncpg://` at the front.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: traject-demo-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: traject-demo-redis
+          property: connectionString
+      - key: API_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: '["https://YOUR-VERCEL-APP.vercel.app"]'
+      - key: ALLOW_INSECURE_API_KEY
+        value: "false"
