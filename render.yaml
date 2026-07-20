@@ -1,4 +1,3 @@
-\
 # Render Blueprint for a live, public Traject backend demo instance.
 #
 # Deploys: the FastAPI backend (Docker, backend/Dockerfile), a managed
