@@ -225,6 +225,10 @@ These scripts measure compression quality on real agent trajectories from
 
 ### Setup
 
+A pre-generated copy of the 49-instance dataset already ships at the repo
+root as `swe_trajectories.jsonl` — copy or symlink it into `sdk/python/` to
+skip the HuggingFace download below entirely.
+
 ```bash
 cd sdk/python
 source .venv/bin/activate

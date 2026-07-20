@@ -56,7 +56,7 @@ pytest sdk/python/tests/ --cov=traject --cov-report=term-missing
 ### 5. Run type checking and linting
 
 ```bash
-mypy --strict sdk/python/traject/
+mypy sdk/python/traject --strict --config-file sdk/python/pyproject.toml
 ruff check sdk/python/
 ruff format --check sdk/python/
 ```

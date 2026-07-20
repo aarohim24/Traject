@@ -109,25 +109,33 @@ In scope:
   docs/cascade-tracing.md, docs/prompt-cache-advisor.md
 - CI: TypeScript test job added to ci.yml
 
-### Phase 4 — Production · NOT STARTED
+### Phase 4 — Production · PARTIALLY BUILT (this status is stale, corrected below)
 
-Do not scaffold, reference, or build any of the following
-until Phase 3 is fully validated:
+The items below were gated behind "Phase 3 fully validated," but the repo
+already contains: a custom React dashboard (`dashboard/`, replacing Grafana
+as the primary UI), a Kubernetes/Helm deployment (`deploy/kubernetes/`,
+`docs/kubernetes-deployment.md`), and enterprise auth docs
+(`docs/enterprise-auth.md`). Do not treat "NOT STARTED" phase labels in this
+file as proof a file shouldn't exist or shouldn't be touched — check the
+actual repo state first. SOC2 groundwork and a managed SaaS offering are the
+only items here still genuinely not started, as far as the repo shows.
 
-- Custom React dashboard (replaces Grafana)
-- Cloud / Kubernetes deployment
-- Enterprise SSO, RBAC, audit logs
-- SOC2 groundwork
-- Managed SaaS offering
+- Custom React dashboard (replaces Grafana) — **exists** (`dashboard/`)
+- Cloud / Kubernetes deployment — **exists** (`deploy/kubernetes/`)
+- Enterprise SSO, RBAC, audit logs — **exists** (`docs/enterprise-auth.md`)
+- SOC2 groundwork — not started
+- Managed SaaS offering — not started
 
-### Phase 5 — Differentiation & Scale · NOT STARTED
+### Phase 5 — Differentiation & Scale · PARTIALLY BUILT (this status is stale, corrected below)
 
-Do not scaffold, reference, or build any of the following
-until Phase 4 is fully validated:
-- ML-based routing with conformal prediction guarantees
-- Predictive cost modeling
-- Plugin system for custom compression strategies
-- AWS Bedrock, Google Vertex AI, Azure AI integrations
+- ML-based routing with conformal prediction guarantees — **exists**
+  (`traject/router/conformal.py`, `traject/router/ml_router.py`)
+- Predictive cost modeling — **exists** (`backend/traject_backend/services/cost_predictor.py`)
+- Plugin system for custom compression strategies — **exists**
+  (`traject/plugins/`)
+- AWS Bedrock, Google Vertex AI integrations — **exist**
+  (`traject/providers/bedrock.py`, `traject/providers/vertex.py`);
+  Azure AI is the only one of these four still not started
 
 ## Permanent exclusions
 

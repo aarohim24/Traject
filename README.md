@@ -349,8 +349,8 @@ The 64–70% verbatim fact preservation reflects that the pipeline aggressively 
 
 Reproduce:
 ```bash
-python examples/benchmark/swebench_eval.py --input trajectories.jsonl --strategy conservative
-python examples/benchmark/quality_eval.py --input trajectories.jsonl --strategy conservative
+python examples/benchmark/swebench_eval.py --input swe_trajectories.jsonl --strategy conservative
+python examples/benchmark/quality_eval.py --input swe_trajectories.jsonl --strategy conservative
 ```
 
 ---
