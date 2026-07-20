@@ -24,29 +24,31 @@ import math
 # Module-level model singleton — loaded ONCE at import time (ADR-003).
 # Never reload; never instantiate inside a function.
 # ---------------------------------------------------------------------------
-import sys as _sys
 from dataclasses import dataclass
 from typing import Any  # noqa: F401  # retained for re-export consistency
 
 import numpy as np
+import structlog
 from sentence_transformers import SentenceTransformer
 
 from traject.classifier.artifact_type import ArtifactType
 from traject.exceptions import TrajectConfigError
 from traject.models import Segment
 
+_log = structlog.get_logger(__name__)
+
 _model_load_announced: bool = False
 
 
 def _load_model() -> SentenceTransformer:
-    """Load the embedding model, printing a one-time first-run notice to stderr."""
+    """Load the embedding model, logging a one-time first-run notice."""
     global _model_load_announced
     if not _model_load_announced:
         _model_load_announced = True
-        print(
-            "traject: loading local embedding model (first run only, ~90MB)...",
-            file=_sys.stderr,
-            flush=True,
+        _log.info(
+            "traject.embedding_model.loading",
+            model="all-MiniLM-L6-v2",
+            note="first run only, ~90MB",
         )
     return SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore[no-any-return]
 

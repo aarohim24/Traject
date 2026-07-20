@@ -12,9 +12,12 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+import structlog
 import tiktoken
 
-from traject.models import InferenceSpan
+from traject.models import InferenceSpan, Provider
+
+_log = structlog.get_logger(__name__)
 
 __all__ = [
     "CACHE_THRESHOLDS",
@@ -28,8 +31,8 @@ __all__ = [
 # ---------------------------------------------------------------------------
 
 CACHE_THRESHOLDS: dict[str, int] = {
-    "anthropic": 1024,
-    "openai": 1024,
+    Provider.ANTHROPIC: 1024,
+    Provider.OPENAI: 1024,
 }
 
 _VOLATILE_PATTERNS: list[re.Pattern[str]] = [
@@ -196,8 +199,8 @@ class PromptCacheAdvisor:
         """Read a JSONL file of InferenceSpan records and analyse them.
 
         Each line in the file is parsed as an :class:`~traject.models.InferenceSpan`
-        using Pydantic's ``model_validate_json``.  Malformed lines are silently
-        skipped.  The collected spans are passed to :meth:`analyze_spans`.
+        using Pydantic's ``model_validate_json``.  Malformed lines are skipped and
+        logged as a warning.  The collected spans are passed to :meth:`analyze_spans`.
 
         Args:
             jsonl_path: Filesystem path to the JSONL file to read.
@@ -214,7 +217,12 @@ class PromptCacheAdvisor:
                 try:
                     span = InferenceSpan.model_validate_json(line)
                     spans.append(span)
-                except Exception:  # skip malformed lines silently
+                except Exception as exc:  # skip malformed lines, but surface why
+                    _log.warning(
+                        "traject.advisor.malformed_line",
+                        path=jsonl_path,
+                        error=str(exc),
+                    )
                     continue
 
         return self.analyze_spans(spans)
