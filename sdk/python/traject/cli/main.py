@@ -19,7 +19,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from traject.models import InferenceSpan
+from traject.models import InferenceSpan, Provider
 
 app = typer.Typer(name="traject", help="Traject SDK developer tools.")
 console = Console()
@@ -253,7 +253,7 @@ def _print_cache_plan(
             f"  [yellow]Step 2[/yellow]  "
             "Move all static instructions above the first volatile line."
         )
-        if provider == "anthropic":
+        if provider == Provider.ANTHROPIC:
             console.print(
                 f"  [yellow]Step 3[/yellow]  "
                 "Add ``cache_control: {{type: ephemeral}}`` to the stable block."

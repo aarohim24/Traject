@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from traject.models import InferenceSpan
+from traject.models import InferenceSpan, Provider
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -156,9 +156,9 @@ class BatchRouter:
                 )
                 return self._failed_record(provider=provider, span_count=0)
 
-            if provider == "openai":
+            if provider == Provider.OPENAI:
                 return await self._submit_openai(eligible)
-            if provider == "anthropic":
+            if provider == Provider.ANTHROPIC:
                 return await self._submit_anthropic(eligible)
 
             _log.error(
@@ -284,7 +284,7 @@ class BatchRouter:
 
         return BatchJobRecord(
             job_id=batch_obj.id,
-            provider="openai",
+            provider=Provider.OPENAI,
             status=BatchJobStatus.PENDING,
             submitted_at=datetime.now(tz=UTC),
             span_count=len(spans),
@@ -351,7 +351,7 @@ class BatchRouter:
 
         return BatchJobRecord(
             job_id=batch_obj.id,
-            provider="anthropic",
+            provider=Provider.ANTHROPIC,
             status=BatchJobStatus.PENDING,
             submitted_at=datetime.now(tz=UTC),
             span_count=len(spans),

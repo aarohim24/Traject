@@ -30,7 +30,7 @@ from traject.compression.strategies import (
 from traject.core.cost_calculator import calculate_cost
 from traject.core.provider_adapter import UsageData, get_adapter
 from traject.exceptions import TrajectError
-from traject.models import CompressionResult, InferenceSpan
+from traject.models import CompressionResult, InferenceSpan, Provider
 from traject.telemetry.otel_exporter import configure_exporter, emit_span
 
 _logger = structlog.get_logger(__name__)
@@ -127,16 +127,16 @@ def _detect_provider(fn: Any, args: tuple[Any, ...]) -> str:  # noqa: ANN401 —
     """
     module_name = getattr(fn, "__module__", "") or ""
     if "openai" in module_name.lower():
-        return "openai"
+        return Provider.OPENAI
     if "anthropic" in module_name.lower():
-        return "anthropic"
+        return Provider.ANTHROPIC
     if args:
         cls_name = type(args[0]).__name__.lower()
         if "openai" in cls_name:
-            return "openai"
+            return Provider.OPENAI
         if "anthropic" in cls_name:
-            return "anthropic"
-    return "unknown"
+            return Provider.ANTHROPIC
+    return Provider.UNKNOWN
 
 
 def _build_compression_config(

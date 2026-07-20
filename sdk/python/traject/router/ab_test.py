@@ -12,6 +12,7 @@ import hashlib
 from dataclasses import dataclass, field
 
 from traject.exceptions import TrajectConfigError
+from traject.router.routing_table import ABTestGroup
 
 
 @dataclass
@@ -64,7 +65,7 @@ class ABTestConfig:
                 "and 1.0 (all treatment traffic)."
             )
 
-    def assign_group(self, request_id: str) -> str:
+    def assign_group(self, request_id: str) -> ABTestGroup:
         """Deterministically assign a request to a treatment or control group.
 
         Computes ``SHA-256("{seed}:{request_id}")``, takes the first four
@@ -83,4 +84,6 @@ class ABTestConfig:
         """
         digest = hashlib.sha256(f"{self.seed}:{request_id}".encode()).digest()
         value = int.from_bytes(digest[:4], "big") / (2**32)
-        return "treatment" if value < self.treatment_pct else "control"
+        if value < self.treatment_pct:
+            return ABTestGroup.TREATMENT
+        return ABTestGroup.CONTROL

@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
+from traject.models import Provider
 from traject.router.task_classifier import TaskType
 
 if TYPE_CHECKING:
@@ -29,6 +30,18 @@ class ModelTier(StrEnum):
     TIER_1 = "tier_1"
     TIER_2 = "tier_2"
     TIER_3 = "tier_3"
+
+
+class ABTestGroup(StrEnum):
+    """A/B test group assignment for a routed request.
+
+    Attributes:
+        TREATMENT: Request assigned to the experimental (treatment) model.
+        CONTROL: Request assigned to the default routing-table model.
+    """
+
+    TREATMENT = "treatment"
+    CONTROL = "control"
 
 
 class ComplexityTier(StrEnum):
@@ -174,12 +187,12 @@ DEFAULT_ROUTING_TABLE: dict[TaskType, dict[ComplexityTier, ModelTier]] = {
 # ---------------------------------------------------------------------------
 
 DEFAULT_MODEL_MAP: dict[str, dict[ModelTier, str]] = {
-    "openai": {
+    Provider.OPENAI: {
         ModelTier.TIER_1: "gpt-4o-mini",
         ModelTier.TIER_2: "gpt-4o",
         ModelTier.TIER_3: "gpt-4o",
     },
-    "anthropic": {
+    Provider.ANTHROPIC: {
         ModelTier.TIER_1: "claude-3-5-haiku-20241022",
         ModelTier.TIER_2: "claude-3-5-sonnet-20241022",
         ModelTier.TIER_3: "claude-3-opus-20240229",

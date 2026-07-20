@@ -21,6 +21,7 @@ from traject.router.ab_test import ABTestConfig
 from traject.router.routing_table import (
     DEFAULT_MODEL_MAP,
     DEFAULT_ROUTING_TABLE,
+    ABTestGroup,
     ComplexityTier,
     ModelTier,
     RoutingDecision,
@@ -153,7 +154,7 @@ class RuleRouter:
             if tag is None or tag == task_type.value:
                 request_id = uuid4().hex
                 ab_test_group = self._ab_test.assign_group(request_id)
-                if ab_test_group == "treatment":
+                if ab_test_group == ABTestGroup.TREATMENT:
                     selected_model = self._ab_test.treatment_model
 
         # Cost delta computation

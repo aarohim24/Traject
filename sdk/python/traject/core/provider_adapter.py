@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from traject.exceptions import TrajectProviderError
+from traject.models import Provider
 
 
 @dataclass
@@ -253,9 +254,9 @@ def get_adapter(provider: str) -> ProviderAdapter:
         adapter = get_adapter("openai")
         usage = adapter.extract_usage(response)
     """
-    if provider == "openai":
+    if provider == Provider.OPENAI:
         return OpenAIAdapter()
-    if provider == "anthropic":
+    if provider == Provider.ANTHROPIC:
         return AnthropicAdapter()
     raise TrajectProviderError(
         f"Unknown provider {provider!r}. Supported providers are: 'openai',"

@@ -15,6 +15,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from decimal import Decimal
+from enum import StrEnum
 from typing import Any, Literal
 from uuid import UUID
 
@@ -23,10 +24,29 @@ from pydantic import BaseModel, field_validator, model_validator
 from traject.classifier.artifact_type import ArtifactType
 from traject.core.pricing import ModelPricing
 
+
+class Provider(StrEnum):
+    """Canonical LLM provider identifiers used for dispatch and lookups.
+
+    ``InferenceSpan.provider`` stays a plain ``str`` field (spans may carry
+    provider names from custom/future adapters this enum doesn't yet know
+    about), but code that dispatches or looks up by provider identity should
+    compare against these members instead of raw string literals.
+    """
+
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    BEDROCK = "bedrock"
+    VERTEX = "vertex"
+    GOOGLE = "google"
+    UNKNOWN = "unknown"
+
+
 __all__ = [
     "CompressionResult",
     "InferenceSpan",
     "ModelPricing",
+    "Provider",
     "Segment",
 ]
 
