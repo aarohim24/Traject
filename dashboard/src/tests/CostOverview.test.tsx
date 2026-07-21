@@ -64,26 +64,23 @@ function makeQueryClient(): QueryClient {
 const MOCK_ATTRIBUTION: AttributionResponse = {
   total_cost_usd: "12.345678",
   total_tokens: 1234567,
-  cache_hit_rate: 0.72,
-  tokens_saved: 50000,
-  feature_tags: [
+  total_savings_usd: "3.100000",
+  breakdown: [
     {
-      feature_tag: "chat",
+      dimension: "chat",
       total_cost_usd: "5.000000",
+      total_tokens: 700000,
+      total_tokens_saved: 36000, // 36/(100+36) calls hit cache -> 72% rate w/ summarise
       call_count: 100,
-      avg_cost_usd: "0.050000",
-      tokens_saved: 1000,
-      compression_ratio: 0.8,
-      shadow_mode: false,
+      cache_hit_count: 72,
     },
     {
-      feature_tag: "summarise",
+      dimension: "summarise",
       total_cost_usd: "7.345678",
+      total_tokens: 534567,
+      total_tokens_saved: 14000,
       call_count: 50,
-      avg_cost_usd: "0.146913",
-      tokens_saved: 2000,
-      compression_ratio: 0.65,
-      shadow_mode: false,
+      cache_hit_count: 36,
     },
   ],
 };
@@ -170,9 +167,9 @@ describe("CostOverview", () => {
     expect(screen.getByText("summarise")).toBeInTheDocument();
   });
 
-  it("shows empty table message when feature_tags is empty", () => {
+  it("shows empty table message when breakdown is empty", () => {
     (useAttribution as ReturnType<typeof vi.fn>).mockReturnValue({
-      data: { ...MOCK_ATTRIBUTION, feature_tags: [] },
+      data: { ...MOCK_ATTRIBUTION, breakdown: [] },
       isLoading: false,
     });
 

@@ -58,39 +58,36 @@ export default function CompressionROI(): JSX.Element {
     );
   }
 
-  const tags = data?.feature_tags ?? [];
+  const tags = data?.breakdown ?? [];
 
-  // Tokens saved over time — use feature_tag entries as data points
+  // Tokens saved over time — use dimension entries as data points
   const tokensSavedData = tags.map((t) => ({
-    name: t.feature_tag,
-    value: t.tokens_saved,
+    name: t.dimension,
+    value: t.total_tokens_saved,
   }));
 
-  // Compression ratio by feature_tag
+  // Compression ratio by dimension — not sent by the API, derived per row.
   const compressionRatioData = tags.map((t) => ({
-    name: t.feature_tag,
-    value: parseFloat(t.compression_ratio.toFixed(3)),
+    name: t.dimension,
+    value:
+      t.total_tokens > 0
+        ? parseFloat((t.total_tokens_saved / t.total_tokens).toFixed(3))
+        : 0,
   }));
 
-  // Cache hit rate series (one point per tag as proxy for over-time)
+  // Cache hit rate series — per-tag rate, not a single value broadcast across all points.
   const cacheHitData = tags.map((t) => ({
-    name: t.feature_tag,
-    rate: data?.cache_hit_rate ?? 0,
+    name: t.dimension,
+    rate: t.call_count > 0 ? t.cache_hit_count / t.call_count : 0,
   }));
 
-  // Shadow vs live split
-  const shadowCount = tags.filter((t) => t.shadow_mode).length;
-  const liveCount = tags.length - shadowCount;
+  // Weighted average compression ratio across all tags (by tokens, not a flat mean).
+  const totalTokens = tags.reduce((sum, t) => sum + t.total_tokens, 0);
+  const totalTokensSaved = tags.reduce((sum, t) => sum + t.total_tokens_saved, 0);
+  const avgRatio = totalTokens > 0 ? totalTokensSaved / totalTokens : 0;
 
-  // Avg compression ratio across all tags
-  const avgRatio =
-    tags.length > 0
-      ? tags.reduce((sum, t) => sum + t.compression_ratio, 0) / tags.length
-      : 0;
-
-  // Estimated cost saved — tokens_saved * rough cost/token approximation ($0.000002)
-  const estimatedCostSaved =
-    (data?.tokens_saved ?? 0) * 0.000002;
+  // Real backend-computed estimate, not a rough per-token approximation.
+  const estimatedCostSaved = parseFloat(data?.total_savings_usd ?? "0");
 
   return (
     <div className="p-6 space-y-6">
@@ -98,7 +95,7 @@ export default function CompressionROI(): JSX.Element {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard
           label="Total Tokens Saved"
-          value={formatTokens(data?.tokens_saved ?? 0)}
+          value={formatTokens(totalTokensSaved)}
         />
         <StatCard
           label="Est. Cost Saved"
@@ -109,8 +106,8 @@ export default function CompressionROI(): JSX.Element {
           value={`${(avgRatio * 100).toFixed(1)}%`}
         />
         <StatCard
-          label="Shadow / Live"
-          value={`${shadowCount} / ${liveCount}`}
+          label="Feature Tags Tracked"
+          value={`${tags.length}`}
         />
       </div>
 
@@ -179,7 +176,7 @@ export default function CompressionROI(): JSX.Element {
         <StatCard
           label="Cumulative Cost Saved by Semantic Cache"
           value={formatCost(estimatedCostSaved)}
-          delta={`Based on ${formatTokens(data?.tokens_saved ?? 0)} tokens saved`}
+          delta={`Based on ${formatTokens(totalTokensSaved)} tokens saved`}
         />
       </div>
     </div>

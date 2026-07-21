@@ -28,10 +28,10 @@ import { COLORS } from "../lib/constants";
 import { formatCost, formatPct, formatTokens } from "../lib/formatters";
 import { useAppStore } from "../store/appStore";
 
-type SortKey = keyof Pick<
-  AttributionByTag,
-  "feature_tag" | "total_cost_usd" | "call_count" | "avg_cost_usd"
->;
+type SortKey = "dimension" | "total_cost_usd" | "call_count" | "avg_cost_usd";
+
+/** A breakdown row with avg_cost_usd computed client-side (not sent by the API). */
+type TagWithAvg = AttributionByTag & { avg_cost_usd: number };
 
 /** Resolve a time-range label to ISO from_ts / to_ts strings. */
 function resolveTimeRange(range: "24h" | "7d" | "30d"): {
@@ -51,7 +51,7 @@ function buildModelData(
 ): { model: string; cost: number }[] {
   // Aggregate by feature_tag as a proxy for model breakdown.
   return tags.slice(0, 6).map((t) => ({
-    model: t.feature_tag,
+    model: t.dimension,
     cost: parseFloat(t.total_cost_usd),
   }));
 }
@@ -94,30 +94,46 @@ export default function CostOverview(): JSX.Element {
     );
   }
 
-  const tags = data?.feature_tags ?? [];
+  const tags = data?.breakdown ?? [];
+
+  // avg_cost_usd isn't sent by the API — compute it client-side per row.
+  const tagsWithAvg: TagWithAvg[] = tags.map((t) => ({
+    ...t,
+    avg_cost_usd: t.call_count > 0 ? parseFloat(t.total_cost_usd) / t.call_count : 0,
+  }));
+
+  // Aggregate cache hit rate across all dimensions (not returned at the top level).
+  const totalCalls = tags.reduce((sum, t) => sum + t.call_count, 0);
+  const totalCacheHits = tags.reduce((sum, t) => sum + t.cache_hit_count, 0);
+  const cacheHitRate = totalCalls > 0 ? totalCacheHits / totalCalls : 0;
+  const totalTokensSaved = tags.reduce((sum, t) => sum + t.total_tokens_saved, 0);
 
   // Sorted top-10 table rows
-  const sortedTags = [...tags]
+  const sortedTags = [...tagsWithAvg]
     .sort((a, b) => {
-      if (sortKey === "feature_tag") {
+      if (sortKey === "dimension") {
         return sortAsc
-          ? a.feature_tag.localeCompare(b.feature_tag)
-          : b.feature_tag.localeCompare(a.feature_tag);
+          ? a.dimension.localeCompare(b.dimension)
+          : b.dimension.localeCompare(a.dimension);
       }
       const av =
         sortKey === "call_count"
           ? a.call_count
-          : parseFloat(a[sortKey]);
+          : sortKey === "avg_cost_usd"
+            ? a.avg_cost_usd
+            : parseFloat(a[sortKey]);
       const bv =
         sortKey === "call_count"
           ? b.call_count
-          : parseFloat(b[sortKey]);
+          : sortKey === "avg_cost_usd"
+            ? b.avg_cost_usd
+            : parseFloat(b[sortKey]);
       return sortAsc ? av - bv : bv - av;
     })
     .slice(0, 10);
 
   const providerData = tags.slice(0, 5).map((t, i) => ({
-    name: t.feature_tag,
+    name: t.dimension,
     value: parseFloat(t.total_cost_usd),
     color: DONUT_COLORS[i % DONUT_COLORS.length],
   }));
@@ -138,11 +154,11 @@ export default function CostOverview(): JSX.Element {
         />
         <StatCard
           label="Cache Hit Rate"
-          value={formatPct(data?.cache_hit_rate ?? 0)}
+          value={formatPct(cacheHitRate)}
         />
         <StatCard
           label="Tokens Saved"
-          value={formatTokens(data?.tokens_saved ?? 0)}
+          value={formatTokens(totalTokensSaved)}
         />
       </div>
 
@@ -152,7 +168,13 @@ export default function CostOverview(): JSX.Element {
           <h2 className="text-sm font-semibold text-gray-400 mb-4">
             Cost by Feature Tag
           </h2>
-          <CostChart data={tags} />
+          <CostChart
+            data={tags.map((t) => ({
+              feature_tag: t.dimension,
+              total_cost_usd: t.total_cost_usd,
+              call_count: t.call_count,
+            }))}
+          />
         </div>
 
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
@@ -232,7 +254,7 @@ export default function CostOverview(): JSX.Element {
               <tr className="border-b border-gray-700 text-gray-400">
                 {(
                   [
-                    ["feature_tag", "Feature Tag"],
+                    ["dimension", "Feature Tag"],
                     ["total_cost_usd", "Total Cost"],
                     ["call_count", "Calls"],
                     ["avg_cost_usd", "Avg Cost"],
@@ -254,11 +276,11 @@ export default function CostOverview(): JSX.Element {
             <tbody>
               {sortedTags.map((tag) => (
                 <tr
-                  key={tag.feature_tag}
+                  key={tag.dimension}
                   className="border-b border-gray-700/50 hover:bg-gray-700/30"
                 >
                   <td className="py-2 px-3 font-mono text-teal-400">
-                    {tag.feature_tag}
+                    {tag.dimension}
                   </td>
                   <td className="py-2 px-3">
                     {formatCost(tag.total_cost_usd)}

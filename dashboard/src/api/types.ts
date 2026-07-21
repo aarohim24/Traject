@@ -14,28 +14,32 @@ export interface AttributionParams {
   group_by?: string;
 }
 
-/** Per-tag breakdown row returned inside AttributionResponse. */
+/**
+ * Per-dimension breakdown row returned inside AttributionResponse.
+ *
+ * `dimension` holds whatever the query's `group_by` was (feature_tag,
+ * provider, or model) — the backend names it generically since the same
+ * row shape serves all three groupings (see AttributionRow in
+ * backend/traject_backend/services/cost_attribution.py).
+ */
 export interface AttributionByTag {
-  feature_tag: string;
+  dimension: string;
   /** Total cost in USD as a decimal string. */
   total_cost_usd: string;
+  total_tokens: number;
+  total_tokens_saved: number;
   call_count: number;
-  /** Average cost per call in USD as a decimal string. */
-  avg_cost_usd: string;
-  tokens_saved: number;
-  compression_ratio: number;
-  shadow_mode: boolean;
+  cache_hit_count: number;
 }
 
 /** Response shape from GET /v1/attribution. */
 export interface AttributionResponse {
-  feature_tags: AttributionByTag[];
   /** Aggregate total cost in USD as a decimal string. */
   total_cost_usd: string;
   total_tokens: number;
-  /** Cache hit rate in the range [0, 1]. */
-  cache_hit_rate: number;
-  tokens_saved: number;
+  /** Estimated USD value of compression savings, as a decimal string. */
+  total_savings_usd: string;
+  breakdown: AttributionByTag[];
 }
 
 /** Request body for POST /v1/budgets/{feature_tag} (upsert). */
