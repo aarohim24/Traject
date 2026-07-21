@@ -97,6 +97,8 @@ export default function CostOverview(): JSX.Element {
   const tags = data?.breakdown ?? [];
 
   // avg_cost_usd isn't sent by the API — compute it client-side per row.
+  // Display-only float division (JS has no Decimal type): fine for a rounded
+  // on-screen average, never fed back into a real cost calculation or stored.
   const tagsWithAvg: TagWithAvg[] = tags.map((t) => ({
     ...t,
     avg_cost_usd: t.call_count > 0 ? parseFloat(t.total_cost_usd) / t.call_count : 0,

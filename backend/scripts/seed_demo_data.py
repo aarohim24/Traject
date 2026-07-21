@@ -31,6 +31,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from typing import TypeVar
 
 import httpx
 
@@ -59,7 +60,10 @@ def _model_provider(model: str) -> str:
     return pricing.provider if pricing is not None else "openai"
 
 
-def _percentile(values: list[Decimal] | list[float], pct: int) -> Decimal | float:
+_Numeric = TypeVar("_Numeric", Decimal, float)
+
+
+def _percentile(values: list[_Numeric], pct: int) -> _Numeric:
     """Nearest-rank percentile of *values* (real data in, real percentile out)."""
     ordered = sorted(values)
     n = len(ordered)
@@ -91,7 +95,7 @@ async def seed(backend_url: str, api_key: str, trajectories_path: Path) -> None:
             costs.append(cost)
 
         prompt_hash = hashlib.sha256(instance_id.encode()).hexdigest()
-        span = {
+        span: dict[str, object] = {
             "id": str(uuid.uuid4()),
             "trace_id": uuid.uuid4().hex,
             "parent_span_id": None,
