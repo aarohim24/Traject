@@ -5,6 +5,7 @@
  * a StatCard for total cost, and a BarChart for artifact_type counts.
  */
 
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -44,7 +45,10 @@ const DONUT_COLORS = ["#2dd4bf", "#60a5fa", "#f472b6", "#a78bfa", "#fb923c", "#3
  */
 export default function RouterAnalytics(): JSX.Element {
   const timeRange = useAppStore((s) => s.timeRange);
-  const { from_ts, to_ts } = resolveTimeRange(timeRange);
+  // Memoized on timeRange only — see CostOverview.tsx for why: resolveTimeRange
+  // uses `new Date()`, so recomputing it every render would change useSpans's
+  // query key on every render and defeat the cache.
+  const { from_ts, to_ts } = useMemo(() => resolveTimeRange(timeRange), [timeRange]);
 
   const { data: spans, isLoading } = useSpans({ from_ts, to_ts, limit: 200 });
 

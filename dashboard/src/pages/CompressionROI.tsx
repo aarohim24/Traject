@@ -6,6 +6,7 @@
  * hit rate over time.
  */
 
+import { useMemo } from "react";
 import {
   CartesianGrid,
   Line,
@@ -40,7 +41,10 @@ function resolveTimeRange(range: "24h" | "7d" | "30d"): {
  */
 export default function CompressionROI(): JSX.Element {
   const timeRange = useAppStore((s) => s.timeRange);
-  const { from_ts, to_ts } = resolveTimeRange(timeRange);
+  // Memoized on timeRange only — see CostOverview.tsx for why: resolveTimeRange
+  // uses `new Date()`, so recomputing it every render would change
+  // useAttribution's query key on every render and defeat the cache.
+  const { from_ts, to_ts } = useMemo(() => resolveTimeRange(timeRange), [timeRange]);
 
   const { data, isLoading } = useAttribution({ from_ts, to_ts });
 

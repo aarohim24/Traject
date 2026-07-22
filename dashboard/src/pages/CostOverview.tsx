@@ -6,7 +6,7 @@
  * and a sortable top-10 feature tags table. Auto-refreshes every 60 s.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -63,7 +63,11 @@ const DONUT_COLORS = ["#2dd4bf", "#60a5fa", "#f472b6", "#a78bfa", "#fb923c"];
  */
 export default function CostOverview(): JSX.Element {
   const timeRange = useAppStore((s) => s.timeRange);
-  const { from_ts, to_ts } = resolveTimeRange(timeRange);
+  // Memoized on timeRange only — resolveTimeRange uses `new Date()`, so
+  // recomputing it on every render would produce a new from_ts/to_ts each
+  // time, changing useAttribution's query key and defeating React Query's
+  // cache (endless refetches instead of one fetch per time-range change).
+  const { from_ts, to_ts } = useMemo(() => resolveTimeRange(timeRange), [timeRange]);
 
   const { data, isLoading } = useAttribution({ from_ts, to_ts });
 
