@@ -109,9 +109,11 @@ async def list_spans(
     if feature_tag is not None:
         stmt = stmt.where(InferenceSpanRecord.feature_tag == feature_tag)
     if from_ts is not None:
-        stmt = stmt.where(InferenceSpanRecord.timestamp >= from_ts)
+        # timestamp is stored naive (TIMESTAMP WITHOUT TIME ZONE); an
+        # aware datetime here would fail the comparison at the DB layer.
+        stmt = stmt.where(InferenceSpanRecord.timestamp >= from_ts.replace(tzinfo=None))
     if to_ts is not None:
-        stmt = stmt.where(InferenceSpanRecord.timestamp < to_ts)
+        stmt = stmt.where(InferenceSpanRecord.timestamp < to_ts.replace(tzinfo=None))
 
     result = await db.execute(stmt)
     rows = result.scalars().all()
