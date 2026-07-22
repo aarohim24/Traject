@@ -94,8 +94,20 @@ jobs:
     steps:
       - uses: actions/first-interaction@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-message: |
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          # v3 renamed repo-token/pr-message to repo_token/pr_message and made
+          # issue_message required even when this workflow only ever runs on
+          # pull_request — set both to the same message.
+          issue_message: |
+            👋 Welcome, and thanks for opening your first pull request to Traject!
+
+            A maintainer will review your PR shortly. In the meantime, please check that:
+            - All CI checks are passing (lint, type-check, tests)
+            - Your commit messages follow the [Conventional Commits](https://www.conventionalcommits.org/) format
+            - You've read [CONTRIBUTING.md](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md)
+
+            We're glad you're here. 🚀
+          pr_message: |
             👋 Welcome, and thanks for opening your first pull request to Traject!
 
             A maintainer will review your PR shortly. In the meantime, please check that:
@@ -202,6 +214,11 @@ jobs:
           python-version: "3.11"
       - name: Install pip-audit
         run: pip install pip-audit -q
+      - name: Upgrade setuptools
+        # The stock setuptools shipped with actions/setup-python has known
+        # CVEs (e.g. PYSEC-2026-3447); upgrade before installing anything
+        # else so pip-audit doesn't flag our own base toolchain.
+        run: pip install -q --upgrade "setuptools>=83.0.0"
       - name: Install SDK with all optional deps
         run: pip install -e "sdk/python[dev,openai,anthropic,langchain,mcp,proxy,ml,bedrock,vertex]" -q
       - name: Install backend dev dependencies
