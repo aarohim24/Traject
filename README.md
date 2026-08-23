@@ -134,10 +134,11 @@ The compression pipeline runs before each provider call:
 5. **Score** — remaining segments are scored by recency (0.4 weight), semantic relevance to the current task (0.4 weight), and reference count in recent turns (0.2 weight). The semantic component is cached within a call by content hash and task-similarity bucket, avoiding redundant embedding lookups for repeated segments.
 6. **Compress** — applied in order:
    - **Lossless dedup** — byte-identical tool results that recur (the agent re-reading the same file/command) are replaced with a short reference; the last occurrence is kept verbatim, so no information is lost.
+   - **Semantic near-duplicate dedup (LOSSY, opt-in)** — at MODERATE and AGGRESSIVE only (never CONSERVATIVE), tool results that are nearly but not byte-identical — the same command re-run, differing only in a timestamp, UUID, or other nondeterministic field — are collapsed using the same in-process `all-MiniLM-L6-v2` embeddings (cosine similarity ≥ 0.97). This is a distinct code path from the lossless dedup above, with its own stub, because whatever field actually differed is discarded. With a `CCRStore` configured, the collapsed content is reversible via `traject_retrieve` like any other CCR stub, instead of being lost outright.
    - **Command-aware summarization** — tool results are sub-classified by the command that produced them (`git diff`, `git log`, pytest, `ls`/`find`, build output) and summarized by a domain-specific compressor that preserves load-bearing facts (failed tests, error types, file:line refs, diff headers) while trimming bulk. Other low-scoring segments are summarized or dropped per strategy thresholds. An inflation guard ensures a replacement is only substituted when strictly smaller.
    - **CCR (optional)** — with a `CCRStore` configured, segments that would be dropped are instead stored in Redis and replaced with a `<<ccr:HASH>>` stub. The agent recovers the full content on demand via the `traject_retrieve` MCP tool — making compression reversible.
 7. **Validate** — circuit breaker: if system prompts or recent turns are absent from the compressed output, compression is aborted and the original context is returned unchanged.
-8. **Emit** — an OpenTelemetry span records tokens saved, compression ratio, strategy applied, cache hit rate, soft-protected count, and CCR-stubbed count.
+8. **Emit** — an OpenTelemetry span records tokens saved, compression ratio, strategy applied, cache hit rate, soft-protected count, near-duplicate-collapsed count, and CCR-stubbed count.
 
 ### Shadow mode
 
@@ -156,6 +157,7 @@ Each `traject.compression.complete` span carries:
 | `cache_hits` | int | Semantic scores served from call-scoped cache |
 | `cache_hit_rate` | float | Cache hit fraction, 0–1 |
 | `segments_soft_protected` | int | Segments elevated to the soft-protect tier |
+| `segments_near_duplicate_collapsed` | int | Segments collapsed by the LOSSY semantic near-duplicate pass (0 at CONSERVATIVE) |
 | `segments_ccr_stubbed` | int | Segments stored in CCR and replaced with a stub |
 
 `tokens_saved` and `compression_ratio` are measured against the **raw input** the caller sent — the lossless preprocessing savings (prose filter, JSON columnarization) are included in the reported reduction, not hidden by shrinking the baseline.

@@ -55,6 +55,16 @@ def _load_model() -> SentenceTransformer:
 
 _model: SentenceTransformer = _load_model()
 
+
+def get_embedding_model() -> SentenceTransformer:
+    """Return the shared ``all-MiniLM-L6-v2`` singleton (ADR-003: loaded once).
+
+    Lets other compression-path modules (e.g. ``semantic_dedup``) reuse the
+    exact same embedding model instead of loading a second copy.
+    """
+    return _model
+
+
 # ---------------------------------------------------------------------------
 # Scoring constants (fallback when no task-aware weights are available)
 # ---------------------------------------------------------------------------

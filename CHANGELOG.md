@@ -14,6 +14,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Lossless JSON array columnarization for TOOL_RESULT segments — converts arrays ≥5 items to compact table form
 - Command-aware tool-result classifier — sub-classifies by command type (GIT_DIFF, GIT_LOG, PYTEST, FILE_TREE, BUILD) with domain-specific mini-compressors
 - CCR (Content-Compress-Retrieve) reversible compression — stores dropped segments in Redis; `traject_retrieve` MCP tool recovers them on demand
+- Semantic near-duplicate dedup (LOSSY, opt-in at MODERATE/AGGRESSIVE) — collapses TOOL_RESULT segments that differ only in a nondeterministic field (timestamp, UUID) using the existing local embedding model; separate code path and stub from the lossless exact-match dedup, reversible via CCR when configured
 - Soft-protect gate split — distinguishes semantically-referenced segments from content-protected ones, enabling command-aware summarization of aged tool results
 - `scripts/setup.sh` first-run bootstrap — generates `deploy/.env` with strong random secrets
 - Dashboard Build CI job — typecheck, vitest, and Vite production build on every push

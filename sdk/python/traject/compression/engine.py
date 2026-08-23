@@ -10,6 +10,9 @@ Improvements in this version:
 - Structured tool result summarization (extracts file paths, errors, code blocks).
 - Dynamic turn protection via substring matching against the active task.
 - Task-aware scoring weight auto-detection is delegated to the relevance scorer.
+- Optional LOSSY semantic near-duplicate collapsing (MODERATE/AGGRESSIVE only)
+  via :mod:`traject.compression.semantic_dedup` — separate from, and layered
+  on top of, the lossless exact-match dedup below.
 
 The public entry point is :func:`compress`. All helper functions are private
 and intended for use only within this module.
@@ -37,6 +40,10 @@ from traject.compression.relevance_scorer import (
     score_segments,
 )
 from traject.compression.segment_parser import _encoding_for_model, parse
+from traject.compression.semantic_dedup import (
+    NEAR_DUPLICATE_STUB,
+    compute_near_duplicates,
+)
 from traject.compression.strategies import (
     CompressionConfig,
     CompressionStrategy,
@@ -518,7 +525,9 @@ def compress(
             reversible compression.  When provided, segments that would
             otherwise be dropped are stored in Redis and replaced with a
             short ``<<ccr:HASH>>`` stub.  The agent can recover the original
-            content via the ``traject_retrieve`` MCP tool.
+            content via the ``traject_retrieve`` MCP tool.  Also applies to
+            segments collapsed by ``config.near_duplicate_dedup`` — without
+            a CCR store, those use a fixed, non-reversible stub instead.
 
     Returns:
         A :class:`~traject.models.CompressionResult` with token counts,
@@ -644,6 +653,17 @@ def compress(
     # tool results because the information is preserved in the retained later copy.
     dedup_stub_indices, dedup_keep_verbatim = _compute_dedup(segments, preprocessed)
 
+    # LOSSY near-duplicate dedup — separate pass, separate stub, opt-in via
+    # config (never runs at CONSERVATIVE). Segments already handled by the
+    # lossless pass above, or otherwise protected, are never reconsidered here.
+    near_dup_stub_indices: set[int] = set()
+    near_dup_keep_verbatim: set[int] = set()
+    if config.near_duplicate_dedup:
+        near_dup_exclude = dedup_stub_indices | dedup_keep_verbatim
+        near_dup_stub_indices, near_dup_keep_verbatim = compute_near_duplicates(
+            segments, near_dup_exclude
+        )
+
     for seg, score in zip(segments, scores, strict=False):
         # Earlier exact-duplicate tool output → replace with a short reference.
         if seg.index in dedup_stub_indices:
@@ -651,9 +671,27 @@ def compress(
             compressed_messages.append({"role": seg.role, "content": _DEDUP_STUB})
             continue
 
+        # Earlier near-duplicate tool output → replace with its own stub,
+        # distinct from the lossless dedup stub above (see semantic_dedup.py).
+        # When a CCR store is configured, make the collapse reversible instead
+        # of a hard loss — the agent can retrieve it via traject_retrieve.
+        if seg.index in near_dup_stub_indices:
+            summarized.append(seg)
+            if ccr_store is not None and seg.content.strip():
+                stub = ccr_store.store(seg.content)
+                ccr_stubbed_count += 1
+            else:
+                stub = NEAR_DUPLICATE_STUB
+            compressed_messages.append({"role": seg.role, "content": stub})
+            continue
+
         # The final occurrence of a deduplicated output must be kept verbatim so
         # no information is lost.
-        if seg.protected or seg.index in dedup_keep_verbatim:
+        if (
+            seg.protected
+            or seg.index in dedup_keep_verbatim
+            or seg.index in near_dup_keep_verbatim
+        ):
             retained.append(seg)
             compressed_messages.append(preprocessed[seg.index])
             continue
@@ -730,6 +768,7 @@ def compress(
             cache_hit_rate=cache.hit_rate,
             segments_soft_protected=segments_soft_protected_count,
             segments_ccr_stubbed=0,
+            segments_near_duplicate_collapsed=0,
         )
 
     # Step 8: SHADOW MODE
@@ -761,6 +800,7 @@ def compress(
         cache_hit_rate=round(cache.hit_rate, 4),
         segments_soft_protected=segments_soft_protected_count,
         segments_ccr_stubbed=ccr_stubbed_count,
+        segments_near_duplicate_collapsed=len(near_dup_stub_indices),
     )
 
     return CompressionResult(
@@ -780,4 +820,5 @@ def compress(
         cache_hit_rate=cache.hit_rate,
         segments_soft_protected=segments_soft_protected_count,
         segments_ccr_stubbed=ccr_stubbed_count,
+        segments_near_duplicate_collapsed=len(near_dup_stub_indices),
     )

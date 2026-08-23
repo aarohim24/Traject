@@ -294,6 +294,10 @@ class CompressionResult(BaseModel):
         segments_ccr_stubbed: Number of segments stored in the CCR Redis
             store and replaced with a ``<<ccr:HASH>>`` stub.  Zero when no
             :class:`~traject.compression.ccr.CCRStore` was provided.
+        segments_near_duplicate_collapsed: Number of segments collapsed by
+            the LOSSY semantic near-duplicate pass (see
+            :mod:`traject.compression.semantic_dedup`). Always 0 at
+            CONSERVATIVE, since that tier keeps its lossless guarantee.
     """
 
     original_tokens: int
@@ -312,6 +316,7 @@ class CompressionResult(BaseModel):
     cache_hit_rate: float = 0.0
     segments_soft_protected: int = 0
     segments_ccr_stubbed: int = 0
+    segments_near_duplicate_collapsed: int = 0
 
     @field_validator("compression_ratio", mode="after")
     @classmethod

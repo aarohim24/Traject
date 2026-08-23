@@ -65,6 +65,15 @@ class CompressionConfig:
             Segments whose composite relevance score exceeds this value are
             never compressed regardless of the active strategy or target
             reduction percentage.  Defaults to ``0.65``.
+        near_duplicate_dedup: When ``True``, enables the semantic
+            near-duplicate pass (see
+            :mod:`traject.compression.semantic_dedup`), which collapses
+            TOOL_RESULT segments that are nearly but not byte-identical
+            (e.g. the same command re-run with a different timestamp or
+            UUID). This is LOSSY — the field that differed is discarded —
+            unlike the always-on exact-match dedup in ``engine.py``, and
+            must stay ``False`` at CONSERVATIVE to preserve that tier's
+            lossless guarantee. Defaults to ``False``.
     """
 
     strategy: CompressionStrategy
@@ -73,6 +82,7 @@ class CompressionConfig:
     protect_system_prompt: bool
     shadow_mode: bool
     score_ceiling: float = 0.65
+    near_duplicate_dedup: bool = False
 
 
 STRATEGY_DEFAULTS: dict[CompressionStrategy, CompressionConfig] = {
@@ -89,6 +99,7 @@ STRATEGY_DEFAULTS: dict[CompressionStrategy, CompressionConfig] = {
         min_turns_protected=3,
         protect_system_prompt=True,
         shadow_mode=True,
+        near_duplicate_dedup=True,
     ),
     CompressionStrategy.AGGRESSIVE: CompressionConfig(
         strategy=CompressionStrategy.AGGRESSIVE,
@@ -96,6 +107,7 @@ STRATEGY_DEFAULTS: dict[CompressionStrategy, CompressionConfig] = {
         min_turns_protected=2,
         protect_system_prompt=True,
         shadow_mode=True,
+        near_duplicate_dedup=True,
     ),
 }
 
