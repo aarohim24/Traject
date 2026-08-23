@@ -88,6 +88,7 @@ class TestValidateConfig:
             min_turns_protected=kw.get("min_turns_protected", 3),  # type: ignore[arg-type]
             protect_system_prompt=kw.get("protect_system_prompt", True),  # type: ignore[arg-type]
             shadow_mode=True,
+            near_duplicate_dedup=kw.get("near_duplicate_dedup", False),  # type: ignore[arg-type]
         )
 
     def test_valid_config_passes(self) -> None:
@@ -116,3 +117,21 @@ class TestValidateConfig:
     def test_protect_system_prompt_false_raises(self) -> None:
         with pytest.raises(TrajectConfigError):
             validate_config(self._base_config(protect_system_prompt=False))
+
+    def test_near_duplicate_dedup_at_conservative_raises(self) -> None:
+        # LOSSY pass must never be enabled at CONSERVATIVE, even if a caller
+        # constructs the config directly instead of going through
+        # STRATEGY_DEFAULTS (which never sets this combination itself).
+        with pytest.raises(TrajectConfigError):
+            validate_config(self._base_config(near_duplicate_dedup=True))
+
+    def test_near_duplicate_dedup_at_moderate_passes(self) -> None:
+        config = CompressionConfig(
+            strategy=CompressionStrategy.MODERATE,
+            target_reduction_pct=0.35,
+            min_turns_protected=3,
+            protect_system_prompt=True,
+            shadow_mode=True,
+            near_duplicate_dedup=True,
+        )
+        validate_config(config)  # should not raise

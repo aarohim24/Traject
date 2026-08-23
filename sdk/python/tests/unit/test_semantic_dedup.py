@@ -117,6 +117,18 @@ class TestComputeNearDuplicates:
         assert stubs == set()
         assert keep == set()
 
+    def test_soft_protected_segments_never_collapsed(self) -> None:
+        # A segment a later turn is actively reasoning about (soft-protected
+        # by the engine's semantic-reference pass) must not be silently
+        # discarded just because a near-duplicate copy exists elsewhere.
+        referenced = _segment(0, _near_dup_body("2026-08-23T10:00:00Z")).model_copy(
+            update={"soft_protected": True, "semantically_referenced": True}
+        )
+        segs = [referenced, _segment(1, _near_dup_body("2026-08-23T10:05:33Z"))]
+        stubs, keep = compute_near_duplicates(segs, exclude_indices=set())
+        assert stubs == set()
+        assert keep == set()
+
 
 class TestNearDuplicateDedupInEngine:
     def test_disabled_at_conservative(self) -> None:

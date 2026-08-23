@@ -60,6 +60,12 @@ def compute_near_duplicates(
         and s.content.strip()
         and s.index not in exclude_indices
         and not s.protected
+        # Soft-protected segments (actively referenced by a later turn, or
+        # carrying high-information content like errors/paths/hashes) must
+        # go through the engine's normal scoring/summarization path, which
+        # is designed to preserve load-bearing facts — not this blunter,
+        # whole-segment collapse.
+        and not s.soft_protected
     ]
     if len(candidates) < 2:
         return set(), set()

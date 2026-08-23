@@ -143,6 +143,8 @@ def validate_config(config: CompressionConfig) -> None:
         TrajectConfigError: If ``min_turns_protected`` is negative.
         TrajectConfigError: If ``protect_system_prompt`` is ``False`` (not
             supported in Phase 1).
+        TrajectConfigError: If ``near_duplicate_dedup`` is ``True`` at the
+            CONSERVATIVE strategy.
     """
     if not 0.0 < config.target_reduction_pct < 1.0:
         raise TrajectConfigError(
@@ -157,4 +159,13 @@ def validate_config(config: CompressionConfig) -> None:
         raise TrajectConfigError(
             "protect_system_prompt must be True. Disabling system prompt "
             "protection is not supported in Phase 1."
+        )
+    if (
+        config.strategy == CompressionStrategy.CONSERVATIVE
+        and config.near_duplicate_dedup
+    ):
+        raise TrajectConfigError(
+            "near_duplicate_dedup is not supported at CONSERVATIVE — it is a "
+            "LOSSY pass and would violate that tier's lossless guarantee. "
+            "Use MODERATE or AGGRESSIVE, or leave near_duplicate_dedup=False."
         )
