@@ -45,6 +45,7 @@ traject.patch(client, feature_tag="my_agent", shadow_mode=True)
 - [Supported providers](#supported-providers)
 - [Requirements](#requirements)
 - [Architecture](#architecture)
+- [Known gaps](#known-gaps)
 - [Contributing](#contributing)
 
 → **Full documentation index:** [docs/INDEX.md](docs/INDEX.md)
@@ -144,21 +145,32 @@ The compression pipeline runs before each provider call:
 
 Shadow mode computes the full compression pipeline and logs what would have been saved, without modifying the context passed to the provider. It is the default. Enable live compression (`shadow_mode=False`) after validating savings on your workload.
 
-### OTel span attributes
+### Compression telemetry
 
-Each `traject.compression.complete` span carries:
+`compress()` returns a `CompressionResult` with the full breakdown below, and
+logs the same fields via `structlog` as a `traject.compression.complete`
+event on every run — this is a structured log line, not an OpenTelemetry
+span (ADR-001 compliance for compression telemetry specifically is tracked
+as a known gap; see "Known gaps" below).
 
-| Attribute | Type | Description |
+| Field | Type | Description |
 |---|---|---|
 | `tokens_saved` | int | Tokens eliminated by compression |
 | `compression_ratio` | float | Fraction of tokens eliminated, 0–1 |
-| `strategy` | str | `conservative`, `moderate`, or `aggressive` |
+| `strategy_applied` | str | `conservative`, `moderate`, or `aggressive` |
 | `shadow_mode` | bool | Whether original messages were returned |
 | `cache_hits` | int | Semantic scores served from call-scoped cache |
 | `cache_hit_rate` | float | Cache hit fraction, 0–1 |
 | `segments_soft_protected` | int | Segments elevated to the soft-protect tier |
 | `segments_near_duplicate_collapsed` | int | Segments collapsed by the LOSSY semantic near-duplicate pass (0 at CONSERVATIVE) |
 | `segments_ccr_stubbed` | int | Segments stored in CCR and replaced with a stub |
+
+Separately, the real OpenTelemetry span emitted per provider call (the
+`gen_ai.<provider>.<model>` span — see `traject/telemetry/otel_exporter.py`)
+carries a smaller set of compression attributes: `traject.compression.applied`,
+`traject.compression.shadow_mode`, and `traject.compression.tokens_saved`.
+The per-segment breakdown above (cache hit rate, soft-protected count, etc.)
+is not yet on that span.
 
 `tokens_saved` and `compression_ratio` are measured against the **raw input** the caller sent — the lossless preprocessing savings (prose filter, JSON columnarization) are included in the reported reduction, not hidden by shrinking the baseline.
 
@@ -400,6 +412,16 @@ Traject SDK
                                │
                                └── Grafana / React Dashboard
 ```
+
+## Known gaps
+
+- **Compression telemetry is not yet a real OTel span.** ADR-001 requires all
+  telemetry to be OpenTelemetry spans, but the per-segment compression
+  breakdown (cache hit rate, soft-protected count, near-duplicate-collapsed
+  count, etc.) is currently only available via `CompressionResult` and a
+  `structlog` log event (`traject.compression.complete`) — see "Compression
+  telemetry" above. The real `gen_ai.*` OTel span carries a smaller subset
+  (`traject.compression.applied`, `.shadow_mode`, `.tokens_saved`).
 
 ## License
 
