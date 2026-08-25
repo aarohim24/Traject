@@ -25,7 +25,7 @@ import math
 # Never reload; never instantiate inside a function.
 # ---------------------------------------------------------------------------
 from dataclasses import dataclass
-from typing import Any, cast  # noqa: F401  # Any retained for re-export consistency
+from typing import Any  # noqa: F401  # retained for re-export consistency
 
 import numpy as np
 import structlog
@@ -50,12 +50,15 @@ def _load_model() -> SentenceTransformer:
             model="all-MiniLM-L6-v2",
             note="first run only, ~90MB",
         )
-    # cast(), not `# type: ignore`: sentence-transformers is unpinned, and
-    # its type stubs have flip-flopped between returning `Any` and a real
-    # `SentenceTransformer` across releases — an ignore comment then becomes
-    # "unused" under mypy --strict depending on which version CI happens to
-    # install. cast() is correct either way, with no unused-ignore drift.
-    return cast(SentenceTransformer, SentenceTransformer("all-MiniLM-L6-v2"))
+    # sentence-transformers is unpinned, and whether SentenceTransformer(...)
+    # resolves as `Any` or a real `SentenceTransformer` depends entirely on
+    # which release's stubs got installed — confirmed by `reveal_type` giving
+    # different answers locally vs. in CI. Neither `# type: ignore` nor
+    # cast() survives that flip (one becomes "unused", the other "redundant"
+    # under mypy --strict, depending on the installed version). See the
+    # matching per-module override in pyproject.toml disabling
+    # warn_unused_ignores only for this file, which is the stable fix.
+    return SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore[no-any-return]
 
 
 _model: SentenceTransformer = _load_model()

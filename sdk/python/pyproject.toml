@@ -121,6 +121,15 @@ strict = true
 python_version = "3.11"
 
 [[tool.mypy.overrides]]
+# sentence-transformers is unpinned; whether SentenceTransformer(...) types
+# as `Any` or a real class depends on which release's stubs got resolved,
+# so the one `# type: ignore[no-any-return]` in this file legitimately
+# flips between required and unused across environments/versions. Scoped
+# to this single module only — every other file keeps full strictness.
+module = "traject.compression.relevance_scorer"
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
 module = "mcp.*"
 ignore_missing_imports = true
 
