@@ -25,7 +25,7 @@ import math
 # Never reload; never instantiate inside a function.
 # ---------------------------------------------------------------------------
 from dataclasses import dataclass
-from typing import Any  # noqa: F401  # retained for re-export consistency
+from typing import Any, cast  # noqa: F401  # Any retained for re-export consistency
 
 import numpy as np
 import structlog
@@ -50,7 +50,12 @@ def _load_model() -> SentenceTransformer:
             model="all-MiniLM-L6-v2",
             note="first run only, ~90MB",
         )
-    return SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore[no-any-return]
+    # cast(), not `# type: ignore`: sentence-transformers is unpinned, and
+    # its type stubs have flip-flopped between returning `Any` and a real
+    # `SentenceTransformer` across releases — an ignore comment then becomes
+    # "unused" under mypy --strict depending on which version CI happens to
+    # install. cast() is correct either way, with no unused-ignore drift.
+    return cast(SentenceTransformer, SentenceTransformer("all-MiniLM-L6-v2"))
 
 
 _model: SentenceTransformer = _load_model()
