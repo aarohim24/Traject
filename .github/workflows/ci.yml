@@ -90,7 +90,12 @@ jobs:
   welcome-contributor:
     name: Welcome First-Time Contributor
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    # Dependabot-triggered runs always get a forced read-only GITHUB_TOKEN
+    # (GitHub security policy, not something a `permissions:` block can
+    # override), so first-interaction's comment-post call fails with
+    # "Resource not accessible by integration" on every Dependabot PR.
+    # Bots don't need a first-time-contributor welcome anyway — skip them.
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     steps:
       - uses: actions/first-interaction@v3
         with:
